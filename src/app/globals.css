@@ -1,0 +1,286 @@
+@import "tailwindcss";
+
+/*
+  MAZAL design system
+  ───────────────────
+  All brand tokens live here. Adjust a value once and it propagates
+  across the whole storefront (Tailwind v4 reads these via @theme).
+*/
+@theme {
+  /* Palette — blush rose & espresso (matches the satin monogram logo) */
+  --color-cream: #fdf7f3; /* primary background — warm blush white */
+  --color-cream-soft: #f8ebe3; /* lifted surfaces / cards (soft blush) */
+  --color-sand: #f0d6ca; /* secondary background / bands (blush rose) */
+  --color-sand-deep: #e2bcae; /* borders, dividers (dusty rose) */
+  --color-bronze: #c2887a; /* rose-mauve accent: buttons, links */
+  --color-bronze-deep: #a86b5c; /* accent hover / pressed (deeper rose) */
+  --color-ink: #46352e; /* primary text (espresso brown — the monogram) */
+  --color-ink-soft: #836b61; /* muted / secondary text (mauve-brown) */
+
+  /* Typography */
+  --font-serif: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Editorial letter-spacing for eyebrows / nav */
+  --tracking-luxe: 0.22em;
+
+  /* Layout */
+  --spacing-section: 7rem;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings default to the high-contrast serif */
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--color-bronze);
+  color: var(--color-cream);
+}
+
+/* Refined focus ring for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--color-bronze);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ── Lenis smooth scroll (engine attached in SmoothScroll.tsx) ── */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ── Reusable utilities ───────────────────────────────── */
+
+/* Editorial eyebrow label */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-luxe);
+  text-transform: uppercase;
+  color: var(--color-bronze);
+}
+
+/* Scroll reveal — paired with the <Reveal> component */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animated underline for text links */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* ── Cinematic hero motion ────────────────────────────── */
+@keyframes mz-kenburns {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+@keyframes mz-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mz-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+/* ── Hero scroll indicator ────────────────────────────── */
+@keyframes mz-scroll-cue {
+  0% {
+    transform: translateY(-55%);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(190%);
+    opacity: 0;
+  }
+}
+.mz-scroll-dot {
+  animation: mz-scroll-cue 2.2s cubic-bezier(0.76, 0, 0.24, 1) infinite;
+}
+
+.mz-kenburns {
+  animation: mz-kenburns 7.5s ease-out forwards;
+}
+.mz-hero-in {
+  animation: mz-hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Announcement marquee ─────────────────────────────── */
+/* The track holds two identical copies side-by-side and slides by exactly
+   half its width, so the loop is seamless. RTL-aware via translate sign. */
+@keyframes mz-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes mz-marquee-rtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(50%);
+  }
+}
+.mz-marquee-track {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  animation: mz-marquee var(--mz-marquee-duration, 38s) linear infinite;
+  will-change: transform;
+}
+[dir="rtl"] .mz-marquee-track {
+  animation-name: mz-marquee-rtl;
+}
+.mz-marquee:hover .mz-marquee-track {
+  animation-play-state: paused;
+}
+
+/* ── Inline image "chips" inside a serif headline ─────── */
+/* Sized to roughly the cap height of the line; vertically centred. */
+.inline-chip {
+  display: inline-block;
+  vertical-align: -0.18em;
+  inline-size: 1.55em;
+  block-size: 0.82em;
+  margin-inline: 0.18em;
+  border-radius: 999px;
+  overflow: hidden;
+  object-fit: cover;
+  background: var(--color-sand);
+  box-shadow: 0 1px 0 rgba(46, 41, 36, 0.06);
+}
+
+/* ── Pill button with circular accent arrow badge ─────── */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-cream-soft);
+  padding-block: 0.55rem;
+  padding-inline: 0.7rem 0.6rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition:
+    background-color 0.35s ease,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-pill > span:first-child {
+  padding-inline-start: 0.85rem;
+}
+.btn-pill .btn-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.1rem;
+  block-size: 2.1rem;
+  border-radius: 999px;
+  background: var(--color-bronze);
+  color: var(--color-cream-soft);
+  transition:
+    background-color 0.35s ease,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-pill:hover {
+  background: var(--color-bronze-deep);
+}
+.btn-pill:hover .btn-pill-badge {
+  background: var(--color-cream-soft);
+  color: var(--color-ink);
+  transform: rotate(-45deg);
+}
+[dir="rtl"] .btn-pill .btn-pill-arrow {
+  transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Static, readable marquee — no sliding, no clipped offset */
+  .mz-marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+  .btn-pill:hover .btn-pill-badge {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

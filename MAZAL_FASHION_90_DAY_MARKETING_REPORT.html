@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MAZAL Fashion — 90-Day Marketing Strategy Report</title>
+<style>
+  :root{
+    --cream:#fdf7f3; --cream-soft:#f8ebe3; --sand:#f0d6ca; --sand-deep:#e2bcae;
+    --rose:#c2887a; --rose-deep:#a86b5c; --ink:#46352e; --ink-soft:#836b61;
+    --line:#e6cfc4; --ok:#5b7a55;
+  }
+  *{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color:var(--ink); font-size:10.5pt; line-height:1.55; background:#fff;
+  }
+  h1,h2,h3,h4,.serif{ font-family:Georgia,"Times New Roman",serif; font-weight:600; letter-spacing:.005em; }
+  @page{ size:A4; margin:16mm 15mm 18mm 15mm; }
+
+  /* ---------- COVER ---------- */
+  .cover{
+    position:relative; height:265mm; margin:-16mm -15mm 0 -15mm; padding:34mm 24mm;
+    background:
+      radial-gradient(120% 80% at 18% 12%, rgba(255,247,242,.95), transparent 58%),
+      radial-gradient(95% 90% at 88% 26%, rgba(236,204,192,.9), transparent 55%),
+      radial-gradient(120% 110% at 60% 108%, rgba(226,180,166,.95), transparent 60%),
+      linear-gradient(135deg,#f8ece4 0%,#efd3c8 48%,#e4b8a9 100%);
+    page-break-after:always; color:var(--ink); display:flex; flex-direction:column;
+  }
+  .cover .mark{ font-family:Georgia,serif; font-size:30pt; letter-spacing:.5em; font-weight:600; }
+  .cover .rule{ width:54px; height:2px; background:var(--rose-deep); margin:10mm 0 8mm; }
+  .cover .eyebrow{ text-transform:uppercase; letter-spacing:.32em; font-size:8.5pt; color:var(--rose-deep); font-weight:700; }
+  .cover h1{ font-size:33pt; line-height:1.08; margin:6mm 0 0; }
+  .cover .sub{ font-size:13pt; color:var(--ink-soft); margin-top:5mm; max-width:130mm; font-family:Georgia,serif; font-style:italic; }
+  .cover .meta{ margin-top:auto; font-size:9.5pt; color:var(--ink-soft); }
+  .cover .meta b{ color:var(--ink); }
+  .cover .tagline{ font-family:Georgia,serif; font-style:italic; font-size:12pt; color:var(--rose-deep); }
+
+  /* ---------- GENERIC ---------- */
+  .page{ page-break-before:always; }
+  h1.section{ font-size:20pt; margin:0 0 2mm; padding-bottom:3mm; border-bottom:2px solid var(--sand-deep); }
+  .kicker{ text-transform:uppercase; letter-spacing:.28em; font-size:8pt; font-weight:700; color:var(--rose-deep); margin:0 0 1mm; }
+  h2{ font-size:14pt; margin:7mm 0 2mm; color:var(--ink); }
+  h3{ font-size:11.5pt; margin:5mm 0 1.5mm; color:var(--rose-deep); }
+  p{ margin:0 0 2.6mm; }
+  ul,ol{ margin:0 0 3mm; padding-left:5mm; }
+  li{ margin:0 0 1.4mm; }
+  strong{ color:var(--ink); }
+  a{ color:var(--rose-deep); text-decoration:none; }
+  .lead{ font-size:11pt; color:var(--ink-soft); }
+  .muted{ color:var(--ink-soft); }
+  .small{ font-size:9pt; }
+
+  table{ width:100%; border-collapse:collapse; margin:2mm 0 4mm; font-size:9.3pt; }
+  th,td{ border:1px solid var(--line); padding:2.2mm 2.6mm; text-align:left; vertical-align:top; }
+  thead th{ background:var(--rose); color:#fff; font-weight:600; letter-spacing:.02em; }
+  tbody tr:nth-child(even){ background:var(--cream-soft); }
+  td.num,th.num{ text-align:right; white-space:nowrap; }
+  .compact-table{ font-size:8.4pt; line-height:1.35; }
+  .compact-table th,.compact-table td{ padding:1.5mm 1.8mm; }
+  table, tr, .card, .quote, .checklist, .cal-month{ break-inside:avoid; }
+
+  .card{ background:var(--cream-soft); border:1px solid var(--line); border-radius:4mm; padding:4mm 5mm; margin:0 0 4mm; }
+  .card.dark{ background:var(--ink); color:var(--cream-soft); border-color:var(--ink); }
+  .card.dark h3{ color:var(--sand); }
+  .card.rose{ background:var(--sand); border-color:var(--sand-deep); }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+  .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:4mm; }
+
+  .example{ border-left:3px solid var(--rose); background:#fffdfb; padding:3mm 4mm; margin:2.5mm 0; border-radius:0 3mm 3mm 0; }
+  .example .lbl{ text-transform:uppercase; letter-spacing:.18em; font-size:7.5pt; font-weight:700; color:var(--rose-deep); display:block; margin-bottom:1mm; }
+  .example p{ margin:0 0 1.5mm; }
+  .mono{ font-family:"Consolas","Courier New",monospace; font-size:8.8pt; }
+
+  .checklist{ list-style:none; padding:0; margin:1mm 0 4mm; }
+  .checklist li{ position:relative; padding-left:7mm; margin-bottom:1.8mm; }
+  .checklist li:before{ content:""; position:absolute; left:0; top:.4mm; width:3.6mm; height:3.6mm; border:1.4px solid var(--rose-deep); border-radius:1mm; background:#fff; }
+
+  .pill{ display:inline-block; background:var(--rose); color:#fff; border-radius:999px; padding:.6mm 2.4mm; font-size:7.6pt; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+  .tag{ display:inline-block; background:var(--cream-soft); border:1px solid var(--sand-deep); border-radius:999px; padding:.5mm 2.4mm; font-size:8pt; margin:0 1mm 1mm 0; }
+
+  .toc{ font-size:10.5pt; }
+  .toc div{ display:flex; justify-content:space-between; border-bottom:1px dotted var(--line); padding:2mm 0; }
+  .toc .n{ color:var(--rose-deep); font-weight:700; width:9mm; }
+  .toc .t{ flex:1; }
+
+  /* calendar */
+  .cal-month{ margin:0 0 5mm; }
+  .cal-month h3{ margin-bottom:1mm; }
+  .weekrow{ display:grid; grid-template-columns:20mm 1fr; gap:0; border:1px solid var(--line); border-radius:2mm; overflow:hidden; margin-bottom:2mm; }
+  .weekrow .wk{ background:var(--ink); color:var(--cream-soft); padding:2.4mm; font-weight:700; font-size:8.6pt; display:flex; align-items:center; }
+  .weekrow .wd{ padding:2.4mm 3mm; font-size:9pt; background:#fff; }
+  .footer-note{ margin-top:6mm; font-size:8.5pt; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:2.5mm; }
+  .twocol{ column-count:2; column-gap:7mm; }
+  .twocol li{ break-inside:avoid; }
+  .legend span{ margin-right:5mm; font-size:8.6pt; }
+  .dot{ display:inline-block; width:3mm; height:3mm; border-radius:50%; margin-right:1.4mm; vertical-align:middle; }
+  @media print{
+    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    a[href]:after{ content:""; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="mark">MAZAL</div>
+  <div class="rule"></div>
+  <div class="eyebrow">Confidential — Marketing Strategy</div>
+  <h1>90-Day Marketing<br/>Strategy &amp; Launch Plan</h1>
+  <div class="sub">A practical, channel-by-channel playbook to launch and grow MAZAL — quiet-luxury modest fashion for the modern Gulf wardrobe.</div>
+  <div class="meta">
+    <p class="tagline">“MAZAL means Still.”</p>
+    <p style="margin-top:6mm"><b>Prepared for:</b> MAZAL Fashion — Founder &amp; Brand Team<br/>
+    <b>Market:</b> United Arab Emirates &amp; GCC · Priced in AED<br/>
+    <b>Scope:</b> Days 1–90 from launch · Organic + Paid + Retention<br/>
+    <b>Date:</b> 23 June 2026 · Version 1.0</p>
+  </div>
+</div>
+
+<!-- ============ TOC ============ -->
+<div class="page">
+  <p class="kicker">Contents</p>
+  <h1 class="section">Table of Contents</h1>
+  <div class="toc">
+    <div><span class="n">01</span><span class="t">Executive Summary</span><span>Section</span></div>
+    <div><span class="n">02</span><span class="t">Brand Positioning</span><span>Section</span></div>
+    <div><span class="n">03</span><span class="t">Target Audience &amp; Personas</span><span>Section</span></div>
+    <div><span class="n">04</span><span class="t">Competitive Landscape</span><span>Section</span></div>
+    <div><span class="n">05</span><span class="t">Launch Strategy (3 Phases)</span><span>Section</span></div>
+    <div><span class="n">06</span><span class="t">The 90-Day Marketing Plan</span><span>Section</span></div>
+    <div><span class="n">07</span><span class="t">Instagram Strategy + Post Ideas</span><span>Section</span></div>
+    <div><span class="n">08</span><span class="t">TikTok Strategy + Video Hooks</span><span>Section</span></div>
+    <div><span class="n">09</span><span class="t">Snapchat Strategy</span><span>Section</span></div>
+    <div><span class="n">10</span><span class="t">Pinterest Strategy</span><span>Section</span></div>
+    <div><span class="n">11</span><span class="t">Facebook Strategy</span><span>Section</span></div>
+    <div><span class="n">12</span><span class="t">YouTube Shorts Strategy</span><span>Section</span></div>
+    <div><span class="n">13</span><span class="t">Threads / X Strategy</span><span>Section</span></div>
+    <div><span class="n">14</span><span class="t">Paid Ads Strategy + Ad Copy</span><span>Section</span></div>
+    <div><span class="n">15</span><span class="t">Influencer Strategy + Outreach</span><span>Section</span></div>
+    <div><span class="n">16</span><span class="t">Email &amp; WhatsApp Marketing</span><span>Section</span></div>
+    <div><span class="n">17</span><span class="t">Website Conversion Suggestions</span><span>Section</span></div>
+    <div><span class="n">18</span><span class="t">Startup Checklist</span><span>Section</span></div>
+    <div><span class="n">19</span><span class="t">Signature Campaign Ideas</span><span>Section</span></div>
+    <div><span class="n">20</span><span class="t">90-Day Content Calendar</span><span>Section</span></div>
+    <div><span class="n">21</span><span class="t">Daily / Weekly / Monthly Rhythm</span><span>Section</span></div>
+    <div><span class="n">22</span><span class="t">Metrics &amp; KPIs to Track</span><span>Section</span></div>
+    <div><span class="n">23</span><span class="t">Budget Options (AED)</span><span>Section</span></div>
+    <div><span class="n">24</span><span class="t">Final Priority List</span><span>Section</span></div>
+  </div>
+  <div class="footer-note">This report is built from MAZAL's live storefront — its quiet-luxury design system, modest-fashion catalogue (abayas, kaftans, dresses, modest wear, throws, scarves &amp; accessories), AED pricing, the <b>STILL10</b> first-order incentive, complimentary delivery over AED 500, WhatsApp concierge, and 4.9★ social proof. Every example is written to be copied, edited, and used.</div>
+</div>
+
+<!-- ============ 01 EXEC SUMMARY ============ -->
+<div class="page">
+  <p class="kicker">Section 01</p>
+  <h1 class="section">Executive Summary</h1>
+  <p class="lead">MAZAL enters the market as a <strong>quiet-luxury modest-fashion house</strong> — abayas, kaftans and scarves designed with the restraint of a maison and the warmth of home. The brand promise is captured in one word: <em>Still</em>. The 90-day goal is not loud discounting; it is to build a <strong>recognisable, premium, trust-rich brand</strong> that converts a warm Gulf audience into first orders and repeat clients.</p>
+
+  <div class="grid3">
+    <div class="card"><h3>The Objective</h3><p class="small">Launch MAZAL, reach the first <b>1,000 engaged followers</b> per core channel, capture <b>2,000+ emails/WhatsApp opt-ins</b>, and land the <b>first 150–300 orders</b> in 90 days.</p></div>
+    <div class="card"><h3>The Strategy</h3><p class="small">Editorial organic content (IG + TikTok led), a tight influencer seeding program, retargeting-first paid ads, and a concierge retention loop via WhatsApp &amp; email.</p></div>
+    <div class="card"><h3>The Edge</h3><p class="small">A genuinely beautiful storefront, a clear point of view ("still elegance"), AED-native trust signals, and modest-luxury positioning that is under-served at this quality level.</p></div>
+  </div>
+
+  <h2>90-Day Targets at a Glance</h2>
+  <table>
+    <thead><tr><th>Metric</th><th class="num">Month 1 (Launch)</th><th class="num">Month 2 (Traction)</th><th class="num">Month 3 (Scale)</th></tr></thead>
+    <tbody>
+      <tr><td>Instagram followers</td><td class="num">1,500</td><td class="num">4,000</td><td class="num">8,000</td></tr>
+      <tr><td>TikTok followers</td><td class="num">1,000</td><td class="num">5,000</td><td class="num">12,000</td></tr>
+      <tr><td>Email / WhatsApp list</td><td class="num">800</td><td class="num">1,800</td><td class="num">3,500</td></tr>
+      <tr><td>Website sessions / mo</td><td class="num">8,000</td><td class="num">20,000</td><td class="num">45,000</td></tr>
+      <tr><td>Orders</td><td class="num">40–60</td><td class="num">70–110</td><td class="num">120–180</td></tr>
+      <tr><td>Conversion rate</td><td class="num">0.8–1.2%</td><td class="num">1.3–1.8%</td><td class="num">1.8–2.5%</td></tr>
+      <tr><td>Avg. order value (AOV)</td><td class="num">AED 1,150</td><td class="num">AED 1,250</td><td class="num">AED 1,350</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Targets assume the Standard budget (Section 23) and a launch catalogue led by the Sukoon, Layl &amp; Noor abayas, Hawa &amp; Dhahab kaftans, and the Hams &amp; Thuraya scarves. Adjust upward on the Growth budget.</p>
+
+  <h2>Where to Focus First</h2>
+  <ol>
+    <li><strong>Instagram + TikTok are the engine.</strong> 70% of organic effort goes here — this is where a Gulf modest-luxury audience discovers and trusts brands.</li>
+    <li><strong>Seed 15–25 micro-influencers</strong> before spending heavily on ads; their content becomes your ad creative.</li>
+    <li><strong>Capture every visitor</strong> into WhatsApp/email with STILL10 — paid traffic is wasted without retention.</li>
+    <li><strong>Spend paid budget on retargeting first</strong>, prospecting second.</li>
+  </ol>
+</div>
+
+<!-- ============ 02 POSITIONING ============ -->
+<div class="page">
+  <p class="kicker">Section 02</p>
+  <h1 class="section">Brand Positioning</h1>
+
+  <div class="card rose">
+    <h3 style="margin-top:0">Positioning Statement</h3>
+    <p style="margin-bottom:0">For the modern Gulf woman who values <strong>calm, considered elegance</strong>, MAZAL is a quiet-luxury modest-fashion house that designs abayas, kaftans and scarves <strong>made to endure</strong> — never trend-led, always timeless. Unlike fast modest-fashion and loud logo brands, MAZAL sells <strong>stillness</strong>: fluid silhouettes, warm neutral tones, and pieces worn and worn again.</p>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h3>Brand Pillars</h3>
+      <ul>
+        <li><strong>Still / Calm</strong> — "MAZAL means Still." Restraint over noise.</li>
+        <li><strong>Craft</strong> — hand-finished seams, considered to the last stitch.</li>
+        <li><strong>Endurance</strong> — "designed to endure," anti-fast-fashion.</li>
+        <li><strong>Warmth</strong> — Gulf hospitality, the warmth of home.</li>
+        <li><strong>Modesty as power</strong> — "Modesty shaped by craft, worn with quiet confidence."</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Brand Voice</h3>
+      <ul>
+        <li>Editorial, unhurried, warm — never salesy or shouty.</li>
+        <li>Short, poetic lines. Lots of white space.</li>
+        <li>Bilingual-ready: English with tasteful Arabic accents (الأناقة في السكون).</li>
+        <li>Avoid: "SALE!!!", emojis-as-noise, urgency spam.</li>
+        <li>Prefer: "An edit of quiet statement pieces."</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Visual Identity (from the live site)</h2>
+  <p>The strategy must stay visually consistent with the storefront so paid and organic feel like one brand.</p>
+  <table>
+    <thead><tr><th>Token</th><th>Value</th><th>Use in content</th></tr></thead>
+    <tbody>
+      <tr><td>Blush cream <span class="dot" style="background:#fdf7f3;border:1px solid #ccc"></span></td><td class="mono">#FDF7F3</td><td>Backgrounds, story frames, email base</td></tr>
+      <tr><td>Champagne / sand <span class="dot" style="background:#f0d6ca"></span></td><td class="mono">#F0D6CA</td><td>Cards, secondary banners</td></tr>
+      <tr><td>Warm rose-beige <span class="dot" style="background:#cdb0a5"></span></td><td class="mono">#CDB0A5</td><td>Accents, dividers</td></tr>
+      <tr><td>Rose-mauve (accent) <span class="dot" style="background:#c2887a"></span></td><td class="mono">#C2887A</td><td>Buttons, links, highlights, CTAs</td></tr>
+      <tr><td>Cocoa / espresso (text) <span class="dot" style="background:#46352e"></span></td><td class="mono">#46352E</td><td>Headlines, body copy</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Type:</strong> high-contrast serif display (Cormorant-style) + clean sans body. <strong>Motifs:</strong> satin/silk textures, marble &amp; warm-stone interiors, the M·Z monogram, generous negative space, 16–20px rounded corners.</p>
+
+  <h2>One-Line Messages (use everywhere)</h2>
+  <div class="example"><span class="lbl">Tagline</span><p>MAZAL means Still.</p></div>
+  <div class="example"><span class="lbl">Hero line</span><p>Modern modest luxury — crafted to endure.</p></div>
+  <div class="example"><span class="lbl">Value line</span><p>Considered down to the last seam. Made to be worn, and worn again.</p></div>
+</div>
+
+<!-- ============ 03 AUDIENCE ============ -->
+<div class="page">
+  <p class="kicker">Section 03</p>
+  <h1 class="section">Target Audience &amp; Personas</h1>
+  <p class="lead">MAZAL's price points (AED 520 scarves → AED 2,450 statement kaftans, ~AED 1,150 AOV) define a <strong>premium but attainable</strong> customer: she buys few, beautiful, lasting pieces.</p>
+
+  <div class="grid3">
+    <div class="card">
+      <span class="pill">Primary</span>
+      <h3>"Sara" — The Gulf Professional</h3>
+      <p class="small"><b>28–40, Dubai / Abu Dhabi / Riyadh.</b> Works or runs a business, attends majlis &amp; events. Wants effortless, modest, quietly luxurious pieces. Shops on Instagram, pays with Apple Pay / Tabby. Values quality &amp; discretion over logos.</p>
+      <p class="small"><b>Buys:</b> Sukoon &amp; Safa abayas, Thuraya shawl, Noujoum belt.</p>
+    </div>
+    <div class="card">
+      <span class="pill">Secondary</span>
+      <h3>"Latifa" — The Occasion Dresser</h3>
+      <p class="small"><b>24–35.</b> Weddings, Eid, graduations, photoshoots. Wants a statement piece nobody else has. Discovers via TikTok &amp; influencers. Higher AOV, more impulsive, screenshots and shares.</p>
+      <p class="small"><b>Buys:</b> Dhahab &amp; Hawa kaftans, Layl abaya, Sadu clutch.</p>
+    </div>
+    <div class="card">
+      <span class="pill">Tertiary</span>
+      <h3>"Mariam" — The Modest Millennial Abroad</h3>
+      <p class="small"><b>22–38, GCC expat / UK / wider diaspora.</b> Seeks elevated modest basics &amp; gifting. Pinterest &amp; IG saver. Ships internationally (60+ countries). Entry price-sensitive.</p>
+      <p class="small"><b>Buys:</b> Hams scarf, Amaya modest set, Sakina throw, Yusra knit set.</p>
+    </div>
+  </div>
+
+  <h2>Audience Insights to Exploit</h2>
+  <table>
+    <thead><tr><th>Insight</th><th>Marketing implication</th></tr></thead>
+    <tbody>
+      <tr><td>Modesty + luxury rarely meet at this design quality</td><td>Lead with editorial imagery; own "quiet luxury, modestly."</td></tr>
+      <tr><td>Gulf calendar drives demand (Ramadan, Eid, National Day, wedding season)</td><td>Build campaign tentpoles around these; pre-launch the edit 3–4 weeks early.</td></tr>
+      <tr><td>WhatsApp is the default commerce channel in the Gulf</td><td>Make WhatsApp concierge a hero, not a footnote.</td></tr>
+      <tr><td>Tabby / Tamara BNPL expected at this price</td><td>Surface "4 interest-free payments" on PDP &amp; ads.</td></tr>
+      <tr><td>Arabic + English shoppers</td><td>Bilingual captions; mirror layouts for RTL.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Hashtag &amp; Keyword Universe</h2>
+  <p>
+    <span class="tag">#ModestFashion</span><span class="tag">#AbayaStyle</span><span class="tag">#LuxuryAbaya</span>
+    <span class="tag">#Kaftan</span><span class="tag">#DubaiFashion</span><span class="tag">#AbuDhabiStyle</span>
+    <span class="tag">#EidOutfit</span><span class="tag">#RamadanReady</span><span class="tag">#QuietLuxury</span>
+    <span class="tag">#ModestLuxury</span><span class="tag">#GCCFashion</span><span class="tag">#أناقة_محتشمة</span>
+    <span class="tag">#عبايات</span><span class="tag">#قفطان</span><span class="tag">#MajlisStyle</span>
+  </p>
+</div>
+
+<!-- ============ 04 COMPETITIVE ============ -->
+<div class="page">
+  <p class="kicker">Section 04</p>
+  <h1 class="section">Competitive Landscape</h1>
+  <p class="lead">MAZAL sits between mass modest e-tailers and ultra-luxury maisons. The opening is <strong>"editorial quiet luxury at an attainable price, modest-first."</strong></p>
+  <table>
+    <thead><tr><th>Segment</th><th>Examples (type)</th><th>Their strength</th><th>MAZAL's wedge</th></tr></thead>
+    <tbody>
+      <tr><td>Mass modest e-tail</td><td>Large modest marketplaces</td><td>Range, price, reach</td><td>Design taste, restraint, premium feel</td></tr>
+      <tr><td>Local abaya ateliers</td><td>Instagram boutiques</td><td>Bespoke, community</td><td>Brand system, e-commerce polish, retention</td></tr>
+      <tr><td>Luxury RTW</td><td>Global maisons</td><td>Prestige</td><td>Modest-first, AED-native, attainable AOV</td></tr>
+      <tr><td>Fast fashion modest lines</td><td>High-street capsules</td><td>Trend speed, price</td><td>"Designed to endure," quality story</td></tr>
+    </tbody>
+  </table>
+  <h3>Differentiation Checklist (own these in every asset)</h3>
+  <ul class="checklist">
+    <li>A single, ownable word: <strong>Still</strong>.</li>
+    <li>Editorial photography in warm-stone / marble settings.</li>
+    <li>Named pieces with meaning (Sukoon = calm, Noor = light, Layl = night).</li>
+    <li>Concierge styling over WhatsApp — service as luxury.</li>
+    <li>Bilingual, Gulf-native voice and calendar.</li>
+  </ul>
+</div>
+
+<!-- ============ 05 LAUNCH STRATEGY ============ -->
+<div class="page">
+  <p class="kicker">Section 05</p>
+  <h1 class="section">Launch Strategy — 3 Phases</h1>
+
+  <h2>Phase 1 · Days 1–30 — “The Veil Lifts” (Awareness &amp; Trust)</h2>
+  <p>Goal: establish the brand world, prove quality, and build the first audience &amp; list. Light spend; heavy content + seeding.</p>
+  <ul>
+    <li>Publish 4–5 IG/TikTok posts per week; daily Stories.</li>
+    <li>Seed 15–25 micro-influencers with hero pieces.</li>
+    <li>Launch teaser → countdown → "now open" sequence.</li>
+    <li>Turn on retargeting only; collect emails with STILL10.</li>
+  </ul>
+
+  <h2>Phase 2 · Days 31–60 — “Considered” (Traction &amp; Conversion)</h2>
+  <p>Goal: convert the warm audience; find 2–3 winning ad creatives; scale what works.</p>
+  <ul>
+    <li>Introduce prospecting ads using best influencer/UGC content.</li>
+    <li>Run the first campaign tentpole (e.g., "The Abaya Edit").</li>
+    <li>Launch the Rewards / referral loop &amp; WhatsApp broadcast list.</li>
+    <li>Begin weekly email; start "complete-the-look" cross-sell.</li>
+  </ul>
+
+  <h2>Phase 3 · Days 61–90 — “Worn &amp; Worn Again” (Scale &amp; Retention)</h2>
+  <p>Goal: scale profitable acquisition, lift AOV &amp; repeat rate, lock in a content engine.</p>
+  <ul>
+    <li>Scale winning ad sets; add lookalike audiences.</li>
+    <li>Run a signature campaign with 1 macro + 5 micro influencers.</li>
+    <li>Push bundles (abaya + scarf + belt) &amp; gifting.</li>
+    <li>Formalise UGC pipeline; first customer-photo gallery live.</li>
+  </ul>
+
+  <div class="card dark">
+    <h3>Launch-Week Sequence (Days 1–7)</h3>
+    <p class="small" style="margin-bottom:0">D-7 teaser ("Something still is coming") → D-3 monogram reveal → D-1 countdown sticker → <b>D-Day "We're open" Reel + email + WhatsApp blast</b> → D+1 founder story → D+2 first influencer posts go live → D+3 first UGC repost → D+5 "most-loved so far" → D+7 styling Live on Instagram.</p>
+  </div>
+</div>
+
+<!-- ============ 06 90-DAY PLAN ============ -->
+<div class="page">
+  <p class="kicker">Section 06</p>
+  <h1 class="section">The 90-Day Marketing Plan</h1>
+  <p class="lead">A phase-by-phase view of channels, focus, and the single most important outcome per month.</p>
+
+  <table>
+    <thead><tr><th>Area</th><th>Month 1 — Launch</th><th>Month 2 — Traction</th><th>Month 3 — Scale</th></tr></thead>
+    <tbody>
+      <tr><td><b>North-star</b></td><td>Build brand world + list</td><td>Find winning creatives</td><td>Profitable scale + repeat</td></tr>
+      <tr><td>Instagram</td><td>4–5 posts/wk, daily stories, 1 Live</td><td>5 posts/wk, 2 Lives, Collabs</td><td>Daily Reels, UGC-led</td></tr>
+      <tr><td>TikTok</td><td>3–4 videos/wk, find voice</td><td>1/day, double down on hooks</td><td>1–2/day + Spark Ads</td></tr>
+      <tr><td>Pinterest</td><td>Set up, 5 pins/day (scheduled)</td><td>Idea pins + product pins</td><td>Catalogue sync, ads test</td></tr>
+      <tr><td>Snapchat</td><td>Daily story, public profile</td><td>Spotlight + AR try-on test</td><td>Snap Ads retarget</td></tr>
+      <tr><td>Email/WhatsApp</td><td>Welcome flow + weekly note</td><td>Abandoned cart + broadcasts</td><td>Segmented, RFM, VIP</td></tr>
+      <tr><td>Paid ads</td><td>Retargeting only (low)</td><td>+ Prospecting (test)</td><td>Scale winners + lookalikes</td></tr>
+      <tr><td>Influencers</td><td>Seed 15–25 micro (gifting)</td><td>5–8 paid micro</td><td>1 macro + 5 micro campaign</td></tr>
+      <tr><td>Campaign</td><td>"The Veil Lifts" (open)</td><td>"The Abaya Edit"</td><td>Signature seasonal moment</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Effort Split (organic time)</h2>
+  <p class="legend">
+    <span><span class="dot" style="background:#c2887a"></span>Instagram 35%</span>
+    <span><span class="dot" style="background:#46352e"></span>TikTok 30%</span>
+    <span><span class="dot" style="background:#cdb0a5"></span>Pinterest 10%</span>
+    <span><span class="dot" style="background:#e2bcae"></span>Email/WhatsApp 15%</span>
+    <span><span class="dot" style="background:#a86b5c"></span>Other (FB/Snap/YT/X) 10%</span>
+  </p>
+
+  <h2>Monthly Themes</h2>
+  <table>
+    <thead><tr><th>Month</th><th>Theme</th><th>Hero category</th><th>Hook</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Stillness, introduced</td><td>Abayas (Sukoon, Noor, Safa)</td><td>"Meet the house that designs calm."</td></tr>
+      <tr><td>2</td><td>The art of the edit</td><td>Kaftans + occasion (Hawa, Dhahab, Layl)</td><td>"One piece, worn many ways."</td></tr>
+      <tr><td>3</td><td>Layers &amp; finishing notes</td><td>Scarves, throws, accessories</td><td>"The detail that finishes a look."</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 07 INSTAGRAM ============ -->
+<div class="page">
+  <p class="kicker">Section 07 · Channel</p>
+  <h1 class="section">Instagram Strategy</h1>
+  <p class="lead"><strong>Primary channel.</strong> Instagram is where MAZAL's editorial world and Gulf audience meet. Goal: a feed that looks like a magazine, Reels that travel, and Stories that sell.</p>
+
+  <div class="grid2">
+    <div><h3>Cadence</h3><ul class="small">
+      <li><b>4–5 feed posts / week</b> (3 Reels, 1–2 carousels)</li>
+      <li><b>Daily Stories</b> (3–6 frames)</li>
+      <li><b>1 Live / week</b> (styling or new-in)</li>
+      <li>Highlights: New In · Abayas · Kaftans · Reviews · Styling · Shipping</li>
+    </ul></div>
+    <div><h3>Content mix (per 10 posts)</h3><ul class="small">
+      <li>4 × product/editorial Reels</li>
+      <li>2 × styling / "ways to wear"</li>
+      <li>2 × brand story / craft / behind-the-seams</li>
+      <li>1 × social proof (review/UGC)</li>
+      <li>1 × offer / new drop</li>
+    </ul></div>
+  </div>
+
+  <h2>Exact Reel Ideas (with hooks)</h2>
+  <ol>
+    <li><b>"3 ways to drape the Thuraya shawl"</b> — fast cuts, text hook: <i>"One scarf. Three moods."</i></li>
+    <li><b>"The Sukoon Abaya in motion"</b> — slow-mo walk in a marble corridor; caption the fabric ("matte crêpe, cut for quiet movement").</li>
+    <li><b>"Get ready with me for majlis"</b> — Noor abaya + Noujoum belt + Hams scarf.</li>
+    <li><b>"Why our seams are hand-finished"</b> — macro craft B-roll; hook: <i>"Look closer."</i></li>
+    <li><b>"Abaya or kaftan for Eid?"</b> — A/B styling, ask viewers to vote in comments.</li>
+    <li><b>"Unboxing MAZAL"</b> — packaging ASMR, dust bag, card with STILL10.</li>
+    <li><b>"From AED 520"</b> — entry pieces tour (scarves, belt) to widen the funnel.</li>
+  </ol>
+
+  <h2>Ready-to-Post Captions</h2>
+  <div class="example"><span class="lbl">Launch / hero</span>
+    <p>Stillness, worn beautifully. Meet MAZAL — modern modest luxury, crafted to endure. The first edit is now open. ✦ الأناقة في السكون</p>
+    <p class="small mono">First order? STILL10 for 10% off · Complimentary delivery over AED 500 · Shipping to 60+ countries</p></div>
+  <div class="example"><span class="lbl">Product — Sukoon Abaya</span>
+    <p>The Sukoon Abaya. Fluid open crêpe, hand-finished seams, a softly draped collar — a piece to live in, season after season. In Sand, Champagne &amp; Espresso. AED 1,850. Tap to shop, or DM “STYLE” for a personal recommendation.</p></div>
+  <div class="example"><span class="lbl">Social proof</span>
+    <p>“It feels like it was made for me.” — 4.9★ from 1,800+ clients. This is what <i>still</i> elegance feels like. 🤍</p></div>
+  <div class="example"><span class="lbl">Carousel — "Ways to wear the Hawa Kaftan"</span>
+    <p>One kaftan, from morning majlis to evening. Swipe for three quiet ways to wear the Hawa → which is yours? 1, 2 or 3?</p></div>
+
+  <h2>Story Poll &amp; Sticker Ideas</h2>
+  <ul class="twocol small">
+    <li><b>This or That:</b> Sukoon vs. Safa abaya.</li>
+    <li><b>Slider:</b> "How much do you love bronze detailing?" 🤍</li>
+    <li><b>Quiz:</b> "What does MAZAL mean?" (answer: Still).</li>
+    <li><b>Poll:</b> "Eid look — abaya or kaftan?"</li>
+    <li><b>Question box:</b> "What's your size? We'll recommend a piece."</li>
+    <li><b>Countdown:</b> to launch / to a drop.</li>
+    <li><b>Emoji slider:</b> rate the new Noor abaya.</li>
+    <li><b>"Add yours":</b> "Your most-worn neutral."</li>
+  </ul>
+  <p class="small muted"><b>Profile setup:</b> name field = "MAZAL · Modest Luxury"; bio: "Still elegance, crafted to endure · Abayas · Kaftans · Scarves · 🇦🇪 Ships worldwide · STILL10 = 10% off"; link to shop; action button = WhatsApp; pin 3 best Reels.</p>
+
+  <h2>First 30 Instagram Posts</h2>
+  <table class="compact-table">
+    <thead><tr><th>#</th><th>Format</th><th>Post idea</th><th>Caption / CTA</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Reel</td><td>Brand reveal: logo, homepage, fabric movement.</td><td>"Stillness, worn beautifully. The first edit is now open." Shop with STILL10.</td></tr>
+      <tr><td>2</td><td>Carousel</td><td>Meet the edit: abayas, kaftans, scarves, accessories.</td><td>"Start with the piece you will wear again and again."</td></tr>
+      <tr><td>3</td><td>Reel</td><td>Sukoon Abaya slow walk and fabric close-ups.</td><td>"An abaya cut for quiet movement." Tap to shop.</td></tr>
+      <tr><td>4</td><td>Story set</td><td>This or That: Sukoon vs. Noor.</td><td>Use poll sticker and link both products.</td></tr>
+      <tr><td>5</td><td>Reel</td><td>3 ways to drape the Thuraya shawl.</td><td>"One scarf. Three moods." Save for later.</td></tr>
+      <tr><td>6</td><td>Carousel</td><td>Why MAZAL means "Still".</td><td>Founder note + brand values.</td></tr>
+      <tr><td>7</td><td>Reel</td><td>Unboxing MAZAL: tissue, card, dust bag.</td><td>"The order experience, from our hands to yours."</td></tr>
+      <tr><td>8</td><td>Photo</td><td>Noor Abaya editorial product image.</td><td>"Champagne tones. Tonal detail. Made to endure."</td></tr>
+      <tr><td>9</td><td>Reel</td><td>GRWM for majlis with abaya + scarf + belt.</td><td>"A complete look in under 30 seconds."</td></tr>
+      <tr><td>10</td><td>Carousel</td><td>Trust post: shipping, returns, WhatsApp styling, reviews.</td><td>"New here? This is how we take care of you."</td></tr>
+      <tr><td>11</td><td>Reel</td><td>Hawa Kaftan morning-to-evening styling.</td><td>"One kaftan, two occasions."</td></tr>
+      <tr><td>12</td><td>Photo</td><td>Detail shot: embroidery, seam, cuff, collar.</td><td>"Considered down to the last seam."</td></tr>
+      <tr><td>13</td><td>Reel</td><td>Packing first orders.</td><td>"Every order leaves with stillness and care."</td></tr>
+      <tr><td>14</td><td>Carousel</td><td>Size and fit guide for abayas.</td><td>"Not sure about fit? DM STYLE."</td></tr>
+      <tr><td>15</td><td>Reel</td><td>Founder voice: why quiet-luxury modestwear.</td><td>"Why we built MAZAL."</td></tr>
+      <tr><td>16</td><td>Carousel</td><td>5 Eid / occasion looks.</td><td>"Save this for your next invitation."</td></tr>
+      <tr><td>17</td><td>Reel</td><td>Abaya vs. kaftan: which piece for which occasion?</td><td>"Comment ABAYA or KAFTAN."</td></tr>
+      <tr><td>18</td><td>Photo</td><td>Entry product: scarf or belt under AED 600.</td><td>"The finishing note starts here."</td></tr>
+      <tr><td>19</td><td>Reel</td><td>Influencer try-on repost / Collab post.</td><td>"Seen on [creator]. Shop the look."</td></tr>
+      <tr><td>20</td><td>Carousel</td><td>How to build a neutral modest capsule.</td><td>"Three pieces. Many days."</td></tr>
+      <tr><td>21</td><td>Reel</td><td>Fabric movement test indoors and outdoors.</td><td>"Watch how it moves."</td></tr>
+      <tr><td>22</td><td>Story set</td><td>Ask Me Anything: sizing, delivery, styling.</td><td>Question sticker + WhatsApp link.</td></tr>
+      <tr><td>23</td><td>Carousel</td><td>Reviews and social proof.</td><td>"What clients notice first: fit, fabric, feeling."</td></tr>
+      <tr><td>24</td><td>Reel</td><td>Complete the look: abaya + scarf + belt.</td><td>"The simplest way to finish the outfit."</td></tr>
+      <tr><td>25</td><td>Photo</td><td>Hero kaftan for evening occasions.</td><td>"For the invitation you want to feel calm in."</td></tr>
+      <tr><td>26</td><td>Reel</td><td>Behind the scenes at the shoot.</td><td>"The quiet work behind the edit."</td></tr>
+      <tr><td>27</td><td>Carousel</td><td>Gift guide: scarves, throws, accessories.</td><td>"A gift with restraint and warmth."</td></tr>
+      <tr><td>28</td><td>Reel</td><td>Low-stock / last sizes product movement.</td><td>"Still available, but not for long."</td></tr>
+      <tr><td>29</td><td>Carousel</td><td>Most saved looks of the month.</td><td>"Which one should we restock first?"</td></tr>
+      <tr><td>30</td><td>Reel</td><td>Month recap: launch, orders, clients, best moments.</td><td>"30 days of MAZAL. Thank you for being here."</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 08 TIKTOK ============ -->
+<div class="page">
+  <p class="kicker">Section 08 · Channel</p>
+  <h1 class="section">TikTok Strategy</h1>
+  <p class="lead"><strong>Growth engine.</strong> TikTok rewards authentic, fast, story-first video — perfect for reach beyond your following. Native, lo-fi &gt; over-produced. Hook in the first 2 seconds.</p>
+
+  <div class="grid2">
+    <div><h3>Cadence &amp; format</h3><ul class="small">
+      <li>Start 3–4 / week → build to 1–2 / day.</li>
+      <li>9:16, 15–34s, trending audio + original audio.</li>
+      <li>On-screen text hook always; captions on.</li>
+      <li>Reply to comments with video.</li>
+    </ul></div>
+    <div><h3>Content buckets</h3><ul class="small">
+      <li>Styling / "ways to wear"</li>
+      <li>Fabric &amp; craft close-ups (oddly satisfying)</li>
+      <li>"TikTok made me" / unboxing</li>
+      <li>Founder voice / brand story</li>
+      <li>Trend-jacking (modest twist)</li>
+    </ul></div>
+  </div>
+
+  <h2>Exact Video Ideas + Hooks (first line on screen)</h2>
+  <table>
+    <thead><tr><th>Hook (0–2s)</th><th>The video</th><th>Goal</th></tr></thead>
+    <tbody>
+      <tr><td>"POV: you found the abaya you'll wear for 5 years."</td><td>Slow reveal of Sukoon abaya, walk, fabric flow.</td><td>Reach / saves</td></tr>
+      <tr><td>"Things in my MAZAL order that just make sense."</td><td>Unboxing: dust bag, card, scarf, belt.</td><td>Trust / desire</td></tr>
+      <tr><td>"Rate this Eid look 1–10."</td><td>Dhahab kaftan + clutch transition.</td><td>Comments</td></tr>
+      <tr><td>"Watch the bronze thread catch the light."</td><td>Macro of Layl abaya embroidery.</td><td>Watch-time</td></tr>
+      <tr><td>"How to style ONE scarf 3 ways."</td><td>Thuraya shawl quick transitions.</td><td>Saves / shares</td></tr>
+      <tr><td>"Abayas under AED 2,000 that look like AED 10,000."</td><td>Carousel of Safa, Noor, Sukoon.</td><td>Reach</td></tr>
+      <tr><td>"Getting ready with me — quiet luxury edition."</td><td>GRWM, calm ASMR voiceover.</td><td>Affinity</td></tr>
+      <tr><td>"They asked where my abaya is from…"</td><td>Story-time, soft brand reveal.</td><td>Discovery</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Caption + Hashtag Pattern</h2>
+  <div class="example"><span class="lbl">TikTok caption</span>
+    <p>the way it moves 🤍 the Sukoon abaya, made to endure. #modestfashion #abaya #dubai #quietluxury #fyp</p></div>
+  <p class="small"><b>Sounds:</b> save 5–10 trending sounds weekly in-app; keep a "calm/aesthetic" sound folder. <b>Series:</b> "Quiet Luxury Diaries" (numbered), "The Craft" (macro), "Style MAZAL" (GRWM). <b>Spark Ads:</b> boost any video over 20k views or 8%+ engagement.</p>
+
+  <h2>30 TikTok Hooks to Film</h2>
+  <table class="compact-table">
+    <thead><tr><th>#</th><th>Hook</th><th>Video direction</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>"POV: your abaya finally feels expensive without shouting."</td><td>Slow reveal, detail shots, walk-away ending.</td></tr>
+      <tr><td>2</td><td>"3 modest looks I would wear in Dubai this week."</td><td>Quick outfit transitions.</td></tr>
+      <tr><td>3</td><td>"If you love quiet luxury, look at this seam."</td><td>Macro craft close-up.</td></tr>
+      <tr><td>4</td><td>"One scarf, three moods."</td><td>Scarf draping tutorial.</td></tr>
+      <tr><td>5</td><td>"Packing an order for a MAZAL client."</td><td>ASMR packing sequence.</td></tr>
+      <tr><td>6</td><td>"Abaya or kaftan for a wedding guest look?"</td><td>Split-screen comparison.</td></tr>
+      <tr><td>7</td><td>"What I would wear to majlis if I wanted calm elegance."</td><td>GRWM with voiceover.</td></tr>
+      <tr><td>8</td><td>"The color palette that makes every outfit feel expensive."</td><td>Neutrals and fabric swatches.</td></tr>
+      <tr><td>9</td><td>"This is why the Noor abaya is called Noor."</td><td>Name meaning + product story.</td></tr>
+      <tr><td>10</td><td>"Things in our first collection that just make sense."</td><td>Features: pockets, finish, movement, styling.</td></tr>
+      <tr><td>11</td><td>"A modest capsule wardrobe in 5 pieces."</td><td>Flat lay + try-on.</td></tr>
+      <tr><td>12</td><td>"How to make a simple abaya look styled."</td><td>Add scarf, belt, bag, jewelry.</td></tr>
+      <tr><td>13</td><td>"Watch the fabric move."</td><td>Fabric movement loop.</td></tr>
+      <tr><td>14</td><td>"What AED 1,850 should feel like."</td><td>Quality justification and detail shots.</td></tr>
+      <tr><td>15</td><td>"Founder note: why MAZAL is not fast fashion."</td><td>Founder talking head + B-roll.</td></tr>
+      <tr><td>16</td><td>"Styling the same abaya for day and night."</td><td>Two-look transformation.</td></tr>
+      <tr><td>17</td><td>"A quiet-luxury Eid look without logos."</td><td>Occasion styling.</td></tr>
+      <tr><td>18</td><td>"Replying to: is the fabric heavy?"</td><td>Comment reply video.</td></tr>
+      <tr><td>19</td><td>"Replying to: what size should I order?"</td><td>Fit guide with model reference.</td></tr>
+      <tr><td>20</td><td>"The mistake people make when styling neutrals."</td><td>Before/after contrast.</td></tr>
+      <tr><td>21</td><td>"A scarf can change the whole outfit."</td><td>Same base outfit, multiple scarf styles.</td></tr>
+      <tr><td>22</td><td>"This detail is why we call it made to endure."</td><td>Stitching, finishing, care instructions.</td></tr>
+      <tr><td>23</td><td>"Come choose tomorrow's MAZAL post with me."</td><td>Founder/content planning behind the scenes.</td></tr>
+      <tr><td>24</td><td>"What I would gift from MAZAL."</td><td>Gift guide under different budgets.</td></tr>
+      <tr><td>25</td><td>"Customer asked for a soft occasion look. Here is what I picked."</td><td>WhatsApp concierge reenactment.</td></tr>
+      <tr><td>26</td><td>"The first 5 seconds of opening a MAZAL order."</td><td>Unboxing hook.</td></tr>
+      <tr><td>27</td><td>"How to wear bronze tones without looking loud."</td><td>Styling education.</td></tr>
+      <tr><td>28</td><td>"The abaya I would keep in my wardrobe for years."</td><td>Hero product testimonial style.</td></tr>
+      <tr><td>29</td><td>"Which look should we make next?"</td><td>Audience voting, comments.</td></tr>
+      <tr><td>30</td><td>"30 days of building MAZAL."</td><td>Founder recap montage.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 09 SNAPCHAT ============ -->
+<div class="page">
+  <p class="kicker">Section 09 · Channel</p>
+  <h1 class="section">Snapchat Strategy</h1>
+  <p class="lead">Snapchat has deep Gulf penetration, especially among younger women — strong for <strong>daily intimacy, drops and retargeting</strong>.</p>
+  <div class="grid2">
+    <div><h3>Organic</h3><ul class="small">
+      <li>Public Profile; post a daily Story (behind-the-scenes, new-in, "today at the atelier").</li>
+      <li>Spotlight: re-cut your best TikToks/Reels (vertical, native).</li>
+      <li>Use polls &amp; "swipe up to shop" links.</li>
+      <li>Exclusive "Snap-first" drop or code (e.g., SNAPSTILL).</li>
+    </ul></div>
+    <div><h3>Paid &amp; AR</h3><ul class="small">
+      <li>Snap Ads: retarget site visitors &amp; engagers first.</li>
+      <li>Test a simple AR try-on / scarf-drape Lens later.</li>
+      <li>Dynamic product ads once catalogue is connected.</li>
+      <li>Story Ads as a "lookbook" sequence.</li>
+    </ul></div>
+  </div>
+  <div class="example"><span class="lbl">Snap story copy</span><p>at the atelier today 🤍 the Noor abaya, in champagne. tap up to see it ↑ STILL10 for your first order.</p></div>
+  <p class="small muted">Cadence: 3–7 snaps/day in a single Story. Keep it raw and personal — Snapchat rewards realness over polish.</p>
+
+  <h2>Daily Snapchat Story Menu</h2>
+  <table class="compact-table">
+    <thead><tr><th>Day</th><th>Story idea</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>Mon</td><td>New-in mirror try-on: 3 snaps showing movement and fit.</td><td>Add product link + "reply SIZE for help."</td></tr>
+      <tr><td>Tue</td><td>Behind the scenes: packing, steaming, styling rail.</td><td>Use raw clips and one poll.</td></tr>
+      <tr><td>Wed</td><td>Style clinic: answer one sizing or occasion question.</td><td>Invite replies to WhatsApp concierge.</td></tr>
+      <tr><td>Thu</td><td>Weekend occasion edit: abaya, kaftan, scarf, clutch.</td><td>Use "tap to shop" on each frame.</td></tr>
+      <tr><td>Fri</td><td>Client love / review screenshot / UGC repost.</td><td>Ask clients to send photos for a thank-you.</td></tr>
+      <tr><td>Sat</td><td>Snap-first flash code or early access preview.</td><td>Keep code short, e.g. SNAPSTILL.</td></tr>
+      <tr><td>Sun</td><td>Founder recap: what sold, what is low, what is coming.</td><td>Ask "which piece should restock?"</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 10 + 11 PINTEREST + FACEBOOK ============ -->
+<div class="page">
+  <p class="kicker">Section 10 · Channel</p>
+  <h1 class="section">Pinterest Strategy</h1>
+  <p class="lead">Pinterest is a <strong>search &amp; planning engine</strong> with long content life — ideal for "Eid outfit," "abaya style," "modest wedding guest." It quietly drives high-intent, international traffic.</p>
+  <div class="grid2">
+    <div><h3>Setup &amp; boards</h3><ul class="small">
+      <li>Business account + claim website + enable Rich Pins.</li>
+      <li>Boards: Abaya Style · Kaftan Edit · Modest Eid · Quiet Luxury · Neutral Wardrobe · Scarf Styling · Majlis Ready · Bridal Modest.</li>
+      <li>Pin 5–10/day (mix product + idea pins), scheduled.</li>
+    </ul></div>
+    <div><h3>Pin copy pattern</h3>
+      <div class="example small"><span class="lbl">Title</span><p>Quiet-Luxury Abaya for Eid — Champagne &amp; Bronze</p><span class="lbl">Description</span><p>The Noor abaya in champagne with tonal embroidery. Modest, timeless, made to endure. Shop MAZAL — ships to 60+ countries. #modestfashion #eidoutfit #abaya #quietluxury</p></div>
+    </div>
+  </div>
+  <p class="small muted">SEO keywords to seed in titles/descriptions: <i>modest outfit, abaya style, kaftan dress, Eid outfit ideas, modest wedding guest, neutral capsule wardrobe, hijab style, luxury abaya.</i> Connect the product catalogue for shopping pins in Month 2–3.</p>
+
+  <h2>30 Pinterest Pin Ideas</h2>
+  <table class="compact-table">
+    <thead><tr><th>#</th><th>Pin title</th><th>Link target</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Quiet-Luxury Abaya Outfit for Eid</td><td>Noor Abaya PDP</td></tr>
+      <tr><td>2</td><td>3 Ways to Style a Neutral Scarf</td><td>Thuraya Scarf PDP</td></tr>
+      <tr><td>3</td><td>Modest Wedding Guest Kaftan Idea</td><td>Dhahab Kaftan PDP</td></tr>
+      <tr><td>4</td><td>Dubai Majlis Outfit Inspiration</td><td>Sukoon Abaya PDP</td></tr>
+      <tr><td>5</td><td>Neutral Modest Capsule Wardrobe</td><td>Collection page</td></tr>
+      <tr><td>6</td><td>Champagne Abaya Styling Guide</td><td>Noor Abaya PDP</td></tr>
+      <tr><td>7</td><td>Luxury Abaya Details to Look For</td><td>Abayas category</td></tr>
+      <tr><td>8</td><td>How to Style an Abaya Belt</td><td>Accessories category</td></tr>
+      <tr><td>9</td><td>Kaftan Outfit for Evening Events</td><td>Hawa Kaftan PDP</td></tr>
+      <tr><td>10</td><td>Modest Outfit Ideas in Warm Neutrals</td><td>Lookbook / collection</td></tr>
+      <tr><td>11</td><td>Scarf Draping Ideas for Modest Fashion</td><td>Scarves category</td></tr>
+      <tr><td>12</td><td>Abaya Outfit with Bronze Accessories</td><td>Complete-the-look bundle</td></tr>
+      <tr><td>13</td><td>Gifting Ideas for Modest Fashion Lovers</td><td>Gift edit</td></tr>
+      <tr><td>14</td><td>What to Wear to a Gulf Wedding</td><td>Occasion edit</td></tr>
+      <tr><td>15</td><td>Soft Luxury Eid Outfit Ideas</td><td>Eid edit</td></tr>
+      <tr><td>16</td><td>Everyday Abaya Styling for Work</td><td>Safa Abaya PDP</td></tr>
+      <tr><td>17</td><td>Elegant Hijab and Abaya Color Pairings</td><td>Scarves category</td></tr>
+      <tr><td>18</td><td>Minimalist Modest Wardrobe Checklist</td><td>Email signup / blog</td></tr>
+      <tr><td>19</td><td>Luxury Modest Fashion in AED</td><td>Homepage</td></tr>
+      <tr><td>20</td><td>Abaya Outfit for Travel Days</td><td>Abayas category</td></tr>
+      <tr><td>21</td><td>How to Wear One Kaftan Three Ways</td><td>Kaftans category</td></tr>
+      <tr><td>22</td><td>Calm Occasionwear for Ramadan Nights</td><td>Seasonal edit</td></tr>
+      <tr><td>23</td><td>Modest Fashion Flat Lay Inspiration</td><td>Collection page</td></tr>
+      <tr><td>24</td><td>Abaya Fabric Movement Close-Up</td><td>Hero PDP</td></tr>
+      <tr><td>25</td><td>Quiet Luxury Accessories for Abayas</td><td>Accessories category</td></tr>
+      <tr><td>26</td><td>Neutral Eid Lookbook</td><td>Lookbook / collection</td></tr>
+      <tr><td>27</td><td>Timeless Abaya Colors to Own</td><td>Abayas category</td></tr>
+      <tr><td>28</td><td>Modern Modest Outfit for Dinner</td><td>Kaftan PDP</td></tr>
+      <tr><td>29</td><td>How to Build a Luxury Modest Look</td><td>Complete-the-look bundle</td></tr>
+      <tr><td>30</td><td>MAZAL Still Elegance Lookbook</td><td>Homepage</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:9mm">Section 11 · Facebook Strategy</h2>
+  <p>Facebook is <strong>less for organic reach, more for infrastructure</strong>: it powers Meta Ads, Shops, reviews, and an older/expat &amp; gifting audience.</p>
+  <ul>
+    <li><b>Use for:</b> Meta Ads engine, Facebook/Instagram Shop &amp; catalogue, Messenger + WhatsApp click-to-chat ads, Groups (modest fashion / Gulf expat communities), reviews.</li>
+    <li><b>Post 2–3×/week</b> — repurpose IG content; longer captions &amp; albums work here.</li>
+    <li><b>Community:</b> a "MAZAL Majlis" group for VIPs, styling Q&amp;A, early access.</li>
+    <li><b>Don't</b> over-invest organic time; treat it as the ad backbone.</li>
+  </ul>
+  <div class="example"><span class="lbl">Facebook post</span><p>Introducing MAZAL — modest luxury, designed to endure. Our first edit of abayas, kaftans &amp; scarves is now open, with complimentary delivery over AED 500 and worldwide shipping. Use STILL10 for 10% off your first order. 🤍</p></div>
+</div>
+
+<!-- ============ 12 + 13 YOUTUBE + THREADS/X ============ -->
+<div class="page">
+  <p class="kicker">Section 12 · Channel</p>
+  <h1 class="section">YouTube Shorts Strategy</h1>
+  <p class="lead">A near-free reach channel by <strong>repurposing</strong> your Reels/TikToks vertically — plus a small library of evergreen "search" Shorts that rank for modest-fashion queries.</p>
+  <ul>
+    <li>Re-upload 1 Short/day (remove other-platform watermarks; re-export clean).</li>
+    <li>Evergreen searchable titles: "How to Style an Abaya 3 Ways," "What to Wear for Eid 2026," "Modest Outfit Ideas — Quiet Luxury."</li>
+    <li>Keyword the title, description &amp; first comment; add an end-card to the site.</li>
+    <li>Later: 1 long-form/month — a 3–5 min brand film / "inside the atelier."</li>
+  </ul>
+  <div class="example"><span class="lbl">Shorts title + desc</span><p><b>3 Ways to Style a MAZAL Scarf 🤍 #modestfashion</b><br/>The Thuraya shawl-scarf, three ways — modest, timeless, made to endure. Shop MAZAL (ships worldwide). #abaya #hijabstyle #quietluxury</p></div>
+
+  <h2 style="margin-top:9mm">Section 13 · Threads / X Strategy</h2>
+  <p>Optional, low-effort. Useful for <strong>brand voice, community and customer care</strong> — not a primary sales driver. Worth it on Threads for the fashion community; X mainly for support &amp; reposting press.</p>
+  <ul>
+    <li>3–5 posts/week: short brand musings, behind-the-scenes, polls, restock alerts.</li>
+    <li>Repurpose caption lines &amp; "did you know" craft facts.</li>
+    <li>Engage modest-fashion creators &amp; reply fast to questions.</li>
+  </ul>
+  <div class="example"><span class="lbl">Threads post</span><p>we named her Sukoon — it means "stillness." an abaya cut for quiet movement, made to be worn and worn again. 🤍</p></div>
+  <p class="small muted"><b>Verdict:</b> include Threads (yes, low effort), keep X for service + PR only.</p>
+</div>
+
+<!-- ============ 14 PAID ADS ============ -->
+<div class="page">
+  <p class="kicker">Section 14</p>
+  <h1 class="section">Paid Ads Strategy</h1>
+  <p class="lead">Principle: <strong>retargeting before prospecting.</strong> Warm traffic (site visitors, engagers, list) converts cheapest. Only scale prospecting once you have a winning creative and a working retention loop.</p>
+
+  <h2>Budget Flow by Phase</h2>
+  <table>
+    <thead><tr><th>Phase</th><th>Retargeting</th><th>Prospecting</th><th>Primary objective</th></tr></thead>
+    <tbody>
+      <tr><td>Month 1</td><td>80%</td><td>20%</td><td>Catalogue sales / engagement; build pixels</td></tr>
+      <tr><td>Month 2</td><td>55%</td><td>45%</td><td>Test 3–5 creatives; find winner</td></tr>
+      <tr><td>Month 3</td><td>40%</td><td>60%</td><td>Scale winners + 1% lookalikes</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Channels &amp; Roles</h2>
+  <table>
+    <thead><tr><th>Platform</th><th>Use</th><th>Audience</th></tr></thead>
+    <tbody>
+      <tr><td>Meta (IG/FB)</td><td>Core: catalogue + creative testing</td><td>Retarget → interests (modest fashion, luxury, Gulf) → lookalikes</td></tr>
+      <tr><td>TikTok Ads</td><td>Reach + Spark Ads on winning organic</td><td>Broad + creator-content lookalikes</td></tr>
+      <tr><td>Pinterest Ads</td><td>High-intent shopping pins (M2–3)</td><td>Keyword + actalike</td></tr>
+      <tr><td>Snapchat Ads</td><td>Retargeting + younger Gulf</td><td>Pixel audiences</td></tr>
+      <tr><td>Google (Search/PMax)</td><td>Capture brand + "luxury abaya" demand</td><td>Branded + non-brand + Shopping</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Ad Copy — ready to use</h2>
+  <div class="grid2">
+    <div class="example"><span class="lbl">Meta — prospecting (primary text)</span>
+      <p>Modesty, shaped by craft. MAZAL designs abayas &amp; kaftans made to endure — fluid silhouettes, warm neutral tones, hand-finished seams. Discover the edit. ✦ Complimentary delivery over AED 500.</p>
+      <p class="small mono">Headline: Quiet luxury, modestly. · CTA: Shop Now</p></div>
+    <div class="example"><span class="lbl">Meta — retargeting</span>
+      <p>Still thinking about it? Your piece is waiting. Enjoy 10% off your first order with STILL10 — and free delivery over AED 500. Pay in 4 with Tabby.</p>
+      <p class="small mono">Headline: Made to be worn, and worn again. · CTA: Shop Now</p></div>
+    <div class="example"><span class="lbl">TikTok — Spark Ad caption</span>
+      <p>the abaya you'll keep for years 🤍 made to endure. shop MAZAL — STILL10 for 10% off. #modestfashion</p></div>
+    <div class="example"><span class="lbl">Google Search — RSA</span>
+      <p class="small">Headlines: <i>Luxury Modest Abayas</i> · <i>MAZAL — Quiet Luxury</i> · <i>Abayas &amp; Kaftans in AED</i> · <i>Ships Worldwide · STILL10</i><br/>Desc: Hand-finished abayas, kaftans &amp; scarves. Designed to endure. Free delivery over AED 500.</p></div>
+  </div>
+  <p class="small muted"><b>Creative rule:</b> 60% of ad creative should be UGC/influencer-style (native, trust-building); 40% editorial brand. Refresh creatives every 10–14 days. Always include AED price, BNPL, and STILL10 in retargeting.</p>
+</div>
+
+<!-- ============ 15 INFLUENCERS ============ -->
+<div class="page">
+  <p class="kicker">Section 15</p>
+  <h1 class="section">Influencer Strategy</h1>
+  <p class="lead">Influencers are MAZAL's fastest path to trust in the Gulf. Strategy: <strong>seed many micro creators (gifting) → amplify the best with paid + Spark Ads.</strong> Their content becomes your ad library.</p>
+
+  <h2>Tier Plan (90 days)</h2>
+  <table>
+    <thead><tr><th>Tier</th><th>Followers</th><th>How many</th><th>Deal</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>Nano</td><td>2k–15k</td><td>15–25</td><td>Gifting + STILL10 affiliate</td><td>Volume of authentic UGC</td></tr>
+      <tr><td>Micro</td><td>15k–80k</td><td>5–8</td><td>Gift + AED 500–2,000</td><td>Reels/TikToks you can boost</td></tr>
+      <tr><td>Mid</td><td>80k–300k</td><td>2–3</td><td>Paid + product</td><td>Reach &amp; credibility</td></tr>
+      <tr><td>Macro</td><td>300k+</td><td>1 (Month 3)</td><td>Paid campaign</td><td>Signature moment</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Selection Checklist</h2>
+  <ul class="checklist">
+    <li>Gulf-based or Gulf-relevant, modest-fashion aligned.</li>
+    <li>Real engagement (3%+), comments not just likes.</li>
+    <li>Aesthetic matches MAZAL (warm, editorial, calm).</li>
+    <li>Audience = women 22–40, UAE/KSA/Qatar/Kuwait.</li>
+    <li>No conflicting recent abaya-brand partnerships.</li>
+  </ul>
+
+  <h2>Outreach Messages (copy &amp; personalise)</h2>
+  <div class="example"><span class="lbl">DM — nano/micro gifting</span>
+    <p>Hi [Name] 🤍 We're MAZAL — a new modest-luxury house (abayas, kaftans &amp; scarves) designed to endure. We love how you style quiet, elegant looks, and we'd be honoured to send you a piece to keep — no obligation. Could we share the new edit and arrange a gift to your size? — [Your name], MAZAL</p></div>
+  <div class="example"><span class="lbl">Email — micro/mid paid</span>
+    <p>Subject: A collaboration with MAZAL 🤍<br/><br/>Hi [Name], I'm [Your name], founder of MAZAL — modern modest luxury, crafted to endure. We're launching in the UAE and would love to partner with you on 1 Reel + 3 Stories featuring a hero piece of your choice (e.g., the Sukoon abaya or Dhahab kaftan). We can offer a gifted piece plus a fee of AED [X] and an affiliate code for your audience. Could I send our lookbook &amp; rate card? Warmly, [Your name] · [phone/IG]</p></div>
+  <div class="example"><span class="lbl">Follow-up (after 4–5 days)</span>
+    <p>Hi [Name], just floating this back up 🤍 We'd love to gift you a MAZAL piece this week — totally yours to keep. Shall I arrange your size?</p></div>
+
+  <h2>Brief &amp; Tracking</h2>
+  <ul class="small">
+    <li>Give a 1-page brief: 3 key messages, do/don'ts, hashtags (#MAZAL #ModestLuxury), tag + STILL10/affiliate code.</li>
+    <li>Ask for usage rights (organic + paid) in the agreement — essential for Spark Ads/boosting.</li>
+    <li>Track via unique codes/links; log reach, saves, sales, CPA per creator in a sheet.</li>
+  </ul>
+</div>
+
+<!-- ============ 16 EMAIL + WHATSAPP ============ -->
+<div class="page">
+  <p class="kicker">Section 16</p>
+  <h1 class="section">Email &amp; WhatsApp Marketing</h1>
+  <p class="lead">This is where margin is made. Paid wins the first order; <strong>email &amp; WhatsApp win the second, third and referral.</strong> The site already captures emails (STILL10) and runs a WhatsApp concierge — build the flows behind them.</p>
+
+  <h2>Core Email Flows (automated)</h2>
+  <table>
+    <thead><tr><th>Flow</th><th>Trigger</th><th>Messages</th><th>Goal</th></tr></thead>
+    <tbody>
+      <tr><td>Welcome</td><td>Newsletter signup</td><td>3 (code → story → bestsellers)</td><td>First order</td></tr>
+      <tr><td>Abandoned cart</td><td>Cart, no checkout</td><td>3 (1h / 24h / 48h)</td><td>Recover</td></tr>
+      <tr><td>Browse abandon</td><td>Viewed PDP</td><td>1–2</td><td>Nudge</td></tr>
+      <tr><td>Post-purchase</td><td>Order placed</td><td>3 (thanks → care → review)</td><td>Trust + UGC</td></tr>
+      <tr><td>Win-back</td><td>No order 45–60d</td><td>2</td><td>Reactivate</td></tr>
+      <tr><td>VIP</td><td>2+ orders / high AOV</td><td>Ongoing</td><td>Early access</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Email Examples</h2>
+  <div class="example"><span class="lbl">Welcome #1 — the code</span>
+    <p><b>Subject:</b> Your STILL10 is inside 🤍<br/><b>Preview:</b> Welcome to a calmer kind of luxury.<br/><br/>Welcome to MAZAL. We design modest pieces with the restraint of a maison and the warmth of home — made to be worn, and worn again. Here's 10% off your first order: <b>STILL10</b>. Complimentary delivery over AED 500. <i>Explore the edit →</i></p></div>
+  <div class="example"><span class="lbl">Abandoned cart #2 (24h)</span>
+    <p><b>Subject:</b> Still thinking it over?<br/><br/>Your piece is waiting. Quietly luxurious, made to endure — and yours with 10% off (STILL10) and free delivery over AED 500. Pay in 4 with Tabby. <i>Return to your bag →</i> · Need help with size? Reply or message us on WhatsApp.</p></div>
+  <div class="example"><span class="lbl">Post-purchase #3 — review</span>
+    <p><b>Subject:</b> How does it feel? 🤍<br/><br/>We'd love to hear how your MAZAL piece wears. Leave a review (90 seconds) and we'll send you a little thank-you toward your next order. Tag <b>@mazal</b> to be featured.</p></div>
+
+  <h2>WhatsApp Concierge (the Gulf advantage)</h2>
+  <ul class="small">
+    <li>Use the floating WhatsApp on-site as a <b>styling concierge</b>, not just support.</li>
+    <li>Build an opt-in broadcast list (offer: early access + STILL10).</li>
+    <li>Quick replies: sizing, delivery, styling, order help.</li>
+  </ul>
+  <div class="grid2">
+    <div class="example"><span class="lbl">WhatsApp — welcome</span><p>Hello and welcome to MAZAL 🤍 I'm [Name], your styling concierge. Tell me the occasion (everyday, majlis, Eid, wedding) and your usual size — I'll suggest 2–3 pieces. Your first order has 10% off with STILL10.</p></div>
+    <div class="example"><span class="lbl">WhatsApp — broadcast (new drop)</span><p>New in at MAZAL: the Noor abaya in champagne ✦ luminous tonal embroidery, made to endure. Early access for you before it's public. Reply “LINK” and I'll send it. Complimentary delivery over AED 500.</p></div>
+    <div class="example"><span class="lbl">WhatsApp — abandoned cart</span><p>Hi [Name] 🤍 noticed your bag is still open. Want me to hold your size? Here's 10% off with STILL10 — and I'm here if you have any sizing questions.</p></div>
+    <div class="example"><span class="lbl">WhatsApp — post-delivery</span><p>Has your MAZAL piece arrived? 🤍 I'd love to know it fits beautifully. If you share a photo or a quick review, I'll add a thank-you to your next order.</p></div>
+  </div>
+  <p class="small muted">Compliance: only message opt-ins; keep broadcasts to ~2–4/month; lead with value, not discounts.</p>
+</div>
+
+<!-- ============ 17 WEBSITE CONVERSION ============ -->
+<div class="page">
+  <p class="kicker">Section 17</p>
+  <h1 class="section">Website Conversion Suggestions</h1>
+  <p class="lead">The storefront is already beautiful and trust-rich (4.9★/1,800+, free-shipping bar, WhatsApp, wishlist, reviews, quick-add). These tweaks lift conversion without redesigning anything.</p>
+
+  <table>
+    <thead><tr><th>#</th><th>Suggestion</th><th>Why it lifts conversion</th><th>Priority</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Add <b>Tabby/Tamara BNPL</b> messaging on PDP &amp; cart ("4 interest-free payments of AED X")</td><td>Expected at this price in the Gulf; raises AOV &amp; conversion</td><td>High</td></tr>
+      <tr><td>2</td><td>Show <b>STILL10</b> capture as a timed pop-up / sticky bar for new visitors</td><td>Converts traffic into list before they bounce</td><td>High</td></tr>
+      <tr><td>3</td><td>Surface <b>delivery time + free-over-AED-500</b> on every PDP</td><td>Removes the #1 hesitation</td><td>High</td></tr>
+      <tr><td>4</td><td>Add a <b>size guide + "fits true / model wears"</b> note + WhatsApp "ask about fit"</td><td>Cuts returns &amp; hesitation on abayas</td><td>High</td></tr>
+      <tr><td>5</td><td>Real <b>customer-photo gallery</b> &amp; verified reviews on PDP</td><td>Social proof is the top trust driver</td><td>Med</td></tr>
+      <tr><td>6</td><td><b>Bundles / "complete the look"</b> (abaya + scarf + belt) with a small saving</td><td>Lifts AOV; the logic already exists in the catalogue</td><td>Med</td></tr>
+      <tr><td>7</td><td><b>Low-stock</b> &amp; "back in stock" alerts (Layl, Dhahab are limited)</td><td>Urgency + captures demand</td><td>Med</td></tr>
+      <tr><td>8</td><td>Express/Apple Pay <b>one-tap checkout</b>; guest checkout</td><td>Reduces mobile drop-off</td><td>High</td></tr>
+      <tr><td>9</td><td>Add <b>Arabic toggle</b> (RTL is already structured)</td><td>Doubles addressable audience</td><td>Med</td></tr>
+      <tr><td>10</td><td>Trust row at checkout: secure pay, easy returns, WhatsApp help</td><td>Last-mile reassurance</td><td>Med</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Measurement: set up GA4 + Meta/TikTok pixels + a heatmap (Clarity/Hotjar) before driving paid traffic, so every dirham is attributable.</p>
+</div>
+
+<!-- ============ 18 STARTUP CHECKLIST ============ -->
+<div class="page">
+  <p class="kicker">Section 18</p>
+  <h1 class="section">Startup Checklist (Pre-Launch)</h1>
+
+  <h3>Brand &amp; Accounts</h3>
+  <ul class="checklist twocol">
+    <li>Secure handles: @mazal on IG, TikTok, Snap, Pinterest, FB, YouTube, Threads.</li>
+    <li>Consistent bio, profile photo (M·Z monogram), link-in-bio (or site).</li>
+    <li>Brand kit: logo, palette, fonts, 3 caption templates, hashtag sets.</li>
+    <li>Replace site placeholders: real WhatsApp number, Google review link, socials, contact, domain.</li>
+  </ul>
+  <h3>Commerce &amp; Tech</h3>
+  <ul class="checklist twocol">
+    <li>Payments live: cards, Apple Pay, Tabby/Tamara.</li>
+    <li>Shipping zones + rates (UAE + GCC + intl) &amp; returns policy.</li>
+    <li>GA4, Meta Pixel, TikTok Pixel, Snap Pixel installed &amp; tested.</li>
+    <li>Product catalogue/feed connected to Meta &amp; TikTok &amp; Pinterest.</li>
+    <li>Email/SMS platform (e.g., Klaviyo) + WhatsApp Business API/app.</li>
+    <li>Welcome + abandoned-cart flows built and tested.</li>
+  </ul>
+  <h3>Content &amp; Inventory</h3>
+  <ul class="checklist twocol">
+    <li>Launch shoot: 8–12 hero pieces, editorial + flat-lay + on-model + macro.</li>
+    <li>20–30 pieces of content batched (Reels, TikToks, carousels, stories).</li>
+    <li>9-grid "first impression" feed planned.</li>
+    <li>Influencer list (30+) built with contacts &amp; sizes.</li>
+    <li>Stock buffer on hero pieces (Sukoon, Noor, Hawa, Hams).</li>
+    <li>Packaging ready (dust bag, card with STILL10, tissue).</li>
+  </ul>
+  <h3>Legal/Ops</h3>
+  <ul class="checklist twocol">
+    <li>Trade licence, VAT, terms, privacy, returns pages.</li>
+    <li>Customer-service SLAs (reply &lt; 2h in business hours).</li>
+    <li>Influencer agreement template (incl. paid-usage rights).</li>
+  </ul>
+
+  <h2>Founder First 7 Days: What to Do Tomorrow</h2>
+  <table class="compact-table">
+    <thead><tr><th>Day</th><th>Founder action</th><th>Output by end of day</th></tr></thead>
+    <tbody>
+      <tr><td>Day 1</td><td>Open all social accounts, lock bios, profile images, links, WhatsApp button, highlights.</td><td>IG, TikTok, Snap, Pinterest, Facebook, YouTube, Threads live and consistent.</td></tr>
+      <tr><td>Day 2</td><td>Choose 8 hero products and write the first caption bank.</td><td>30 caption starters + product facts ready.</td></tr>
+      <tr><td>Day 3</td><td>Film batch one: unboxing, fabric movement, 3 scarf styles, founder intro.</td><td>8-10 vertical videos in drafts.</td></tr>
+      <tr><td>Day 4</td><td>Build the launch grid and first 7 days of Stories.</td><td>9-grid planned + story polls/questions ready.</td></tr>
+      <tr><td>Day 5</td><td>Make a creator list and start outreach.</td><td>30 creators logged, 10 DMs sent, sizes requested.</td></tr>
+      <tr><td>Day 6</td><td>Set up email welcome flow, abandoned cart, and WhatsApp quick replies.</td><td>Basic retention system ready before traffic arrives.</td></tr>
+      <tr><td>Day 7</td><td>Check website trust points and analytics.</td><td>Pixels tested, delivery/returns clear, STILL10 capture active.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 19 CAMPAIGNS ============ -->
+<div class="page">
+  <p class="kicker">Section 19</p>
+  <h1 class="section">Signature Campaign Ideas</h1>
+  <div class="grid2">
+    <div class="card"><h3>1 · “The Veil Lifts” (Launch)</h3><p class="small">A 7-day reveal echoing the site's veil intro. Teaser → monogram → countdown → open. Influencers post in sync on D-Day. Goal: awareness + list.</p></div>
+    <div class="card"><h3>2 · “The Abaya Edit”</h3><p class="small">Hero the Sukoon/Noor/Safa abayas. "One abaya, five years." Macro craft content + styling Reels + a focused ad set.</p></div>
+    <div class="card"><h3>3 · “Still, Together” (Ramadan/Eid)</h3><p class="small">Evergreen tentpole template: gifting edit, Eid lookbook, "what will you wear," limited Dhahab kaftan. Highest-AOV moment.</p></div>
+    <div class="card"><h3>4 · “Named for Calm”</h3><p class="small">Story series on piece names (Sukoon, Noor, Layl, Hawa). Meaning-led content that travels &amp; builds love.</p></div>
+    <div class="card"><h3>5 · “The Finishing Note”</h3><p class="small">Scarves &amp; throws as entry + add-on. UGC drape challenge (#StyleMAZAL). Widens funnel from AED 520.</p></div>
+    <div class="card"><h3>6 · “Worn &amp; Worn Again”</h3><p class="small">Customer-led: real clients restyling one piece many ways. Review drive + referral. Builds the UGC engine.</p></div>
+  </div>
+  <h2>Referral &amp; Loyalty</h2>
+  <ul>
+    <li><b>Give 10%, get 10%:</b> referrer &amp; friend both save (ties to STILL10 mechanic).</li>
+    <li><b>MAZAL Rewards</b> (page already exists): points on purchase, review, referral, birthday.</li>
+    <li><b>VIP "Majlis" tier:</b> early access, concierge styling, free express.</li>
+  </ul>
+</div>
+
+<!-- ============ 20 CONTENT CALENDAR ============ -->
+<div class="page">
+  <p class="kicker">Section 20</p>
+  <h1 class="section">90-Day Content Calendar</h1>
+  <p class="lead">Week-by-week focus. Each week = ~4–5 IG posts, 5–7 TikToks, daily Stories/Snaps, 5–10 pins, 1 email. Bold = the week's lead beat.</p>
+
+  <div class="cal-month">
+    <h3>Month 1 — “Stillness, Introduced” (Awareness + List)</h3>
+    <div class="weekrow"><div class="wk">Week 1</div><div class="wd"><b>LAUNCH WEEK — "The Veil Lifts."</b> Teaser→open sequence, founder story Reel, influencers go live D-Day, welcome email + WhatsApp blast. Retargeting on.</div></div>
+    <div class="weekrow"><div class="wk">Week 2</div><div class="wd"><b>Abaya hero week.</b> Sukoon/Noor in motion, craft macro, "3 ways to style," first UGC reposts, story polls (abaya vs. kaftan).</div></div>
+    <div class="weekrow"><div class="wk">Week 3</div><div class="wd"><b>Social proof week.</b> Reviews carousel, unboxing Reels, "named for calm" series begins, IG Live styling #1.</div></div>
+    <div class="weekrow"><div class="wk">Week 4</div><div class="wd"><b>Funnel-widener.</b> Scarves &amp; entry pieces (from AED 520), Pinterest push, recap "most-loved so far," collect emails hard.</div></div>
+  </div>
+
+  <div class="cal-month">
+    <h3>Month 2 — “The Art of the Edit” (Traction + Conversion)</h3>
+    <div class="weekrow"><div class="wk">Week 5</div><div class="wd"><b>"The Abaya Edit" campaign.</b> Launch prospecting ads with best UGC; bundle abaya+scarf+belt; mid-influencer Reels.</div></div>
+    <div class="weekrow"><div class="wk">Week 6</div><div class="wd"><b>Kaftan week.</b> Hawa &amp; Dhahab styling, "morning majlis to evening," TikTok GRWM series, abandoned-cart flow live.</div></div>
+    <div class="weekrow"><div class="wk">Week 7</div><div class="wd"><b>Rewards + referral launch.</b> "Give 10, get 10," WhatsApp broadcast list opens, VIP early access teaser.</div></div>
+    <div class="weekrow"><div class="wk">Week 8</div><div class="wd"><b>Optimise &amp; double-down.</b> Scale the winning creative, IG Live #2, customer-photo gallery goes live, Snap Spotlight push.</div></div>
+  </div>
+
+  <div class="cal-month">
+    <h3>Month 3 — “Worn &amp; Worn Again” (Scale + Retention)</h3>
+    <div class="weekrow"><div class="wk">Week 9</div><div class="wd"><b>Signature campaign.</b> 1 macro + 5 micro influencers in sync; lookalike audiences on; PR/press outreach.</div></div>
+    <div class="weekrow"><div class="wk">Week 10</div><div class="wd"><b>Occasion/gifting.</b> Eid/wedding-guest edit (evergreen), gifting bundles, limited Dhahab restock with low-stock urgency.</div></div>
+    <div class="weekrow"><div class="wk">Week 11</div><div class="wd"><b>UGC engine.</b> #StyleMAZAL drape challenge, "worn &amp; worn again" customer features, review drive, win-back emails.</div></div>
+    <div class="weekrow"><div class="wk">Week 12</div><div class="wd"><b>Consolidate.</b> Best-of recap, "the edit so far," VIP Majlis tier opens, plan next quarter from the data.</div></div>
+  </div>
+  <h2>Daily Action Calendar by Week</h2>
+  <table class="compact-table">
+    <thead><tr><th>Week</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Brand reveal Reel</td><td>Founder story</td><td>Product teaser</td><td>Countdown Stories</td><td>Launch post + email</td><td>Influencer reposts</td><td>Launch recap + KPI check</td></tr>
+      <tr><td>2</td><td>Sukoon Reel</td><td>Noor carousel</td><td>Scarf tutorial</td><td>Story Q&amp;A</td><td>Abaya poll</td><td>Packing orders</td><td>Batch next week</td></tr>
+      <tr><td>3</td><td>Review carousel</td><td>Unboxing TikTok</td><td>Named for Calm Reel</td><td>IG Live styling</td><td>UGC repost</td><td>Email: bestsellers</td><td>Ad creative review</td></tr>
+      <tr><td>4</td><td>Scarf entry post</td><td>Pinterest batch</td><td>Bundle Reel</td><td>WhatsApp styling push</td><td>Most-saved recap</td><td>Creator follow-up</td><td>Month 1 scorecard</td></tr>
+      <tr><td>5</td><td>Abaya Edit launch</td><td>UGC ad test</td><td>Complete-look carousel</td><td>Creator Collab</td><td>Retargeting copy refresh</td><td>Snap-first story</td><td>Pause weak ads</td></tr>
+      <tr><td>6</td><td>Kaftan GRWM</td><td>Dhahab detail Reel</td><td>Occasion carousel</td><td>Cart flow check</td><td>WhatsApp broadcast</td><td>TikTok reply videos</td><td>Batch + report</td></tr>
+      <tr><td>7</td><td>Referral announcement</td><td>VIP teaser</td><td>Client look repost</td><td>Founder note</td><td>Email: give 10/get 10</td><td>Creator outreach</td><td>KPI review</td></tr>
+      <tr><td>8</td><td>Winning creative push</td><td>Customer-photo gallery</td><td>IG Live</td><td>Snap Spotlight</td><td>Ad scale test</td><td>Blog/Pinterest pins</td><td>Month 2 plan</td></tr>
+      <tr><td>9</td><td>Signature campaign</td><td>Macro post</td><td>Micro creator wave</td><td>Lookalike ads</td><td>Press outreach</td><td>UGC repost</td><td>Campaign scorecard</td></tr>
+      <tr><td>10</td><td>Gifting edit</td><td>Wedding guest Reel</td><td>Bundle offer</td><td>Low-stock Stories</td><td>Email: occasion edit</td><td>Snap flash code</td><td>Inventory review</td></tr>
+      <tr><td>11</td><td>#StyleMAZAL launch</td><td>Customer feature</td><td>Scarf challenge</td><td>Review request</td><td>Win-back email</td><td>Best UGC ads</td><td>UGC shortlist</td></tr>
+      <tr><td>12</td><td>Best-of recap</td><td>VIP Majlis opens</td><td>Founder learnings</td><td>Restock poll</td><td>Next edit teaser</td><td>Quarter plan</td><td>90-day report</td></tr>
+      <tr><td>13</td><td>Days 85-90</td><td colspan="6">Final push, next-quarter teaser, retention offers, VIP outreach, content archive, restock planning, and founder review.</td></tr>
+    </tbody>
+  </table>
+  <div class="footer-note">Tip: batch a full week of content in one session. Keep a simple board (Notion/Sheet) with columns: Date · Channel · Format · Hook · Asset · Caption · CTA · Status.</div>
+</div>
+
+<!-- ============ 21 RHYTHM ============ -->
+<div class="page">
+  <p class="kicker">Section 21</p>
+  <h1 class="section">Daily / Weekly / Monthly Rhythm</h1>
+  <div class="grid3">
+    <div class="card"><h3>Daily (45–75 min)</h3><ul class="small">
+      <li>Post 1 TikTok + 1 Reel (or repurpose).</li>
+      <li>3–6 Stories + daily Snap story.</li>
+      <li>Reply to all comments &amp; DMs &amp; WhatsApp (&lt;2h).</li>
+      <li>Engage 15–20 target accounts.</li>
+      <li>Schedule 5–10 pins.</li>
+      <li>Check ad spend &amp; pause obvious losers.</li>
+    </ul></div>
+    <div class="card"><h3>Weekly (½ day)</h3><ul class="small">
+      <li>Batch &amp; schedule next week's content.</li>
+      <li>Send 1 email (note/new-in) + 1 WhatsApp broadcast (if value).</li>
+      <li>1 IG/TikTok Live or collab.</li>
+      <li>Outreach to 5–10 new influencers; follow up warm ones.</li>
+      <li>Review KPIs vs. targets; note 1 winner + 1 fix.</li>
+    </ul></div>
+    <div class="card"><h3>Monthly (1 day)</h3><ul class="small">
+      <li>Full funnel review (reach→order→repeat).</li>
+      <li>Refresh ad creatives; cut &amp; scale.</li>
+      <li>Plan next month's campaign &amp; shoot.</li>
+      <li>Influencer performance review (CPA/creator).</li>
+      <li>Re-segment email/WhatsApp; VIP outreach.</li>
+      <li>Report: wins, learnings, next bets.</li>
+    </ul></div>
+  </div>
+  <h2>Owner Map (lean team)</h2>
+  <table>
+    <thead><tr><th>Role</th><th>Owns</th></tr></thead>
+    <tbody>
+      <tr><td>Founder / Brand</td><td>Voice, campaigns, influencer relationships, approvals</td></tr>
+      <tr><td>Content creator</td><td>Daily Reels/TikToks, shoots, editing, trends</td></tr>
+      <tr><td>Community / Concierge</td><td>DMs, WhatsApp styling, reviews, UGC collection</td></tr>
+      <tr><td>Performance (in-house or freelance)</td><td>Ads, pixels, email flows, reporting</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============ 22 METRICS ============ -->
+<div class="page">
+  <p class="kicker">Section 22</p>
+  <h1 class="section">Metrics &amp; KPIs to Track</h1>
+  <h2>North-Star &amp; Guardrails</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Metric</th><th>Healthy target (by M3)</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="3">Acquisition</td><td>Website sessions / mo</td><td class="num">40k–50k</td></tr>
+      <tr><td>Cost per click (Meta)</td><td class="num">AED 1.5–4</td></tr>
+      <tr><td>New followers / mo (IG+TT)</td><td class="num">6k–10k</td></tr>
+      <tr><td rowspan="3">Conversion</td><td>Store conversion rate</td><td class="num">1.8–2.5%</td></tr>
+      <tr><td>Add-to-cart rate</td><td class="num">6–9%</td></tr>
+      <tr><td>Checkout completion</td><td class="num">&gt; 45%</td></tr>
+      <tr><td rowspan="3">Economics</td><td>AOV</td><td class="num">AED 1,300+</td></tr>
+      <tr><td>ROAS (blended)</td><td class="num">&gt; 2.5–3.0×</td></tr>
+      <tr><td>CAC</td><td class="num">&lt; AED 120</td></tr>
+      <tr><td rowspan="3">Retention</td><td>Email list growth / mo</td><td class="num">1,200+</td></tr>
+      <tr><td>Repeat-purchase rate</td><td class="num">&gt; 20%</td></tr>
+      <tr><td>Email revenue share</td><td class="num">25–35%</td></tr>
+      <tr><td rowspan="2">Brand</td><td>Engagement rate (IG)</td><td class="num">&gt; 4%</td></tr>
+      <tr><td>UGC pieces / mo</td><td class="num">30+</td></tr>
+    </tbody>
+  </table>
+  <h2>Realistic KPI Ranges</h2>
+  <p class="small muted">Use these as planning ranges, not guarantees. Conservative assumes limited spend and founder-led content. Standard assumes consistent posting, micro-influencer seeding, and modest ads. Aggressive assumes strong creative performance and a larger paid/influencer budget.</p>
+  <table class="compact-table">
+    <thead><tr><th>Metric</th><th>Conservative by M3</th><th>Standard by M3</th><th>Aggressive by M3</th></tr></thead>
+    <tbody>
+      <tr><td>Website sessions / month</td><td class="num">8k-15k</td><td class="num">20k-35k</td><td class="num">40k-60k</td></tr>
+      <tr><td>IG + TikTok follower growth / month</td><td class="num">1k-3k</td><td class="num">3k-7k</td><td class="num">8k-15k</td></tr>
+      <tr><td>Store conversion rate</td><td class="num">0.8-1.3%</td><td class="num">1.4-2.0%</td><td class="num">2.0-2.8%</td></tr>
+      <tr><td>Add-to-cart rate</td><td class="num">3-5%</td><td class="num">5-8%</td><td class="num">8-10%</td></tr>
+      <tr><td>Average order value</td><td class="num">AED 950-1,150</td><td class="num">AED 1,150-1,350</td><td class="num">AED 1,350+</td></tr>
+      <tr><td>Blended ROAS</td><td class="num">1.2-1.8x</td><td class="num">2.0-3.0x</td><td class="num">3.0x+</td></tr>
+      <tr><td>Customer acquisition cost</td><td class="num">AED 180-280</td><td class="num">AED 100-180</td><td class="num">&lt; AED 120</td></tr>
+      <tr><td>Email / WhatsApp list growth / month</td><td class="num">300-700</td><td class="num">800-1,500</td><td class="num">1,500+</td></tr>
+      <tr><td>Repeat-purchase rate</td><td class="num">5-10%</td><td class="num">10-18%</td><td class="num">20%+</td></tr>
+      <tr><td>UGC pieces / month</td><td class="num">5-12</td><td class="num">15-30</td><td class="num">30+</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Reporting Cadence</h2>
+  <ul>
+    <li><b>Daily:</b> spend, ROAS, orders, top content (5-min glance).</li>
+    <li><b>Weekly:</b> one-page scorecard vs. targets; 1 winner, 1 fix.</li>
+    <li><b>Monthly:</b> full funnel + cohort + influencer CPA review.</li>
+  </ul>
+  <p class="small muted">Tools: GA4, Meta &amp; TikTok Ads Manager, the email platform's analytics, a simple Google Sheet master scorecard, and Microsoft Clarity for free heatmaps/recordings.</p>
+</div>
+
+<!-- ============ 23 BUDGET ============ -->
+<div class="page">
+  <p class="kicker">Section 23</p>
+  <h1 class="section">Budget Options (Monthly, AED)</h1>
+  <p class="lead">Three tiers. Start Lean to learn, move to Standard once a creative wins, scale to Growth when ROAS holds. Figures are monthly and indicative.</p>
+
+  <table>
+    <thead><tr><th>Line item</th><th class="num">Lean</th><th class="num">Standard</th><th class="num">Growth</th></tr></thead>
+    <tbody>
+      <tr><td>Paid ads (Meta/TikTok/Google/Snap/Pin)</td><td class="num">3,000</td><td class="num">10,000</td><td class="num">28,000</td></tr>
+      <tr><td>Influencer (gifting + paid micro/macro)</td><td class="num">2,000</td><td class="num">6,000</td><td class="num">18,000</td></tr>
+      <tr><td>Content production (shoots, editing)</td><td class="num">1,500</td><td class="num">4,000</td><td class="num">9,000</td></tr>
+      <tr><td>Tools (email, scheduler, heatmaps, apps)</td><td class="num">500</td><td class="num">1,200</td><td class="num">2,500</td></tr>
+      <tr><td>Promotions (STILL10, referral, gifting)</td><td class="num">1,000</td><td class="num">2,500</td><td class="num">6,000</td></tr>
+      <tr><td>Contingency / testing</td><td class="num">500</td><td class="num">1,300</td><td class="num">3,500</td></tr>
+      <tr style="font-weight:700;background:var(--sand)"><td>Total / month</td><td class="num">8,500</td><td class="num">25,000</td><td class="num">67,000</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Allocation Principle</h2>
+  <p class="legend">
+    <span><span class="dot" style="background:#46352e"></span>Paid ads ~40%</span>
+    <span><span class="dot" style="background:#c2887a"></span>Influencer ~25%</span>
+    <span><span class="dot" style="background:#cdb0a5"></span>Content ~16%</span>
+    <span><span class="dot" style="background:#e2bcae"></span>Promos ~10%</span>
+    <span><span class="dot" style="background:#a86b5c"></span>Tools/Contingency ~9%</span>
+  </p>
+  <h3>90-Day Indicative Spend</h3>
+  <table>
+    <thead><tr><th>Tier</th><th class="num">Month 1</th><th class="num">Month 2</th><th class="num">Month 3</th><th class="num">90-day total</th></tr></thead>
+    <tbody>
+      <tr><td>Lean</td><td class="num">8,500</td><td class="num">8,500</td><td class="num">10,000</td><td class="num">27,000</td></tr>
+      <tr><td>Standard</td><td class="num">20,000</td><td class="num">25,000</td><td class="num">30,000</td><td class="num">75,000</td></tr>
+      <tr><td>Growth</td><td class="num">45,000</td><td class="num">60,000</td><td class="num">67,000</td><td class="num">172,000</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Rule of thumb: don't scale ad spend faster than ROAS &amp; fulfilment can hold. Reinvest email/WhatsApp-driven profit into content &amp; influencers — the cheapest long-term growth.</p>
+</div>
+
+<!-- ============ 24 PRIORITIES ============ -->
+<div class="page">
+  <p class="kicker">Section 24</p>
+  <h1 class="section">Final Priority List</h1>
+  <p class="lead">If you do only these, in this order, MAZAL launches well.</p>
+
+  <h3>Do first (Week 0–1)</h3>
+  <ul class="checklist">
+    <li>Replace site placeholders (WhatsApp, reviews link, socials, domain) &amp; install GA4 + all pixels.</li>
+    <li>Lock the brand kit + secure all @mazal handles + set up shoppable profiles.</li>
+    <li>Shoot &amp; batch 20–30 pieces of launch content (editorial + UGC-style).</li>
+    <li>Build the welcome + abandoned-cart flows; open the WhatsApp concierge.</li>
+    <li>Line up 15–25 micro-influencers to post on launch day.</li>
+  </ul>
+  <h3>Do next (Weeks 2–4)</h3>
+  <ul class="checklist">
+    <li>Run the "Veil Lifts" launch sequence across IG + TikTok + Snap + email + WhatsApp.</li>
+    <li>Turn on retargeting ads; capture every visitor with STILL10.</li>
+    <li>Publish daily; reply to everything within 2 hours.</li>
+    <li>Add BNPL (Tabby/Tamara) messaging + delivery info to PDPs.</li>
+  </ul>
+  <h3>Then scale (Weeks 5–12)</h3>
+  <ul class="checklist">
+    <li>Find &amp; scale one winning ad creative; add prospecting + lookalikes.</li>
+    <li>Launch Rewards/referral + the "Abaya Edit" &amp; signature campaigns.</li>
+    <li>Build the UGC + review engine; open the VIP "Majlis" tier.</li>
+    <li>Review KPIs weekly; reinvest retention profit into content + influencers.</li>
+  </ul>
+
+  <div class="card dark">
+    <h3 style="margin-top:0">The One-Sentence Strategy</h3>
+    <p style="margin-bottom:0; font-family:Georgia,serif; font-size:12pt;">Build a beautiful, trusted brand world on Instagram &amp; TikTok, seed it through micro-influencers, capture every visitor into WhatsApp &amp; email, and let retargeting and retention — not discounts — turn “still” into sales.</p>
+  </div>
+
+  <div class="footer-note" style="text-align:center; border:none; margin-top:12mm;">
+    <div style="font-family:Georgia,serif; letter-spacing:.5em; font-size:14pt; color:var(--ink);">MAZAL</div>
+    <p class="small" style="margin-top:2mm;">MAZAL means Still. · Modern modest luxury, crafted to endure.<br/>90-Day Marketing Strategy Report · Version 1.0 · 23 June 2026 · Confidential</p>
+  </div>
+</div>
+
+</body>
+</html>
