@@ -1,0 +1,25 @@
+# PAID-PLAN blueprint with a persistent disk so admin-panel edits/uploads survive
+# restarts and redeploys. When the client is ready to make lasting changes:
+#   1. Render Dashboard -> mazal-rose service -> Settings -> change instance type to Starter.
+#   2. Add a 1 GB disk mounted at /var/data.
+#   3. Add env var MAZAL_DATA_DIR = /var/data/mazal.
+# (Or replace render.yaml with this file's contents and redeploy the blueprint.)
+services:
+  - type: web
+    name: mazal-rose
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: MAZAL_DATA_DIR
+        value: /var/data/mazal
+    disk:
+      name: mazal-data
+      mountPath: /var/data
+      sizeGB: 1
