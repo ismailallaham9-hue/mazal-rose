@@ -82,10 +82,15 @@ export async function generateMetadata({
       },
     };
     const seo = seoMap[category as string];
+    // Admin-editable category SEO (Categories tab) takes priority.
     return {
-      title: seo?.title ?? `${label} — Shop ${label} UAE`,
+      title:
+        customCategory?.seoTitle?.trim() ||
+        seo?.title ||
+        `${label} — Shop ${label} UAE`,
       description:
-        seo?.description ??
+        customCategory?.seoDescription?.trim() ||
+        seo?.description ||
         `Shop MAZAL ${label.toLowerCase()} — quiet-luxury modest fashion crafted with intention. Free GCC delivery over AED 500.`,
       alternates: { canonical: `/shop?category=${category}` },
     };

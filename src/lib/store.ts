@@ -55,6 +55,8 @@ export type StoreCategory = {
   image?: string;
   order: number;
   hidden?: boolean;
+  seoTitle?: string; // admin-editable SEO title for the category page
+  seoDescription?: string; // admin-editable meta description
 };
 
 export type SiteTheme = {
@@ -275,6 +277,30 @@ export const DEFAULT_PAGES: PageContent = {
   },
 };
 
+/** Pre-filled SEO copy for the main categories (admin can edit/override). */
+const CATEGORY_SEO_SEED: Record<string, { seoTitle: string; seoDescription: string }> = {
+  abayas: {
+    seoTitle: "Luxury Abayas Online UAE",
+    seoDescription:
+      "Discover MAZAL luxury abayas in the UAE — open, closed & embellished designs in premium crepe and silk. Free GCC delivery over AED 500. Shop now.",
+  },
+  kaftans: {
+    seoTitle: "Designer Kaftans Online UAE",
+    seoDescription:
+      "Shop MAZAL designer kaftans in the UAE — flowing, gilded silhouettes in georgette and silk for Eid, weddings & evenings. Free GCC delivery over AED 500.",
+  },
+  dresses: {
+    seoTitle: "Modest Luxury Dresses Online UAE",
+    seoDescription:
+      "Shop MAZAL modest luxury dresses in the UAE — elegant day-to-evening silhouettes in timeless cuts and warm tones. Free GCC delivery over AED 500.",
+  },
+  scarves: {
+    seoTitle: "Silk Scarves & Shawls UAE",
+    seoDescription:
+      "Shop featherweight silk scarves & modal shawls in the UAE by MAZAL — the finishing note to any look. Free GCC delivery over AED 500.",
+  },
+};
+
 function seedData(): StoreData {
   return {
     products: PRODUCTS.map((p) => ({ ...p })),
@@ -286,6 +312,7 @@ function seedData(): StoreData {
       blurb: c.blurb,
       image: `/images/categories/${c.value}.jpg`,
       order: index,
+      ...(CATEGORY_SEO_SEED[c.value] ?? {}),
     })),
     articles: ARTICLES.map((a) => ({ ...a, body: a.body.map((b) => ({ ...b })) })),
     settings: { ...DEFAULT_SETTINGS },

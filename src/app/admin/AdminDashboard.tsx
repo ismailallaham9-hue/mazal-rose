@@ -791,7 +791,11 @@ function CategoriesSection({ store, setStore, saveStore }: SectionProps) {
             <TextField label="Order" type="number" value={String(category.order)} onChange={(v) => update(i, { ...category, order: Number(v) })} />
             <label className="flex items-end gap-2 text-sm"><input type="checkbox" checked={category.hidden ?? false} onChange={(e) => update(i, { ...category, hidden: e.target.checked })} /> Hide</label>
             <div className="md:col-span-5">
-              <TextArea label="Blurb" value={category.blurb} onChange={(v) => update(i, { ...category, blurb: v })} />
+              <TextArea label="Intro text (shown on the category page)" value={category.blurb} onChange={(v) => update(i, { ...category, blurb: v })} />
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <TextField label="SEO title" value={category.seoTitle ?? ""} onChange={(v) => update(i, { ...category, seoTitle: v })} />
+                <TextField label="Meta description" value={category.seoDescription ?? ""} onChange={(v) => update(i, { ...category, seoDescription: v })} />
+              </div>
               <button type="button" className="mt-2 text-xs uppercase tracking-[0.14em] text-red-800" onClick={() => setStore({ ...store, categories: store.categories.filter((_, idx) => idx !== i) })}>Delete category</button>
             </div>
           </div>
