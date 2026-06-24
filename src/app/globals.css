@@ -32,6 +32,10 @@
   color-scheme: light;
 }
 
+html {
+  -webkit-text-size-adjust: 100%; /* stop iOS auto-zooming text in landscape */
+}
+
 body {
   background-color: var(--color-cream);
   color: var(--color-ink);
@@ -40,6 +44,14 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* guard against accidental horizontal scroll on mobile */
+}
+
+/* Media never forces the page wider than the viewport */
+img,
+video,
+svg {
+  max-width: 100%;
 }
 
 /* Headings default to the high-contrast serif */

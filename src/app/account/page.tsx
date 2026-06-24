@@ -44,7 +44,7 @@ export default function AccountPage() {
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[220px_1fr]">
           {/* Sidebar */}
-          <aside>
+          <aside className="min-w-0">
             <nav className="flex gap-2 overflow-x-auto lg:flex-col">
               {NAV.map((n) => (
                 <button
@@ -77,7 +77,7 @@ export default function AccountPage() {
           </aside>
 
           {/* Content */}
-          <div>
+          <div className="min-w-0">
             {tab === "dashboard" && (
               <div className="space-y-8">
                 <div className="grid gap-5 sm:grid-cols-3">
