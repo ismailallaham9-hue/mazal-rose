@@ -32,6 +32,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const emirateRoutes = [
+    "dubai",
+    "abu-dhabi",
+    "sharjah",
+    "ajman",
+    "ras-al-khaimah",
+  ].map((emirate) => ({
+    url: `${base}/abayas/${emirate}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
   const productRoutes = products.map((p) => ({
     url: `${base}/shop/${p.slug}`,
     lastModified: new Date(),
@@ -49,6 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticRoutes,
     ...categoryRoutes,
+    ...emirateRoutes,
     ...productRoutes,
     ...articleRoutes,
   ];

@@ -156,10 +156,10 @@ export const DEFAULT_THEME: SiteTheme = {
 };
 
 export const DEFAULT_SEO: SeoSettings = {
-  defaultTitle: "MAZAL — Premium Modest Fashion · Abayas, Kaftans & More",
+  defaultTitle: "Luxury Abayas & Kaftans Online UAE | MAZAL",
   titleTemplate: "%s · MAZAL",
   defaultDescription:
-    "MAZAL means Still. Timeless, calm elegance — abayas, kaftans, throws and scarves crafted with intention for the modern Gulf wardrobe.",
+    "Shop MAZAL luxury abayas, kaftans & modest dresses online in the UAE. Timeless Gulf elegance, premium fabrics and free delivery over AED 500.",
   defaultOgImage: "/images/brand/logo.png",
   indexable: true,
 };
@@ -241,7 +241,38 @@ export const DEFAULT_PAGES: PageContent = {
       },
     ],
   },
-  seo: {},
+  seo: {
+    home: {
+      title: "Luxury Abayas & Kaftans Online UAE | MAZAL",
+      description:
+        "Shop MAZAL luxury abayas, kaftans & modest dresses online in the UAE. Timeless Gulf elegance, premium fabrics and free delivery over AED 500.",
+    },
+    shop: {
+      title: "Luxury Abayas, Kaftans & Modest Dresses UAE",
+      description:
+        "Shop the full MAZAL collection — luxury abayas, designer kaftans, modest dresses and accessories in the UAE. Free GCC delivery over AED 500.",
+    },
+    about: {
+      title: "Our Story — Crafted with Intention",
+      description:
+        "MAZAL means Still. Discover the story behind our quiet-luxury modest fashion house in the UAE — crafted with intention, designed to endure.",
+    },
+    contact: {
+      title: "Contact & Client Care",
+      description:
+        "Reach the MAZAL team for orders, styling and client care in the UAE. Chat on WhatsApp or message us — we reply within one working day.",
+    },
+    journal: {
+      title: "The Journal — Modest Style Notes & Guides",
+      description:
+        "Abaya styling guides, modest fashion trends and atelier stories from MAZAL — quiet luxury for the modern Gulf wardrobe.",
+    },
+    rewards: {
+      title: "Rewards — Loyalty, VIP & Referrals",
+      description:
+        "Join MAZAL Rewards: earn points on every order, unlock VIP tiers and refer friends for AED off. Quiet luxury, generously rewarded.",
+    },
+  },
 };
 
 function seedData(): StoreData {

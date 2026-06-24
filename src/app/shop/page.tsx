@@ -6,6 +6,25 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { ShopClient } from "@/components/ShopClient";
 import { CATEGORIES, CATEGORY_LABEL, type Category } from "@/lib/products";
 import { getStoreData } from "@/lib/store";
+import { SITE } from "@/lib/site";
+
+const CATEGORY_FAQ: Record<string, { q: string; a: string }[]> = {
+  abayas: [
+    { q: "What makes a MAZAL abaya luxury?", a: "Premium crepe and silk fabrics, hand-finished seams, and timeless tailoring designed in the UAE." },
+    { q: "Do you deliver abayas across the GCC?", a: "Yes — to the UAE, Saudi Arabia, Qatar, Kuwait, Bahrain and Oman, with free delivery over AED 500." },
+    { q: "Can I wear MAZAL abayas for Eid or weddings?", a: "Yes. Our embellished and evening abayas are made for Eid, weddings and special occasions." },
+  ],
+  kaftans: [
+    { q: "Are kaftans suitable for UAE weddings?", a: "Yes — our designer kaftans are ideal for weddings, Eid and evening occasions across the Gulf." },
+    { q: "What fabric are MAZAL kaftans made from?", a: "Breezy georgette and silk-touch fabrics that drape beautifully and suit the UAE climate." },
+    { q: "How do I style a kaftan for Eid?", a: "Pair with heeled sandals and gold jewellery for evening, or keep it relaxed with flats by day." },
+  ],
+  dresses: [
+    { q: "Are MAZAL dresses modest?", a: "Yes — our dresses offer thoughtful coverage with elegant, flattering cuts for day and evening." },
+    { q: "Can I wear them to a UAE wedding?", a: "Absolutely. Our evening dresses are designed for weddings, engagements and Eid occasions." },
+    { q: "What fabrics are used?", a: "Considered, enduring fabrics chosen for comfort and a graceful drape in the Gulf climate." },
+  ],
+};
 
 type SP = { category?: string; sort?: string };
 
@@ -45,9 +64,29 @@ export async function generateMetadata({
   if (customCategory || isCategory(category)) {
     const label =
       customCategory?.label ?? CATEGORIES.find((c) => c.value === category)!.label;
+    const seoMap: Record<string, { title: string; description: string }> = {
+      abayas: {
+        title: "Luxury Abayas Online UAE",
+        description:
+          "Discover MAZAL luxury abayas in the UAE — open, closed & embellished designs in premium crepe and silk. Free GCC delivery over AED 500. Shop now.",
+      },
+      kaftans: {
+        title: "Designer Kaftans Online UAE",
+        description:
+          "Shop MAZAL designer kaftans in the UAE — flowing, gilded silhouettes in georgette and silk for Eid, weddings & evenings. Free GCC delivery over AED 500.",
+      },
+      dresses: {
+        title: "Modest Luxury Dresses Online UAE",
+        description:
+          "Shop MAZAL modest luxury dresses in the UAE — elegant day-to-evening silhouettes in timeless cuts and warm tones. Free GCC delivery over AED 500.",
+      },
+    };
+    const seo = seoMap[category as string];
     return {
-      title: `${label} - Shop ${label}`,
-      description: `Shop MAZAL ${label.toLowerCase()} - quiet-luxury modest fashion crafted with intention. Free GCC delivery over AED 500.`,
+      title: seo?.title ?? `${label} — Shop ${label} UAE`,
+      description:
+        seo?.description ??
+        `Shop MAZAL ${label.toLowerCase()} — quiet-luxury modest fashion crafted with intention. Free GCC delivery over AED 500.`,
       alternates: { canonical: `/shop?category=${category}` },
     };
   }
@@ -93,8 +132,51 @@ export default async function ShopPage({
         : `Explore MAZAL ${heading.toLowerCase()} pieces.`))
     : store.pages.shop.blurb;
 
+  const listed = category
+    ? store.products.filter((p) => p.category === category)
+    : store.products;
+  const base = (store.settings.url || SITE.url).replace(/\/$/, "");
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: base },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${base}/shop` },
+      ...(category
+        ? [{ "@type": "ListItem", position: 3, name: heading, item: `${base}/shop?category=${category}` }]
+        : []),
+    ],
+  };
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `${heading} — MAZAL`,
+    numberOfItems: listed.length,
+    itemListElement: listed.slice(0, 24).map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: `${base}/shop/${p.slug}`,
+      name: p.name,
+    })),
+  };
+  const faq = category ? CATEGORY_FAQ[category as string] : undefined;
+  const faqJsonLd = faq && {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
+      {faqJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      )}
       <Container className="pt-8">
         <Breadcrumbs
           items={[

@@ -160,6 +160,27 @@ export default async function ProductPage({
     ],
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE.url },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE.url}/shop` },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: CATEGORY_LABEL[product.category],
+        item: `${SITE.url}/shop?category=${product.category}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: product.name,
+        item: `${SITE.url}/shop/${product.slug}`,
+      },
+    ],
+  };
+
   return (
     <>
       <script
@@ -169,6 +190,10 @@ export default async function ProductPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <Container className="pt-8">

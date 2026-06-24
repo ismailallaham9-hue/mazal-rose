@@ -63,11 +63,25 @@ export default async function ArticlePage({
     publisher: { "@type": "Organization", name: SITE.name },
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE.url },
+      { "@type": "ListItem", position: 2, name: "Journal", item: `${SITE.url}/journal` },
+      { "@type": "ListItem", position: 3, name: article.title, item: `${SITE.url}/journal/${article.slug}` },
+    ],
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <Container className="pt-8">
