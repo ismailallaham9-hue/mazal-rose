@@ -7,7 +7,9 @@ services:
     # when idle. To make admin changes persist, switch `plan` to `starter` and
     # re-add the `MAZAL_DATA_DIR` env var + `disk` block (see render.starter.yaml).
     plan: free
-    buildCommand: npm ci && npm run build
+    # --include=dev is required: NODE_ENV=production makes npm omit devDependencies,
+    # but Next needs build-time devDeps (@tailwindcss/postcss, tailwindcss, typescript).
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
