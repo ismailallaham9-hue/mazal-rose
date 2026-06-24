@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { PillButton } from "./PillButton";
@@ -20,17 +20,32 @@ export function HeroVideo({
 }) {
   const reduceMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Serve a lighter 720p video on phones, the full-res one on larger screens.
+  const [mobile, setMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    v.load(); // re-fetch the source when the mobile/desktop variant changes
     if (reduceMotion) {
       v.pause();
       v.removeAttribute("autoplay");
     } else {
       v.play().catch(() => {});
     }
-  }, [reduceMotion]);
+  }, [reduceMotion, mobile]);
+
+  const videoBase = mobile
+    ? "/video/hero-fashion-mobile"
+    : "/video/hero-fashion";
 
   const fadeUp = {
     hidden: { opacity: 0, y: 24 },
@@ -61,8 +76,8 @@ export function HeroVideo({
         preload="metadata"
         aria-hidden
       >
-        <source src="/video/hero-fashion.webm" type="video/webm" />
-        <source src="/video/hero-fashion.mp4" type="video/mp4" />
+        <source src={`${videoBase}.webm`} type="video/webm" />
+        <source src={`${videoBase}.mp4`} type="video/mp4" />
       </video>
 
       <div aria-hidden className="absolute inset-0 bg-ink/40" />
