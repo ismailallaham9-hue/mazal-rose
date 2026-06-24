@@ -8,7 +8,7 @@ import { useState } from "react";
  * logo.png when present; if the asset hasn't been dropped in yet, falls back
  * gracefully to a typographic monogram so the header never looks broken.
  */
-export function BrandLogo({ size = 44 }: { size?: number }) {
+export function BrandLogo({ size = 52 }: { size?: number }) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
@@ -30,7 +30,7 @@ export function BrandLogo({ size = 44 }: { size?: number }) {
     >
       <Image
         src="/images/brand/logo.png"
-        alt=""
+        alt="MAZAL"
         width={size * 2}
         height={size * 2}
         priority

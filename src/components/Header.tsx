@@ -49,7 +49,7 @@ export function Header() {
         <Container className="flex items-center justify-between py-4 md:py-5">
           {/* Logo + wordmark */}
           <Link href="/" className="flex items-center gap-3" aria-label="MAZAL home">
-            <BrandLogo size={40} />
+            <BrandLogo size={48} />
             <span className="font-serif text-2xl tracking-[0.3em] text-ink">
               MAZAL
             </span>

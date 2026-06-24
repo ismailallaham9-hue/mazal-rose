@@ -86,7 +86,7 @@ export function VeilIntro() {
                 : { opacity: 1, scale: 1, transition: { duration: 0.7, ease: EASE } }
             }
           >
-            <BrandLogo size={64} />
+            <BrandLogo size={72} />
             <span className="font-serif text-3xl tracking-[0.4em] text-ink">
               MAZAL
             </span>

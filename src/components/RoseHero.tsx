@@ -59,7 +59,7 @@ export function RoseHero() {
             animate="show"
             className="flex justify-center"
           >
-            <BrandLogo size={84} />
+            <BrandLogo size={96} />
           </motion.div>
 
           <motion.p
