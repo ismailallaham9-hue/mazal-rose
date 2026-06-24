@@ -25,16 +25,16 @@ export function BrandLogo({ size = 52 }: { size?: number }) {
 
   return (
     <span
-      className="block overflow-hidden rounded-full ring-1 ring-bronze/25"
+      className="block"
       style={{ width: size, height: size }}
     >
       <Image
-        src="/images/brand/logo.png"
+        src="/images/brand/logo-mark.png"
         alt="MAZAL"
         width={size * 2}
         height={size * 2}
         priority
-        className="h-full w-full object-cover"
+        className="h-full w-full object-contain"
         onError={() => setFailed(true)}
       />
     </span>
