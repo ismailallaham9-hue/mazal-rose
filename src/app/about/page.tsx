@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { pageMetadata } from "@/lib/seo";
 import { Container } from "@/components/Container";
 import { Button } from "@/components/Button";
 import { Reveal } from "@/components/Reveal";
@@ -7,11 +8,15 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { StoreStats } from "@/components/StoreStats";
 import { TrustBadges } from "@/components/TrustBadges";
 
-export const metadata: Metadata = {
-  title: "Our Story — Crafted with Intention",
-  description:
-    "MAZAL means Still. Discover the story behind our quiet-luxury modest fashion house — crafted with intention, designed to endure.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    pageKey: "about",
+    path: "/about",
+    fallbackTitle: "Our Story — Crafted with Intention",
+    fallbackDescription:
+      "MAZAL means Still. Discover the story behind our quiet-luxury modest fashion house — crafted with intention, designed to endure.",
+  });
+}
 
 const VALUES = [
   {

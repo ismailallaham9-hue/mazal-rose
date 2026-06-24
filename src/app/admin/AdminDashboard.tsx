@@ -23,6 +23,7 @@ type Tab =
   | "media"
   | "theme"
   | "pages"
+  | "seo"
   | "categories"
   | "journal"
   | "settings";
@@ -45,6 +46,8 @@ type ProductDraft = {
   image: string;
   images: string[];
   featured: boolean;
+  seoTitle: string;
+  seoDescription: string;
 };
 
 const emptyProduct: ProductDraft = {
@@ -64,6 +67,8 @@ const emptyProduct: ProductDraft = {
   image: "",
   images: [],
   featured: false,
+  seoTitle: "",
+  seoDescription: "",
 };
 
 const tabs: { id: Tab; label: string }[] = [
@@ -71,6 +76,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "media", label: "Media" },
   { id: "theme", label: "Theme" },
   { id: "pages", label: "Pages" },
+  { id: "seo", label: "SEO" },
   { id: "categories", label: "Categories" },
   { id: "journal", label: "Journal" },
   { id: "settings", label: "Settings" },
@@ -100,6 +106,8 @@ function productToDraft(product: Product): ProductDraft {
     image: product.image ?? images[0] ?? "",
     images,
     featured: product.featured ?? false,
+    seoTitle: product.seoTitle ?? "",
+    seoDescription: product.seoDescription ?? "",
   };
 }
 
@@ -134,6 +142,8 @@ function productPayload(draft: ProductDraft) {
     image: images[0],
     images,
     featured: draft.featured,
+    seoTitle: draft.seoTitle.trim() || undefined,
+    seoDescription: draft.seoDescription.trim() || undefined,
   };
 }
 
@@ -348,6 +358,9 @@ export function AdminDashboard({
             {tab === "pages" && (
               <PagesSection store={store} setStore={setStore} saveStore={saveStore} />
             )}
+            {tab === "seo" && (
+              <SeoSection store={store} setStore={setStore} saveStore={saveStore} />
+            )}
             {tab === "categories" && (
               <CategoriesSection
                 store={store}
@@ -544,6 +557,17 @@ function ProductsSection(props: {
             />
           </div>
         </div>
+
+        <div className="mt-8 border-t border-sand-deep pt-6">
+          <h3 className="text-xs uppercase tracking-[0.16em] text-ink-soft">SEO (optional)</h3>
+          <p className="mt-1 text-xs text-ink-soft">Leave blank to auto-generate from the product name and description.</p>
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            <TextField label="SEO title" value={props.draft.seoTitle} onChange={(v) => update("seoTitle", v)} />
+            <div className="md:col-span-2">
+              <TextArea label="Meta description" value={props.draft.seoDescription} onChange={(v) => update("seoDescription", v)} />
+            </div>
+          </div>
+        </div>
       </form>
     </div>
   );
@@ -666,6 +690,83 @@ function PagesSection({ store, saveStore }: SectionProps) {
   );
 }
 
+const SEO_PAGES: { key: string; label: string }[] = [
+  { key: "home", label: "Home page" },
+  { key: "shop", label: "Shop page" },
+  { key: "about", label: "About page" },
+  { key: "contact", label: "Contact page" },
+  { key: "journal", label: "Journal page" },
+  { key: "rewards", label: "Rewards page" },
+];
+
+function SeoSection({ store, saveStore }: SectionProps) {
+  const [seo, setSeo] = useState(store.seo);
+  const [url, setUrl] = useState(store.settings.url);
+  const [pageSeo, setPageSeo] = useState<
+    Record<string, { title?: string; description?: string; ogImage?: string }>
+  >(store.pages.seo ?? {});
+
+  const setPage = (key: string, field: "title" | "description" | "ogImage", value: string) =>
+    setPageSeo({ ...pageSeo, [key]: { ...pageSeo[key], [field]: value } });
+
+  const save = () =>
+    saveStore(
+      {
+        ...store,
+        seo,
+        settings: { ...store.settings, url },
+        pages: { ...store.pages, seo: pageSeo },
+      },
+      "SEO saved.",
+    );
+
+  return (
+    <section className="admin-card">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-serif text-3xl">SEO</h2>
+        <button className="admin-dark" onClick={save}>Save SEO</button>
+      </div>
+      <p className="mt-2 text-sm text-ink-soft">
+        Control how the site appears in Google and when shared on social media.
+        Leave a page field blank to use the global defaults below.
+      </p>
+
+      <h3 className="mt-7 text-xs uppercase tracking-[0.16em] text-ink-soft">Global defaults</h3>
+      <div className="mt-3 grid gap-4 md:grid-cols-2">
+        <TextField label="Site URL (domain)" value={url} onChange={setUrl} />
+        <TextField label="Default page title" value={seo.defaultTitle} onChange={(v) => setSeo({ ...seo, defaultTitle: v })} />
+        <TextField label="Title template (must include %s)" value={seo.titleTemplate} onChange={(v) => setSeo({ ...seo, titleTemplate: v })} />
+        <TextField label="Social share image URL" value={seo.defaultOgImage} onChange={(v) => setSeo({ ...seo, defaultOgImage: v })} />
+        <div className="md:col-span-2">
+          <TextArea label="Default meta description (≈150–160 characters)" value={seo.defaultDescription} onChange={(v) => setSeo({ ...seo, defaultDescription: v })} />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" className="accent-bronze" checked={seo.indexable} onChange={(e) => setSeo({ ...seo, indexable: e.target.checked })} />
+          Allow search engines to index the site
+        </label>
+      </div>
+
+      <h3 className="mt-8 text-xs uppercase tracking-[0.16em] text-ink-soft">Per-page SEO</h3>
+      <div className="mt-3 space-y-4">
+        {SEO_PAGES.map(({ key, label }) => (
+          <div key={key} className="grid gap-3 border border-sand-deep bg-cream p-4 md:grid-cols-2">
+            <p className="md:col-span-2 text-sm font-medium">{label}</p>
+            <TextField label="SEO title" value={pageSeo[key]?.title ?? ""} onChange={(v) => setPage(key, "title", v)} />
+            <TextField label="Share image URL" value={pageSeo[key]?.ogImage ?? ""} onChange={(v) => setPage(key, "ogImage", v)} />
+            <div className="md:col-span-2">
+              <TextArea label="Meta description" value={pageSeo[key]?.description ?? ""} onChange={(v) => setPage(key, "description", v)} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-sm text-ink-soft">
+        Per-product and per-article SEO (title, description, link/slug) are edited
+        in the Products and Journal tabs.
+      </p>
+    </section>
+  );
+}
+
 function CategoriesSection({ store, setStore, saveStore }: SectionProps) {
   const update = (index: number, category: StoreCategory) => {
     const categories = [...store.categories];
@@ -727,6 +828,10 @@ function JournalSection({ store, setStore, saveStore }: SectionProps) {
             <div className="md:col-span-2">
               <TextArea label="Excerpt" value={article.excerpt} onChange={(v) => update(i, { ...article, excerpt: v })} />
               <TextArea label="Body. Use lines starting with ## for headings." value={article.body.map((b) => b.type === "h2" ? `## ${b.text}` : b.text).join("\n\n")} onChange={(v) => update(i, { ...article, body: v.split(/\n\n+/).map((part): ArticleBlock => part.startsWith("## ") ? { type: "h2", text: part.slice(3).trim() } : { type: "p", text: part.trim() }).filter((b) => b.text) })} />
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <TextField label="SEO title (optional)" value={article.seoTitle ?? ""} onChange={(v) => update(i, { ...article, seoTitle: v })} />
+                <TextField label="Meta description (optional)" value={article.seoDescription ?? ""} onChange={(v) => update(i, { ...article, seoDescription: v })} />
+              </div>
               <button type="button" className="mt-2 text-xs uppercase tracking-[0.14em] text-red-800" onClick={() => setStore({ ...store, articles: store.articles.filter((_, idx) => idx !== i) })}>Delete post</button>
             </div>
           </div>

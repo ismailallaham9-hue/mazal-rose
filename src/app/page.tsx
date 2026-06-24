@@ -13,8 +13,21 @@ import { HeroVideo } from "@/components/HeroVideo";
 import { EditorialHero } from "@/components/EditorialHero";
 import { InlineChipHeadline } from "@/components/InlineChipHeadline";
 import { Collection2026 } from "@/components/Collection2026";
+import type { Metadata } from "next";
 import type { Badge, Product } from "@/lib/products";
 import { getStoreData } from "@/lib/store";
+import { pageMetadata } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo } = await getStoreData();
+  return pageMetadata({
+    pageKey: "home",
+    path: "/",
+    fallbackTitle: seo.defaultTitle,
+    fallbackDescription: seo.defaultDescription,
+    absoluteTitle: true,
+  });
+}
 
 function getBadged(products: Product[], badge: Badge) {
   return products.filter((p) => p.badges?.includes(badge));

@@ -21,12 +21,17 @@ export async function generateMetadata({
   const { articles } = await getStoreData();
   const article = articles.find((a) => a.slug === slug);
   if (!article) return { title: "Not found" };
+  const title = article.seoTitle?.trim() ? article.seoTitle : article.title;
+  const description = article.seoDescription?.trim()
+    ? article.seoDescription
+    : article.excerpt;
   return {
-    title: article.title,
-    description: article.excerpt,
+    title,
+    description,
+    alternates: { canonical: `/journal/${article.slug}` },
     openGraph: {
       title: `${article.title} - MAZAL Journal`,
-      description: article.excerpt,
+      description,
       images: [article.image],
       type: "article",
     },

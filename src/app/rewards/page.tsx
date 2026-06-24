@@ -5,12 +5,17 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Reveal } from "@/components/Reveal";
 import { Accordion } from "@/components/Accordion";
 import { SITE } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "MAZAL Rewards — Loyalty, VIP & Referrals",
-  description:
-    "Join MAZAL Rewards: earn points on every order, unlock VIP tiers, and refer friends for AED off. Quiet luxury, generously rewarded.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    pageKey: "rewards",
+    path: "/rewards",
+    fallbackTitle: "MAZAL Rewards — Loyalty, VIP & Referrals",
+    fallbackDescription:
+      "Join MAZAL Rewards: earn points on every order, unlock VIP tiers, and refer friends for AED off. Quiet luxury, generously rewarded.",
+  });
+}
 
 const EARN = [
   { points: "+10 pts", action: "for every AED 1 spent", icon: "♦" },

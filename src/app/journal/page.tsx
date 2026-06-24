@@ -5,12 +5,17 @@ import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Reveal } from "@/components/Reveal";
 import { getArticlesFromStore } from "@/lib/store";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "The Journal — Style Notes & Inspiration",
-  description:
-    "Style notes, how-to-wear guides and atelier stories from MAZAL — quiet luxury, considered living.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    pageKey: "journal",
+    path: "/journal",
+    fallbackTitle: "The Journal — Style Notes & Inspiration",
+    fallbackDescription:
+      "Style notes, how-to-wear guides and atelier stories from MAZAL — quiet luxury, considered living.",
+  });
+}
 
 export default async function JournalPage() {
   const articles = await getArticlesFromStore();

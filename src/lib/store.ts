@@ -34,7 +34,18 @@ export type StoreData = {
   settings: SiteSettings;
   media: MediaAsset[];
   pages: PageContent;
+  seo: SeoSettings;
   updatedAt?: string;
+};
+
+/** Global SEO defaults the admin panel controls. The site URL lives in
+ *  settings.url so it stays the single source of truth for canonical links. */
+export type SeoSettings = {
+  defaultTitle: string;
+  titleTemplate: string; // must contain %s, e.g. "%s · MAZAL"
+  defaultDescription: string;
+  defaultOgImage: string; // site-relative or absolute URL for social cards
+  indexable: boolean; // false → ask search engines not to index the site
 };
 
 export type StoreCategory = {
@@ -110,7 +121,7 @@ export type PageContent = {
     wordmark: string;
     columns: { title: string; links: { label: string; href: string }[] }[];
   };
-  seo: Record<string, { title: string; description: string; ogImage?: string }>;
+  seo: Record<string, { title?: string; description?: string; ogImage?: string }>;
 };
 
 const STORE_KEY = "mazal/store.json";
@@ -142,6 +153,15 @@ export const DEFAULT_THEME: SiteTheme = {
   inkSoft: "#836b61",
   radius: "16px",
   logo: "/images/brand/logo.png",
+};
+
+export const DEFAULT_SEO: SeoSettings = {
+  defaultTitle: "MAZAL — Premium Modest Fashion · Abayas, Kaftans & More",
+  titleTemplate: "%s · MAZAL",
+  defaultDescription:
+    "MAZAL means Still. Timeless, calm elegance — abayas, kaftans, throws and scarves crafted with intention for the modern Gulf wardrobe.",
+  defaultOgImage: "/images/brand/logo.png",
+  indexable: true,
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -238,6 +258,7 @@ function seedData(): StoreData {
     })),
     articles: ARTICLES.map((a) => ({ ...a, body: a.body.map((b) => ({ ...b })) })),
     settings: { ...DEFAULT_SETTINGS },
+    seo: { ...DEFAULT_SEO },
     media: [],
     pages: {
       ...DEFAULT_PAGES,
@@ -267,6 +288,7 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     categories: Array.isArray(raw.categories) ? raw.categories : seed.categories,
     articles: Array.isArray(raw.articles) ? raw.articles : seed.articles,
     settings: { ...seed.settings, ...(raw.settings ?? {}) },
+    seo: { ...seed.seo, ...(raw.seo ?? {}) },
     media: Array.isArray(raw.media) ? raw.media : seed.media,
     pages: { ...seed.pages, ...(raw.pages ?? {}) },
     updatedAt: raw.updatedAt,

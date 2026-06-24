@@ -4,12 +4,17 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ContactForm } from "@/components/ContactForm";
 import { Accordion } from "@/components/Accordion";
 import { SITE, whatsappLink } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Contact & Client Care",
-  description:
-    "Reach the MAZAL team for orders, styling, and client care. Chat on WhatsApp or send us a message — we reply within one working day.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    pageKey: "contact",
+    path: "/contact",
+    fallbackTitle: "Contact & Client Care",
+    fallbackDescription:
+      "Reach the MAZAL team for orders, styling, and client care. Chat on WhatsApp or send us a message — we reply within one working day.",
+  });
+}
 
 export default function ContactPage() {
   return (

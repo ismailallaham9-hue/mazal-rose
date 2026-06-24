@@ -47,6 +47,8 @@ export interface Product {
   images?: string[];
   featured?: boolean;
   createdAt?: string; // ISO — drives "new arrivals" ordering
+  seoTitle?: string; // optional SEO override (admin-controlled)
+  seoDescription?: string; // optional meta-description override
 }
 
 export const CATEGORIES: { value: Category; label: string; blurb: string }[] = [

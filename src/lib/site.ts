@@ -9,7 +9,7 @@
 export const SITE = {
   name: "MAZAL",
   tagline: "MAZAL means Still.",
-  url: "https://mazal.example", // TODO: production domain
+  url: "https://mazal.ae", // production domain
 
   currency: "AED",
   freeShippingThreshold: 500, // AED — drives the cart free-shipping progress bar

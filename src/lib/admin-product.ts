@@ -109,5 +109,11 @@ export function normalizeProduct(
     images,
     featured: Boolean(input.featured ?? existing?.featured ?? false),
     createdAt: existing?.createdAt ?? new Date().toISOString().slice(0, 10),
+    seoTitle: has("seoTitle")
+      ? String(input.seoTitle ?? "").trim() || undefined
+      : existing?.seoTitle,
+    seoDescription: has("seoDescription")
+      ? String(input.seoDescription ?? "").trim() || undefined
+      : existing?.seoDescription,
   };
 }

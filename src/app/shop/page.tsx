@@ -48,13 +48,18 @@ export async function generateMetadata({
     return {
       title: `${label} - Shop ${label}`,
       description: `Shop MAZAL ${label.toLowerCase()} - quiet-luxury modest fashion crafted with intention. Free GCC delivery over AED 500.`,
+      alternates: { canonical: `/shop?category=${category}` },
     };
   }
+  const title = store.pages.seo.shop?.title ?? "Shop All - The Collection";
+  const description =
+    store.pages.seo.shop?.description ??
+    "Shop the full MAZAL collection - abayas, kaftans, dresses, accessories and more. Premium modest fashion designed to endure.";
   return {
-    title: store.pages.seo.shop?.title ?? "Shop All - The Collection",
-    description:
-      store.pages.seo.shop?.description ??
-      "Shop the full MAZAL collection - abayas, kaftans, dresses, accessories and more. Premium modest fashion designed to endure.",
+    title,
+    description,
+    alternates: { canonical: "/shop" },
+    openGraph: { title, description, url: "/shop", type: "website" },
   };
 }
 

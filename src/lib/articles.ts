@@ -18,6 +18,8 @@ export interface Article {
   image: string;
   body: ArticleBlock[];
   relatedSlugs?: string[];
+  seoTitle?: string; // optional SEO override (admin-controlled)
+  seoDescription?: string; // optional meta-description override
 }
 
 export const ARTICLES: Article[] = [

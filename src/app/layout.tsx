@@ -27,28 +27,65 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://mazal.example"),
-  title: {
-    default: "MAZAL — Premium Modest Fashion · Abayas, Kaftans & More",
-    template: "%s · MAZAL",
-  },
-  description:
-    "MAZAL means Still. Timeless, calm elegance — abayas, kaftans, throws and scarves crafted with intention for the modern Gulf wardrobe.",
-  icons: {
-    icon: "/images/brand/logo.png",
-  },
-  openGraph: {
-    title: "MAZAL — Still Elegant",
-    description: "Effortless sophistication, designed to endure.",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo, settings, theme } = await getStoreData();
+  const base = settings.url || "https://mazal.ae";
+  let metadataBase: URL | undefined;
+  try {
+    metadataBase = new URL(base);
+  } catch {
+    metadataBase = new URL("https://mazal.ae");
+  }
+  const ogImage = seo.defaultOgImage || "/images/brand/logo.png";
+  const template = seo.titleTemplate.includes("%s")
+    ? seo.titleTemplate
+    : "%s · MAZAL";
+
+  return {
+    metadataBase,
+    title: {
+      default: seo.defaultTitle,
+      template,
+    },
+    description: seo.defaultDescription,
+    icons: { icon: theme.logo || "/images/brand/logo.png" },
+    robots: seo.indexable
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
+    openGraph: {
+      title: seo.defaultTitle,
+      description: seo.defaultDescription,
+      url: base,
+      siteName: settings.name,
+      type: "website",
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.defaultTitle,
+      description: seo.defaultDescription,
+      images: [ogImage],
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { content, pages, theme } = await getStoreData();
+  const { content, pages, theme, settings } = await getStoreData();
+  const base = settings.url || "https://mazal.ae";
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: settings.name,
+    url: base,
+    logo: `${base.replace(/\/$/, "")}${theme.logo || "/images/brand/logo.png"}`,
+    sameAs: [
+      settings.social.instagram,
+      settings.social.tiktok,
+      settings.social.pinterest,
+    ].filter(Boolean),
+  };
   const themeStyle = {
     "--color-cream": theme.cream,
     "--color-cream-soft": theme.creamSoft,
@@ -67,6 +104,10 @@ export default async function RootLayout({
       className={`${cormorant.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-cream text-ink" style={themeStyle}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
         <CartProvider>
           <WishlistProvider>
             <SmoothScroll />

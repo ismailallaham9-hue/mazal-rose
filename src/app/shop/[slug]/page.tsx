@@ -66,12 +66,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = findProduct(await getProductsFromStore(), slug);
   if (!product) return { title: "Not found" };
+  const title = product.seoTitle?.trim()
+    ? product.seoTitle
+    : `${product.name} — ${CATEGORY_LABEL[product.category]}`;
+  const description = product.seoDescription?.trim()
+    ? product.seoDescription
+    : product.description.slice(0, 160);
   return {
-    title: `${product.name} — ${CATEGORY_LABEL[product.category]}`,
-    description: product.description.slice(0, 160),
+    title,
+    description,
+    alternates: { canonical: `/shop/${product.slug}` },
     openGraph: {
       title: `${product.name} · MAZAL`,
-      description: product.description.slice(0, 160),
+      description,
       images: [product.image ?? "/images/brand/hero.jpg"],
       type: "website",
     },

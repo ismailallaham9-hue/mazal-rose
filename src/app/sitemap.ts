@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 import { CATEGORIES } from "@/lib/products";
-import { getProductsFromStore } from "@/lib/store";
-import { ARTICLES } from "@/lib/articles";
-import { SITE } from "@/lib/site";
+import { getStoreData } from "@/lib/store";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await getProductsFromStore();
-  const base = SITE.url;
+  const store = await getStoreData();
+  const products = store.products;
+  const articles = store.articles;
+  const base = (store.settings.url || "https://mazal.ae").replace(/\/$/, "");
   const staticRoutes = [
     "",
     "/shop",
@@ -39,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  const articleRoutes = ARTICLES.map((a) => ({
+  const articleRoutes = articles.map((a) => ({
     url: `${base}/journal/${a.slug}`,
     lastModified: new Date(a.date),
     changeFrequency: "monthly" as const,
