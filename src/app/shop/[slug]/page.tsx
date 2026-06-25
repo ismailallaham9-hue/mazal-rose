@@ -72,6 +72,7 @@ export async function generateMetadata({
   const description = product.seoDescription?.trim()
     ? product.seoDescription
     : product.description.slice(0, 160);
+  const ogImage = product.image ?? "/images/brand/hero.jpg";
   return {
     title,
     description,
@@ -79,8 +80,14 @@ export async function generateMetadata({
     openGraph: {
       title: `${product.name} · MAZAL`,
       description,
-      images: [product.image ?? "/images/brand/hero.jpg"],
+      images: [ogImage],
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.name} · MAZAL`,
+      description,
+      images: [ogImage],
     },
   };
 }

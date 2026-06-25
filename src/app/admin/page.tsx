@@ -3,6 +3,7 @@ import { getStoreData, storageReady } from "@/lib/store";
 
 export const metadata = {
   title: "Admin",
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export default async function AdminPage() {

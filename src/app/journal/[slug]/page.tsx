@@ -35,6 +35,12 @@ export async function generateMetadata({
       images: [article.image],
       type: "article",
     },
+    twitter: {
+      card: "summary_large_image",
+      title: `${article.title} - MAZAL Journal`,
+      description,
+      images: [article.image],
+    },
   };
 }
 
@@ -52,12 +58,15 @@ export default async function ArticlePage({
     .map((s) => products.find((p) => p.slug === s || p.id === s))
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
+  const absImage = /^https?:\/\//i.test(article.image)
+    ? article.image
+    : `${SITE.url.replace(/\/$/, "")}${article.image.startsWith("/") ? "" : "/"}${article.image}`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.title,
     description: article.excerpt,
-    image: [article.image],
+    image: [absImage],
     datePublished: article.date,
     author: { "@type": "Organization", name: SITE.name },
     publisher: { "@type": "Organization", name: SITE.name },

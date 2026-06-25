@@ -35,6 +35,7 @@ export async function generateMetadata({
     description,
     alternates: { canonical: `/abayas/${emirate}` },
     openGraph: { title, description, url: `/abayas/${emirate}`, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

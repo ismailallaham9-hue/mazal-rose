@@ -7,15 +7,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = store.products;
   const articles = store.articles;
   const base = (store.settings.url || "https://mazal.ae").replace(/\/$/, "");
+  // Only indexable, public routes. /account, /wishlist, /cart and /checkout
+  // are intentionally excluded (they're noindex/transactional).
   const staticRoutes = [
     "",
     "/shop",
     "/about",
     "/contact",
-    "/wishlist",
     "/rewards",
     "/journal",
-    "/account",
   ].map(
     (path) => ({
       url: `${base}${path}`,
