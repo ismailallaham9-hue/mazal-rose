@@ -11,6 +11,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
     pageKey: "about",
+    recordKey: "page:about",
     path: "/about",
     fallbackTitle: "Our Story — Crafted with Intention",
     fallbackDescription:

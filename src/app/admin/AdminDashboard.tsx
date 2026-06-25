@@ -292,6 +292,9 @@ export function AdminDashboard({
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {status && <p className="text-sm text-ink-soft">{status}</p>}
+            <Link className="admin-dark" href="/admin/content-studio">
+              Content Studio
+            </Link>
             <Link className="admin-secondary" href="/shop">
               View site
             </Link>

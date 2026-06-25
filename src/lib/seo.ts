@@ -26,35 +26,47 @@ export async function pageMetadata(opts: {
   fallbackImage?: string;
   /** Bypass the "%s · MAZAL" template (use for the home page). */
   absoluteTitle?: boolean;
+  /** key into store.seoRecords for Content Studio overrides (robots, OG, etc.) */
+  recordKey?: string;
 }): Promise<Metadata> {
   const store = await getStoreData();
   const base = store.settings.url || "https://mazal.ae";
   const pageSeo = opts.pageKey ? store.pages.seo?.[opts.pageKey] : undefined;
+  const rec = opts.recordKey ? store.seoRecords?.[opts.recordKey] : undefined;
 
-  const title = pageSeo?.title?.trim() || opts.fallbackTitle;
-  const description = pageSeo?.description?.trim() || opts.fallbackDescription;
+  const title = rec?.seoTitle?.trim() || pageSeo?.title?.trim() || opts.fallbackTitle;
+  const description =
+    rec?.metaDescription?.trim() || pageSeo?.description?.trim() || opts.fallbackDescription;
   const image =
+    abs(base, rec?.ogImage) ??
     abs(base, pageSeo?.ogImage) ??
     abs(base, opts.fallbackImage) ??
     abs(base, store.seo.defaultOgImage);
+  const twImage = abs(base, rec?.twitterImage) ?? image;
+  const canonical = rec?.canonical?.trim() || opts.path;
+  const robots =
+    rec && (rec.index === false || rec.follow === false)
+      ? { index: rec.index !== false, follow: rec.follow !== false }
+      : undefined;
 
   return {
     title: opts.absoluteTitle ? { absolute: title } : title,
     description,
-    alternates: { canonical: opts.path },
+    ...(robots ? { robots } : {}),
+    alternates: { canonical },
     openGraph: {
-      title,
-      description,
-      url: opts.path,
+      title: rec?.ogTitle?.trim() || title,
+      description: rec?.ogDescription?.trim() || description,
+      url: canonical,
       siteName: store.settings.name,
       type: "website",
       images: image ? [image] : undefined,
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
-      images: image ? [image] : undefined,
+      title: rec?.twitterTitle?.trim() || rec?.ogTitle?.trim() || title,
+      description: rec?.twitterDescription?.trim() || rec?.ogDescription?.trim() || description,
+      images: twImage ? [twImage] : undefined,
     },
   };
 }

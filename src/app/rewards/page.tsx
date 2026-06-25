@@ -10,6 +10,7 @@ import { pageMetadata } from "@/lib/seo";
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
     pageKey: "rewards",
+    recordKey: "page:rewards",
     path: "/rewards",
     fallbackTitle: "MAZAL Rewards — Loyalty, VIP & Referrals",
     fallbackDescription:

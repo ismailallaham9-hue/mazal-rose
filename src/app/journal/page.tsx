@@ -10,6 +10,7 @@ import { pageMetadata } from "@/lib/seo";
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
     pageKey: "journal",
+    recordKey: "journal",
     path: "/journal",
     fallbackTitle: "The Journal — Style Notes & Inspiration",
     fallbackDescription:

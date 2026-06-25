@@ -35,6 +35,7 @@ export type StoreData = {
   media: MediaAsset[];
   pages: PageContent;
   seo: SeoSettings;
+  seoRecords: Record<string, SeoRecord>;
   updatedAt?: string;
 };
 
@@ -46,6 +47,38 @@ export type SeoSettings = {
   defaultDescription: string;
   defaultOgImage: string; // site-relative or absolute URL for social cards
   indexable: boolean; // false → ask search engines not to index the site
+};
+
+export type SchemaType =
+  | "WebPage"
+  | "Organization"
+  | "Product"
+  | "CollectionPage"
+  | "Article"
+  | "FAQPage"
+  | "BreadcrumbList";
+
+/** Rich, per-entity SEO record edited in the Content Studio. Keyed in
+ *  store.seoRecords by entity id, e.g. "home", "shop", "category:abayas",
+ *  "product:sukoon-abaya", "city:dubai", "article:<slug>", "page:about". */
+export type SeoRecord = {
+  seoTitle?: string;
+  metaDescription?: string;
+  focusKeyword?: string;
+  secondaryKeywords?: string; // comma-separated
+  canonical?: string; // override (path or absolute)
+  index?: boolean; // default true
+  follow?: boolean; // default true
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  twitterTitle?: string;
+  twitterDescription?: string;
+  twitterImage?: string;
+  schemaType?: SchemaType;
+  sitemapInclude?: boolean; // default true
+  sitemapPriority?: number; // 0.0–1.0
+  sitemapChangefreq?: string; // weekly/monthly/...
 };
 
 export type StoreCategory = {
@@ -317,6 +350,7 @@ function seedData(): StoreData {
     articles: ARTICLES.map((a) => ({ ...a, body: a.body.map((b) => ({ ...b })) })),
     settings: { ...DEFAULT_SETTINGS },
     seo: { ...DEFAULT_SEO },
+    seoRecords: {},
     media: [],
     pages: {
       ...DEFAULT_PAGES,
@@ -347,6 +381,10 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     articles: Array.isArray(raw.articles) ? raw.articles : seed.articles,
     settings: { ...seed.settings, ...(raw.settings ?? {}) },
     seo: { ...seed.seo, ...(raw.seo ?? {}) },
+    seoRecords:
+      raw.seoRecords && typeof raw.seoRecords === "object"
+        ? (raw.seoRecords as Record<string, SeoRecord>)
+        : {},
     media: Array.isArray(raw.media) ? raw.media : seed.media,
     pages: { ...seed.pages, ...(raw.pages ?? {}) },
     updatedAt: raw.updatedAt,

@@ -28,14 +28,24 @@ export async function generateMetadata({
   const { emirate } = await params;
   const e = EMIRATES[emirate];
   if (!e) return { title: "Not found" };
-  const title = `Luxury Abayas in ${e.short}`;
-  const description = `Shop MAZAL luxury abayas, kaftans & modest dresses in ${e.name}. Premium fabrics, fast local delivery and free delivery over AED 500.`;
+  const store = await getStoreData();
+  const rec = store.seoRecords?.[`city:${emirate}`];
+  const title = rec?.seoTitle?.trim() || `Luxury Abayas in ${e.short}`;
+  const description =
+    rec?.metaDescription?.trim() ||
+    `Shop MAZAL luxury abayas, kaftans & modest dresses in ${e.name}. Premium fabrics, fast local delivery and free delivery over AED 500.`;
+  const canonical = rec?.canonical?.trim() || `/abayas/${emirate}`;
+  const robots =
+    rec && (rec.index === false || rec.follow === false)
+      ? { index: rec.index !== false, follow: rec.follow !== false }
+      : undefined;
   return {
     title,
     description,
-    alternates: { canonical: `/abayas/${emirate}` },
-    openGraph: { title, description, url: `/abayas/${emirate}`, type: "website" },
-    twitter: { card: "summary_large_image", title, description },
+    ...(robots ? { robots } : {}),
+    alternates: { canonical },
+    openGraph: { title: rec?.ogTitle?.trim() || title, description: rec?.ogDescription?.trim() || description, url: canonical, type: "website" },
+    twitter: { card: "summary_large_image", title: rec?.twitterTitle?.trim() || title, description: rec?.twitterDescription?.trim() || description },
   };
 }
 

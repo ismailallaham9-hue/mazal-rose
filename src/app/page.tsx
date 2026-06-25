@@ -22,6 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { seo } = await getStoreData();
   return pageMetadata({
     pageKey: "home",
+    recordKey: "home",
     path: "/",
     fallbackTitle: seo.defaultTitle,
     fallbackDescription: seo.defaultDescription,

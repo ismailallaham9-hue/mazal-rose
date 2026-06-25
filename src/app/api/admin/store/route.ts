@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     theme: { ...current.theme, ...(body.theme ?? {}) },
     settings: { ...current.settings, ...(body.settings ?? {}) },
     seo: { ...current.seo, ...(body.seo ?? {}) },
+    seoRecords: { ...current.seoRecords, ...(body.seoRecords ?? {}) },
     pages: { ...current.pages, ...(body.pages ?? {}) },
     products: Array.isArray(body.products) ? body.products : current.products,
     categories: Array.isArray(body.categories)
