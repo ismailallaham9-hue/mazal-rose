@@ -67,7 +67,7 @@ export function CategoryGrid({ categories }: { categories?: StoreCategory[] }) {
           </h2>
         </Reveal>
 
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
           {cats.map((c, i) => {
             const media = c.image
               ? { src: c.image, alt: c.label }
@@ -84,7 +84,7 @@ export function CategoryGrid({ categories }: { categories?: StoreCategory[] }) {
                       src={media.src}
                       alt={media.alt}
                       fill
-                      sizes="(min-width: 768px) 25vw, 50vw"
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
                       className="object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
                     />
                   )}
@@ -101,12 +101,14 @@ export function CategoryGrid({ categories }: { categories?: StoreCategory[] }) {
                     className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-cream via-cream/70 to-transparent"
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 p-4 text-center">
-                    <h3 className="font-serif text-xl text-ink transition-colors group-hover:text-bronze md:text-2xl">
+                  <div className="absolute inset-x-0 bottom-0 p-3 text-center sm:p-4">
+                    <h3 className="font-serif text-lg leading-tight text-ink transition-colors group-hover:text-bronze sm:text-xl md:text-2xl">
                       {c.label}
                     </h3>
-                    <p className="mt-0.5 text-xs text-ink-soft">{c.blurb}</p>
-                    <span className="mt-2 inline-block text-[0.62rem] uppercase tracking-[0.22em] text-bronze">
+                    <p className="mt-0.5 line-clamp-1 text-[0.7rem] text-ink-soft sm:text-xs">
+                      {c.blurb}
+                    </p>
+                    <span className="mt-1.5 inline-block text-[0.6rem] uppercase tracking-[0.2em] text-bronze sm:mt-2 sm:text-[0.62rem] sm:tracking-[0.22em]">
                       Shop now →
                     </span>
                   </div>

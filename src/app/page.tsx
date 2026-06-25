@@ -58,6 +58,9 @@ export default async function Home() {
       />
       <div id="discover" className="scroll-mt-24" aria-hidden />
 
+      {/* ── Shop by Category — directly under the hero ───── */}
+      <CategoryGrid categories={categories} />
+
       {/* ── Editorial magazine grid ──────────────────────── */}
       <EditorialHero />
 
@@ -68,8 +71,6 @@ export default async function Home() {
       <Collection2026 products={bestSellers.length ? bestSellers : newArrivals} />
 
       <TrustBadges />
-
-      <CategoryGrid categories={categories} />
 
       <ProductRail
         eyebrow="Just In"
