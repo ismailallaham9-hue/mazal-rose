@@ -110,13 +110,40 @@ export function ContentStudio({
     return { type: "global", name: store.settings.name, h1: store.seo.defaultTitle, intro: store.seo.defaultDescription, bodyText: store.seo.defaultDescription };
   }, [entity, category, product, article, store, rec.metaDescription]);
 
-  const { score, checks } = scoreSeo(rec, ctx);
+  // Effective values: show what's actually live (from existing fields) until
+  // the Studio record overrides them, so the score reflects reality.
+  const pageKeyFor = entity.type === "home" ? "home" : entity.type === "shop" ? "shop" : entity.ref;
+  const existing = {
+    title:
+      entity.type === "category" ? category?.seoTitle :
+      entity.type === "product" ? product?.seoTitle :
+      entity.type === "article" ? article?.seoTitle :
+      entity.type === "global" ? store.seo.defaultTitle :
+      pageKeyFor ? store.pages.seo[pageKeyFor]?.title : undefined,
+    desc:
+      entity.type === "category" ? category?.seoDescription :
+      entity.type === "product" ? product?.seoDescription :
+      entity.type === "article" ? article?.seoDescription :
+      entity.type === "global" ? store.seo.defaultDescription :
+      pageKeyFor ? store.pages.seo[pageKeyFor]?.description : undefined,
+    og:
+      entity.type === "global" ? store.seo.defaultOgImage :
+      entity.type === "product" ? product?.image :
+      entity.type === "article" ? article?.image :
+      pageKeyFor ? store.pages.seo[pageKeyFor]?.ogImage : undefined,
+  };
+  const eff = {
+    seoTitle: rec.seoTitle ?? existing.title ?? "",
+    metaDescription: rec.metaDescription ?? existing.desc ?? "",
+    ogImage: rec.ogImage ?? existing.og ?? "",
+  };
+
+  const { score, checks } = scoreSeo({ ...rec, ...eff }, ctx);
   const band = score >= 80 ? { label: "Good", cls: "bg-green-700" } : score >= 50 ? { label: "Needs work", cls: "bg-amber-600" } : { label: "Problem", cls: "bg-red-700" };
 
   const base = (store.settings.url || "https://mazal.ae").replace(/\/$/, "");
-  const previewTitle = rec.seoTitle || ctx.h1 || store.seo.defaultTitle;
-  const previewDesc = rec.metaDescription || store.seo.defaultDescription;
-  const canonicalShown = rec.canonical || entity.path;
+  const previewTitle = eff.seoTitle || ctx.h1 || store.seo.defaultTitle;
+  const previewDesc = eff.metaDescription || store.seo.defaultDescription;
 
   // ── save: mirror SEO into the live-wired fields + persist ───────────
   async function save() {
@@ -296,8 +323,8 @@ export function ContentStudio({
             </div>
 
             <div className="mt-5 space-y-4">
-              <Counter label="SEO title" value={rec.seoTitle ?? ""} onChange={(v) => setRec({ seoTitle: v })} min={45} max={60} />
-              <Counter label="Meta description" value={rec.metaDescription ?? ""} onChange={(v) => setRec({ metaDescription: v })} min={140} max={160} area />
+              <Counter label="SEO title" value={eff.seoTitle} onChange={(v) => setRec({ seoTitle: v })} min={45} max={60} />
+              <Counter label="Meta description" value={eff.metaDescription} onChange={(v) => setRec({ metaDescription: v })} min={140} max={160} area />
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Focus keyword" value={rec.focusKeyword ?? ""} onChange={(v) => setRec({ focusKeyword: v })} />
                 <Field label="Secondary keywords (comma-sep)" value={rec.secondaryKeywords ?? ""} onChange={(v) => setRec({ secondaryKeywords: v })} />
@@ -314,7 +341,7 @@ export function ContentStudio({
                 <summary className="cursor-pointer text-xs uppercase tracking-[0.16em] text-ink-soft">Open Graph &amp; Twitter</summary>
                 <div className="mt-3 grid gap-4 md:grid-cols-2">
                   <Field label="OG title" value={rec.ogTitle ?? ""} onChange={(v) => setRec({ ogTitle: v })} />
-                  <Field label="OG image URL" value={rec.ogImage ?? ""} onChange={(v) => setRec({ ogImage: v })} />
+                  <Field label="OG image URL" value={rec.ogImage ?? eff.ogImage} onChange={(v) => setRec({ ogImage: v })} />
                   <Area label="OG description" value={rec.ogDescription ?? ""} onChange={(v) => setRec({ ogDescription: v })} />
                   <Field label="Twitter title" value={rec.twitterTitle ?? ""} onChange={(v) => setRec({ twitterTitle: v })} />
                   <Field label="Twitter image URL" value={rec.twitterImage ?? ""} onChange={(v) => setRec({ twitterImage: v })} />
