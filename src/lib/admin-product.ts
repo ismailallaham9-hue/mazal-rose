@@ -108,6 +108,7 @@ export function normalizeProduct(
     image,
     images,
     featured: Boolean(input.featured ?? existing?.featured ?? false),
+    published: has("published") ? Boolean(input.published) : existing?.published,
     createdAt: existing?.createdAt ?? new Date().toISOString().slice(0, 10),
     seoTitle: has("seoTitle")
       ? String(input.seoTitle ?? "").trim() || undefined

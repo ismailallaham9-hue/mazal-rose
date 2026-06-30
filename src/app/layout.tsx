@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
@@ -104,6 +105,19 @@ export default async function RootLayout({
       className={`${cormorant.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-cream text-ink" style={themeStyle}>
+        {/* Google tag (gtag.js) — loads on every page via the root layout */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-7RP6QP5FWM"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-7RP6QP5FWM');
+          `}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}

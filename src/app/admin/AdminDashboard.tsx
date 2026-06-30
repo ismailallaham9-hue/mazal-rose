@@ -2,7 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   BADGE_OPTIONS,
   CATEGORY_OPTIONS,
@@ -14,11 +22,15 @@ import type { Badge, Category, Product } from "@/lib/products";
 import type {
   MediaAsset,
   SiteContent,
+  SiteSettings,
   StoreCategory,
   StoreData,
 } from "@/lib/store";
 
+/* ─────────────────────── Types ─────────────────────── */
+
 type Tab =
+  | "dashboard"
   | "products"
   | "media"
   | "theme"
@@ -27,6 +39,18 @@ type Tab =
   | "categories"
   | "journal"
   | "settings";
+
+const DEFAULT_THEME_VALUES = {
+  cream: "#fdf7f3",
+  creamSoft: "#f8ebe3",
+  sand: "#f0d6ca",
+  sandDeep: "#e2bcae",
+  bronze: "#c2887a",
+  bronzeDeep: "#a86b5c",
+  ink: "#46352e",
+  inkSoft: "#836b61",
+  radius: "16px",
+};
 
 type ProductDraft = {
   id?: string;
@@ -46,6 +70,7 @@ type ProductDraft = {
   image: string;
   images: string[];
   featured: boolean;
+  published: boolean;
   seoTitle: string;
   seoDescription: string;
 };
@@ -67,11 +92,13 @@ const emptyProduct: ProductDraft = {
   image: "",
   images: [],
   featured: false,
+  published: true,
   seoTitle: "",
   seoDescription: "",
 };
 
 const tabs: { id: Tab; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
   { id: "products", label: "Products" },
   { id: "media", label: "Media" },
   { id: "theme", label: "Theme" },
@@ -81,6 +108,8 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "journal", label: "Journal" },
   { id: "settings", label: "Settings" },
 ];
+
+/* ─────────────────── Product helpers ───────────────── */
 
 function productToDraft(product: Product): ProductDraft {
   const images = product.images?.length
@@ -106,6 +135,7 @@ function productToDraft(product: Product): ProductDraft {
     image: product.image ?? images[0] ?? "",
     images,
     featured: product.featured ?? false,
+    published: product.published !== false,
     seoTitle: product.seoTitle ?? "",
     seoDescription: product.seoDescription ?? "",
   };
@@ -142,10 +172,41 @@ function productPayload(draft: ProductDraft) {
     image: images[0],
     images,
     featured: draft.featured,
+    published: draft.published,
     seoTitle: draft.seoTitle.trim() || undefined,
     seoDescription: draft.seoDescription.trim() || undefined,
   };
 }
+
+/* ─────────────────── Toast system ──────────────────── */
+
+function useToast() {
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const show = useCallback((message: string, type: "success" | "error" = "success") => {
+    clearTimeout(timerRef.current);
+    setToast({ message, type });
+    timerRef.current = setTimeout(() => setToast(null), 3500);
+  }, []);
+  return { toast, show };
+}
+
+function Toast({ toast }: { toast: { message: string; type: "success" | "error" } | null }) {
+  if (!toast) return null;
+  return (
+    <div
+      className={`fixed right-5 top-5 z-50 px-5 py-3 text-sm shadow-lg transition-all ${
+        toast.type === "error"
+          ? "border border-red-300 bg-red-50 text-red-900"
+          : "border border-green-300 bg-green-50 text-green-900"
+      }`}
+    >
+      {toast.message}
+    </div>
+  );
+}
+
+/* ──────────────────── Main component ───────────────── */
 
 export function AdminDashboard({
   initialStore,
@@ -156,11 +217,11 @@ export function AdminDashboard({
 }) {
   const [store, setStore] = useState(initialStore);
   const [tab, setTab] = useState<Tab>("products");
-  const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ProductDraft>(emptyProduct);
+  const { toast, show: showToast } = useToast();
 
   const filteredProducts = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -173,7 +234,6 @@ export function AdminDashboard({
 
   async function saveStore(next: StoreData, message = "Saved.") {
     setBusy(true);
-    setStatus("Saving...");
     const res = await fetch("/api/admin/store", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -182,31 +242,34 @@ export function AdminDashboard({
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setStatus(data.error || "Could not save.");
+      showToast(data.error || "Could not save.", "error");
       return null;
     }
     setStore(data.store);
-    setStatus(message);
+    showToast(message);
     return data.store as StoreData;
   }
 
-  async function uploadFile(file: File) {
+  async function uploadFile(file: File): Promise<MediaAsset | null> {
     setBusy(true);
-    setStatus("Uploading...");
     const form = new FormData();
     form.append("file", file);
     const res = await fetch("/api/admin/upload", { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setStatus(data.error || "Upload failed.");
+      showToast(data.error || "Upload failed.", "error");
       return null;
     }
     const asset = data.asset as MediaAsset;
     const next = { ...store, media: [asset, ...store.media] };
     setStore(next);
-    setStatus("Uploaded.");
     return asset;
+  }
+
+  async function uploadAndGetUrl(file: File): Promise<string | null> {
+    const asset = await uploadFile(file);
+    return asset?.url ?? null;
   }
 
   async function uploadProductImage(e: ChangeEvent<HTMLInputElement>) {
@@ -221,6 +284,20 @@ export function AdminDashboard({
     }));
   }
 
+  async function uploadProductGalleryImages(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    for (const file of files) {
+      const asset = await uploadFile(file);
+      if (asset) {
+        setDraft((d) => ({
+          ...d,
+          image: d.image || asset.url,
+          images: Array.from(new Set([...d.images, asset.url])),
+        }));
+      }
+    }
+  }
+
   async function saveProduct(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const payload = productPayload(draft);
@@ -228,7 +305,6 @@ export function AdminDashboard({
       ? `/api/admin/products/${encodeURIComponent(selectedId)}`
       : "/api/admin/products";
     setBusy(true);
-    setStatus("Saving product...");
     const res = await fetch(url, {
       method: selectedId ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -237,7 +313,7 @@ export function AdminDashboard({
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setStatus(data.error || "Product could not be saved.");
+      showToast(data.error || "Product could not be saved.", "error");
       return;
     }
     const product = data.product as Product;
@@ -249,20 +325,50 @@ export function AdminDashboard({
     }));
     setSelectedId(product.id);
     setDraft(productToDraft(product));
-    setStatus("Product saved.");
+    showToast("Product saved.");
+  }
+
+  async function duplicateProduct() {
+    if (!selectedId) return;
+    const original = store.products.find((p) => p.id === selectedId);
+    if (!original) return;
+    const payload: Record<string, unknown> = {
+      ...original,
+      name: `${original.name} (copy)`,
+      slug: "",
+      featured: false,
+    };
+    delete payload.id;
+    setBusy(true);
+    const res = await fetch("/api/admin/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      showToast(data.error || "Could not duplicate.", "error");
+      return;
+    }
+    const product = data.product as Product;
+    setStore((s) => ({ ...s, products: [product, ...s.products] }));
+    setSelectedId(product.id);
+    setDraft(productToDraft(product));
+    showToast("Product duplicated.");
   }
 
   async function deleteProduct() {
     if (!selectedId) return;
     const product = store.products.find((p) => p.id === selectedId);
-    if (!product || !window.confirm(`Delete ${product.name}?`)) return;
+    if (!product || !window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
     setBusy(true);
     const res = await fetch(`/api/admin/products/${encodeURIComponent(selectedId)}`, {
       method: "DELETE",
     });
     setBusy(false);
     if (!res.ok) {
-      setStatus("Product could not be deleted.");
+      showToast("Product could not be deleted.", "error");
       return;
     }
     setStore((s) => ({
@@ -271,7 +377,7 @@ export function AdminDashboard({
     }));
     setSelectedId(null);
     setDraft(emptyProduct);
-    setStatus("Product deleted.");
+    showToast("Product deleted.");
   }
 
   async function logout() {
@@ -281,21 +387,22 @@ export function AdminDashboard({
 
   return (
     <section className="min-h-screen bg-cream">
+      <Toast toast={toast} />
       <div className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-sand-deep pb-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="eyebrow">MAZAL Control Panel</p>
             <h1 className="mt-2 font-serif text-4xl text-ink">Website Admin</h1>
             <p className="mt-2 text-sm text-ink-soft">
-              Manage products, images, colors, pages, journal, and settings.
+              Manage products, images, pages, journal, theme, and all site settings.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {status && <p className="text-sm text-ink-soft">{status}</p>}
+            {busy && <span className="text-sm text-bronze animate-pulse">Saving…</span>}
             <Link className="admin-dark" href="/admin/content-studio">
               Content Studio
             </Link>
-            <Link className="admin-secondary" href="/shop">
+            <Link className="admin-secondary" href="/" target="_blank">
               View site
             </Link>
             <button type="button" className="admin-dark" onClick={logout}>
@@ -306,22 +413,21 @@ export function AdminDashboard({
 
         {!storageReady && (
           <div className="mt-5 border border-bronze bg-sand px-4 py-3 text-sm text-ink">
-            Production storage is not configured. Enable Vercel Blob so changes
-            persist live and survive redeploys.
+            Production storage is not configured. Changes may not persist after redeploy.
           </div>
         )}
 
         <div className="mt-7 grid gap-7 lg:grid-cols-[220px_1fr]">
-          <nav className="grid gap-2 self-start lg:sticky lg:top-6">
+          <nav className="flex gap-2 overflow-x-auto lg:grid lg:self-start lg:sticky lg:top-6">
             {tabs.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                className={`border px-4 py-3 text-left text-sm uppercase tracking-[0.14em] ${
+                className={`shrink-0 border px-4 py-3 text-left text-sm uppercase tracking-[0.14em] ${
                   tab === item.id
                     ? "border-bronze bg-bronze text-cream-soft"
-                    : "border-sand-deep bg-cream-soft text-ink"
+                    : "border-sand-deep bg-cream-soft text-ink hover:bg-sand/40"
                 }`}
               >
                 {item.label}
@@ -329,12 +435,29 @@ export function AdminDashboard({
             ))}
           </nav>
 
-          <main className="space-y-6">
+          <main className="space-y-6 min-w-0">
+            {tab === "dashboard" && (
+              <DashboardSection
+                store={store}
+                goTo={setTab}
+                startNewProduct={() => {
+                  setSelectedId(null);
+                  setDraft(emptyProduct);
+                  setTab("products");
+                }}
+                editProduct={(p) => {
+                  setSelectedId(p.id);
+                  setDraft(productToDraft(p));
+                  setTab("products");
+                }}
+              />
+            )}
             {tab === "products" && (
               <ProductsSection
                 busy={busy}
                 categories={store.categories}
                 deleteProduct={deleteProduct}
+                duplicateProduct={duplicateProduct}
                 draft={draft}
                 products={filteredProducts}
                 query={query}
@@ -345,6 +468,7 @@ export function AdminDashboard({
                 setSelectedId={setSelectedId}
                 store={store}
                 uploadProductImage={uploadProductImage}
+                uploadProductGalleryImages={uploadProductGalleryImages}
               />
             )}
             {tab === "media" && (
@@ -353,13 +477,14 @@ export function AdminDashboard({
                 setStore={setStore}
                 saveStore={saveStore}
                 uploadFile={uploadFile}
+                showToast={showToast}
               />
             )}
             {tab === "theme" && (
-              <ThemeSection store={store} setStore={setStore} saveStore={saveStore} />
+              <ThemeSection store={store} setStore={setStore} saveStore={saveStore} uploadAndGetUrl={uploadAndGetUrl} />
             )}
             {tab === "pages" && (
-              <PagesSection store={store} setStore={setStore} saveStore={saveStore} />
+              <PagesSection store={store} setStore={setStore} saveStore={saveStore} uploadAndGetUrl={uploadAndGetUrl} />
             )}
             {tab === "seo" && (
               <SeoSection store={store} setStore={setStore} saveStore={saveStore} />
@@ -369,10 +494,11 @@ export function AdminDashboard({
                 store={store}
                 setStore={setStore}
                 saveStore={saveStore}
+                uploadAndGetUrl={uploadAndGetUrl}
               />
             )}
             {tab === "journal" && (
-              <JournalSection store={store} setStore={setStore} saveStore={saveStore} />
+              <JournalSection store={store} setStore={setStore} saveStore={saveStore} uploadAndGetUrl={uploadAndGetUrl} />
             )}
             {tab === "settings" && (
               <SettingsSection store={store} setStore={setStore} saveStore={saveStore} />
@@ -394,6 +520,10 @@ export function AdminDashboard({
           letter-spacing: 0.16em;
           text-transform: uppercase;
         }
+        .admin-dark:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
         .admin-secondary {
           border: 1px solid var(--color-sand-deep);
           color: var(--color-ink);
@@ -402,15 +532,131 @@ export function AdminDashboard({
           letter-spacing: 0.16em;
           text-transform: uppercase;
         }
+        .admin-secondary:hover {
+          background: var(--color-sand);
+        }
+        .admin-danger {
+          border: 1px solid #991b1b;
+          color: #991b1b;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.72rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+        .admin-danger:hover {
+          background: #fef2f2;
+        }
       `}</style>
     </section>
   );
 }
 
+/* ─────────────────── Dashboard ─────────────────────── */
+
+function DashboardSection({
+  store,
+  goTo,
+  startNewProduct,
+  editProduct,
+}: {
+  store: StoreData;
+  goTo: (tab: Tab) => void;
+  startNewProduct: () => void;
+  editProduct: (p: Product) => void;
+}) {
+  const published = store.products.filter((p) => p.published !== false).length;
+  const hidden = store.products.length - published;
+  const lowStock = store.products
+    .filter((p) => typeof p.stock === "number" && p.stock <= 3)
+    .sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0));
+  const featured = store.products.filter((p) => p.featured).length;
+
+  const cards: { label: string; value: string | number; tab?: Tab }[] = [
+    { label: "Products", value: store.products.length, tab: "products" },
+    { label: "Visible / Hidden", value: `${published} / ${hidden}`, tab: "products" },
+    { label: "Featured", value: featured, tab: "products" },
+    { label: "Low stock (≤3)", value: lowStock.length, tab: "products" },
+    { label: "Categories", value: store.categories.length, tab: "categories" },
+    { label: "Journal posts", value: store.articles.length, tab: "journal" },
+    { label: "Media assets", value: store.media.length, tab: "media" },
+  ];
+
+  const actions: { label: string; onClick: () => void }[] = [
+    { label: "+ Add product", onClick: startNewProduct },
+    { label: "Upload media", onClick: () => goTo("media") },
+    { label: "Edit homepage", onClick: () => goTo("pages") },
+    { label: "Edit theme", onClick: () => goTo("theme") },
+    { label: "Contact & settings", onClick: () => goTo("settings") },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <section className="admin-card">
+        <h2 className="font-serif text-3xl">Overview</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          {store.updatedAt
+            ? `Last saved ${new Date(store.updatedAt).toLocaleString()}`
+            : "A snapshot of your store."}
+        </p>
+        <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {cards.map((c) => (
+            <button
+              key={c.label}
+              type="button"
+              onClick={() => c.tab && goTo(c.tab)}
+              className="border border-sand-deep bg-cream p-4 text-left hover:border-bronze"
+            >
+              <span className="block text-xs uppercase tracking-[0.14em] text-ink-soft">{c.label}</span>
+              <span className="mt-2 block font-serif text-3xl text-ink">{c.value}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="admin-card">
+        <h3 className="text-xs uppercase tracking-[0.16em] text-ink-soft">Quick actions</h3>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {actions.map((a) => (
+            <button key={a.label} type="button" className="admin-secondary" onClick={a.onClick}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="admin-card">
+        <h3 className="text-xs uppercase tracking-[0.16em] text-ink-soft">Low stock alerts</h3>
+        {lowStock.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-soft">All products are well stocked.</p>
+        ) : (
+          <div className="mt-3 divide-y divide-sand-deep/60 border border-sand-deep">
+            {lowStock.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => editProduct(p)}
+                className="flex w-full items-center justify-between px-3 py-3 text-left hover:bg-sand/30"
+              >
+                <span className="text-sm font-medium">{p.name}</span>
+                <span className={`text-xs uppercase tracking-[0.12em] ${(p.stock ?? 0) <= 0 ? "text-red-700" : "text-bronze"}`}>
+                  {(p.stock ?? 0) <= 0 ? "Out of stock" : `${p.stock} left`}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+/* ─────────────────── Products ──────────────────────── */
+
 function ProductsSection(props: {
   busy: boolean;
   categories: StoreCategory[];
   deleteProduct: () => void;
+  duplicateProduct: () => void;
   draft: ProductDraft;
   products: Product[];
   query: string;
@@ -421,6 +667,7 @@ function ProductsSection(props: {
   setSelectedId: (id: string | null) => void;
   store: StoreData;
   uploadProductImage: (e: ChangeEvent<HTMLInputElement>) => void;
+  uploadProductGalleryImages: (e: ChangeEvent<HTMLInputElement>) => void;
 }) {
   const update = <K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) =>
     props.setDraft((d) => ({
@@ -442,16 +689,17 @@ function ProductsSection(props: {
               props.setDraft(emptyProduct);
             }}
           >
-            New
+            + New
           </button>
         </div>
         <input
           value={props.query}
           onChange={(e) => props.setQuery(e.target.value)}
-          placeholder="Search"
+          placeholder="Search products…"
           className="mt-4 w-full border border-sand-deep bg-cream px-3 py-2 text-sm"
         />
-        <div className="mt-4 max-h-[680px] overflow-auto border border-sand-deep">
+        <p className="mt-2 text-xs text-ink-soft">{props.products.length} product{props.products.length !== 1 ? "s" : ""}</p>
+        <div className="mt-3 max-h-[680px] overflow-auto border border-sand-deep">
           {props.products.map((p) => (
             <button
               key={p.id}
@@ -461,35 +709,45 @@ function ProductsSection(props: {
                 props.setDraft(productToDraft(p));
               }}
               className={`block w-full border-b border-sand-deep/70 px-3 py-3 text-left ${
-                props.selectedId === p.id ? "bg-sand" : "bg-cream-soft"
+                props.selectedId === p.id ? "bg-sand" : "bg-cream-soft hover:bg-sand/30"
               }`}
             >
-              <span className="block text-sm font-medium">{p.name}</span>
+              <span className="flex items-center gap-2 text-sm font-medium">
+                {p.name}
+                {p.published === false && (
+                  <span className="bg-ink/10 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-ink-soft">Hidden</span>
+                )}
+              </span>
               <span className="text-xs uppercase tracking-[0.12em] text-ink-soft">
-                {p.category} / AED {p.price}
+                {p.category} · AED {p.price}
+                {p.stock !== undefined && p.stock <= 0 ? " · Out of stock" : ""}
               </span>
             </button>
           ))}
+          {props.products.length === 0 && (
+            <p className="px-3 py-6 text-center text-sm text-ink-soft">No products found.</p>
+          )}
         </div>
       </aside>
 
       <form onSubmit={props.saveProduct} className="admin-card">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-serif text-3xl">
-            {props.draft.name || "New Product"}
+            {props.selectedId ? props.draft.name || "Edit Product" : "New Product"}
           </h2>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {props.selectedId && (
-              <button
-                type="button"
-                onClick={props.deleteProduct}
-                className="border border-red-800 px-4 py-2 text-xs uppercase tracking-[0.14em] text-red-800"
-              >
+              <button type="button" onClick={props.duplicateProduct} className="admin-secondary">
+                Duplicate
+              </button>
+            )}
+            {props.selectedId && (
+              <button type="button" onClick={props.deleteProduct} className="admin-danger">
                 Delete
               </button>
             )}
             <button disabled={props.busy} className="admin-dark">
-              Save product
+              {props.selectedId ? "Update product" : "Create product"}
             </button>
           </div>
         </div>
@@ -497,8 +755,8 @@ function ProductsSection(props: {
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <TextField label="Name" value={props.draft.name} onChange={(v) => update("name", v)} required />
           <TextField label="Slug" value={props.draft.slug} onChange={(v) => update("slug", slugify(v))} />
-          <TextField label="Price AED" type="number" value={props.draft.price} onChange={(v) => update("price", v)} required />
-          <TextField label="Compare at AED" type="number" value={props.draft.compareAtPrice} onChange={(v) => update("compareAtPrice", v)} />
+          <TextField label="Price (AED)" type="number" value={props.draft.price} onChange={(v) => update("price", v)} required />
+          <TextField label="Compare at (AED)" type="number" value={props.draft.compareAtPrice} onChange={(v) => update("compareAtPrice", v)} />
           <SelectField
             label="Category"
             value={props.draft.category}
@@ -511,56 +769,79 @@ function ProductsSection(props: {
             ]}
           />
           <TextField label="Stock" type="number" value={props.draft.stock} onChange={(v) => update("stock", v)} />
-          <TextField label="Sizes" value={props.draft.sizes} onChange={(v) => update("sizes", v)} />
+          <TextField label="Sizes (comma-separated)" value={props.draft.sizes} onChange={(v) => update("sizes", v)} />
           <TextField label="Material" value={props.draft.material} onChange={(v) => update("material", v)} />
           <div className="md:col-span-2">
             <TextArea label="Description" value={props.draft.description} onChange={(v) => update("description", v)} />
           </div>
-          <TextArea label="Care lines" value={props.draft.care} onChange={(v) => update("care", v)} />
-          <TextArea label="Custom colors, one per line: Name, #hex" value={props.draft.customColors} onChange={(v) => update("customColors", v)} />
+          <TextArea label="Care instructions (one per line)" value={props.draft.care} onChange={(v) => update("care", v)} />
+          <TextArea label="Custom colors (one per line: Name, #hex)" value={props.draft.customColors} onChange={(v) => update("customColors", v)} />
           <CheckGroup label="Badges" values={BADGE_OPTIONS} selected={props.draft.badges} onChange={(v) => update("badges", v)} />
           <ColorGroup selected={props.draft.colors} onChange={(v) => update("colors", v)} />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" className="accent-bronze" checked={props.draft.featured} onChange={(e) => update("featured", e.target.checked)} />
             Featured on homepage
           </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" className="accent-bronze" checked={props.draft.published} onChange={(e) => update("published", e.target.checked)} />
+            Visible on site (uncheck to hide from shop)
+          </label>
         </div>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-[260px_1fr]">
-          <div>
-            <div className="relative aspect-[4/5] overflow-hidden bg-sand">
-              {props.draft.image ? (
-                <Image src={props.draft.image} alt="" fill className="object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-ink-soft">No image</div>
-              )}
+        {/* ── Images ── */}
+        <div className="mt-8 border-t border-sand-deep pt-6">
+          <h3 className="text-xs uppercase tracking-[0.16em] text-ink-soft">Product Images</h3>
+          <div className="mt-4 grid gap-5 lg:grid-cols-[260px_1fr]">
+            <div>
+              <div className="relative aspect-[4/5] overflow-hidden bg-sand">
+                {props.draft.image ? (
+                  <Image src={props.draft.image} alt="" fill className="object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-ink-soft">No image</div>
+                )}
+              </div>
+              <label className="mt-3 block">
+                <span className="admin-secondary inline-block cursor-pointer">Upload primary image</span>
+                <input className="hidden" type="file" accept="image/*" onChange={props.uploadProductImage} />
+              </label>
             </div>
-            <input className="mt-3 text-sm" type="file" accept="image/*" onChange={props.uploadProductImage} />
-            <TextField label="Primary image URL" value={props.draft.image} onChange={(v) => update("image", v)} />
-          </div>
-          <div>
-            <h3 className="text-xs uppercase tracking-[0.16em] text-ink-soft">Gallery images</h3>
-            <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-              {props.draft.images.map((url) => (
-                <button
-                  key={url}
-                  type="button"
-                  onClick={() => update("image", url)}
-                  className={`relative aspect-square overflow-hidden border ${props.draft.image === url ? "border-bronze" : "border-sand-deep"}`}
-                  title="Set as primary"
-                >
-                  <Image src={url} alt="" fill className="object-cover" />
-                </button>
-              ))}
+            <div>
+              <h4 className="text-xs uppercase tracking-[0.16em] text-ink-soft">Gallery</h4>
+              <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+                {props.draft.images.map((url) => (
+                  <div key={url} className="group relative">
+                    <button
+                      type="button"
+                      onClick={() => update("image", url)}
+                      className={`relative aspect-square w-full overflow-hidden border ${props.draft.image === url ? "border-bronze ring-2 ring-bronze" : "border-sand-deep"}`}
+                      title="Set as primary"
+                    >
+                      <Image src={url} alt="" fill className="object-cover" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = props.draft.images.filter((u) => u !== url);
+                        update("images", next);
+                        if (props.draft.image === url) update("image", next[0] ?? "");
+                      }}
+                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center bg-red-700 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <label className="mt-4 block">
+                <span className="admin-secondary inline-block cursor-pointer">+ Add gallery images</span>
+                <input className="hidden" type="file" accept="image/*" multiple onChange={props.uploadProductGalleryImages} />
+              </label>
             </div>
-            <TextArea
-              label="Gallery URLs, one per line"
-              value={props.draft.images.join("\n")}
-              onChange={(v) => update("images", v.split("\n").map((s) => s.trim()).filter(Boolean))}
-            />
           </div>
         </div>
 
+        {/* ── SEO ── */}
         <div className="mt-8 border-t border-sand-deep pt-6">
           <h3 className="text-xs uppercase tracking-[0.16em] text-ink-soft">SEO (optional)</h3>
           <p className="mt-1 text-xs text-ink-soft">Leave blank to auto-generate from the product name and description.</p>
@@ -576,55 +857,121 @@ function ProductsSection(props: {
   );
 }
 
+/* ──────────────────── Media ────────────────────────── */
+
 function MediaSection({
   store,
   setStore,
   saveStore,
   uploadFile,
+  showToast,
 }: {
   store: StoreData;
   setStore: (store: StoreData) => void;
   saveStore: (store: StoreData, message?: string) => Promise<StoreData | null>;
   uploadFile: (file: File) => Promise<MediaAsset | null>;
+  showToast: (msg: string, type?: "success" | "error") => void;
 }) {
-  async function onFiles(e: ChangeEvent<HTMLInputElement>) {
-    for (const file of Array.from(e.target.files ?? [])) await uploadFile(file);
+  const [dragging, setDragging] = useState(false);
+
+  async function uploadMany(files: File[]) {
+    const valid = files.filter((f) => /^image\/|^video\/(mp4|webm)/.test(f.type));
+    for (const file of valid) await uploadFile(file);
+    if (valid.length) showToast(`${valid.length} file${valid.length > 1 ? "s" : ""} uploaded.`);
   }
+
+  async function onFiles(e: ChangeEvent<HTMLInputElement>) {
+    await uploadMany(Array.from(e.target.files ?? []));
+  }
+
+  function copyUrl(url: string) {
+    navigator.clipboard.writeText(url);
+    showToast("Image link copied.");
+  }
+
+  const setAlt = (id: string, alt: string) =>
+    setStore({ ...store, media: store.media.map((m) => (m.id === id ? { ...m, alt } : m)) });
+
   const remove = (id: string) => {
-    const next = { ...store, media: store.media.filter((m) => m.id !== id) };
-    setStore(next);
+    if (!window.confirm("Remove this media asset?")) return;
+    setStore({ ...store, media: store.media.filter((m) => m.id !== id) });
   };
+
   return (
     <section className="admin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-serif text-3xl">Media Library</h2>
-          <p className="text-sm text-ink-soft">Upload reusable product, page, category, logo, and brand images.</p>
+          <p className="text-sm text-ink-soft">{store.media.length} asset{store.media.length !== 1 ? "s" : ""} — upload images &amp; videos for products, pages, and categories.</p>
         </div>
-        <button className="admin-dark" onClick={() => saveStore(store, "Media saved.")}>Save media</button>
+        <div className="flex gap-3">
+          <label className="admin-dark cursor-pointer">
+            Upload files
+            <input className="hidden" type="file" accept="image/*,video/mp4,video/webm" multiple onChange={onFiles} />
+          </label>
+          <button className="admin-dark" onClick={() => saveStore(store, "Media saved.")}>Save alt text</button>
+        </div>
       </div>
-      <input className="mt-5" type="file" accept="image/*,video/mp4,video/webm" multiple onChange={onFiles} />
-      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          void uploadMany(Array.from(e.dataTransfer.files ?? []));
+        }}
+        className={`mt-5 flex flex-col items-center justify-center border-2 border-dashed px-4 py-10 text-center text-sm ${
+          dragging ? "border-bronze bg-sand/40" : "border-sand-deep bg-cream"
+        }`}
+      >
+        <p className="text-ink-soft">Drag &amp; drop images or videos here to upload.</p>
+        <label className="admin-secondary mt-3 cursor-pointer">
+          Or choose files
+          <input className="hidden" type="file" accept="image/*,video/mp4,video/webm" multiple onChange={onFiles} />
+        </label>
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
         {store.media.map((asset) => (
-          <div key={asset.id} className="border border-sand-deep bg-cream p-2">
+          <div key={asset.id} className="group border border-sand-deep bg-cream p-2">
             {asset.type.startsWith("image/") ? (
               <div className="relative aspect-square overflow-hidden bg-sand">
-                <Image src={asset.url} alt={asset.name} fill className="object-cover" />
+                <Image src={asset.url} alt={asset.alt || asset.name} fill className="object-cover" />
               </div>
             ) : (
-              <div className="flex aspect-square items-center justify-center bg-sand text-sm">Video</div>
+              <div className="flex aspect-square items-center justify-center bg-sand text-sm text-ink-soft">Video</div>
             )}
-            <p className="mt-2 truncate text-xs">{asset.name}</p>
-            <input readOnly value={asset.url} className="mt-2 w-full border border-sand-deep bg-cream-soft px-2 py-1 text-xs" />
-            <button type="button" className="mt-2 text-xs uppercase tracking-[0.14em] text-red-800" onClick={() => remove(asset.id)}>Remove</button>
+            <p className="mt-2 truncate text-xs" title={asset.name}>{asset.name}</p>
+            <input
+              value={asset.alt ?? ""}
+              onChange={(e) => setAlt(asset.id, e.target.value)}
+              placeholder="Describe this image…"
+              className="mt-2 w-full border border-sand-deep bg-cream-soft px-2 py-1 text-xs"
+            />
+            <div className="mt-2 flex gap-2">
+              <button type="button" className="text-xs text-bronze underline" onClick={() => copyUrl(asset.url)}>Copy link</button>
+              <button type="button" className="text-xs text-red-800" onClick={() => remove(asset.id)}>Remove</button>
+            </div>
           </div>
         ))}
+        {store.media.length === 0 && (
+          <p className="col-span-full py-8 text-center text-sm text-ink-soft">No media uploaded yet.</p>
+        )}
       </div>
     </section>
   );
 }
 
-function ThemeSection({ store, setStore, saveStore }: SectionProps) {
+/* ──────────────────── Theme ────────────────────────── */
+
+type SectionProps = {
+  store: StoreData;
+  setStore: (store: StoreData) => void;
+  saveStore: (store: StoreData, message?: string) => Promise<StoreData | null>;
+};
+
+function ThemeSection({ store, setStore, saveStore, uploadAndGetUrl }: SectionProps & { uploadAndGetUrl: (file: File) => Promise<string | null> }) {
   const themeKeys = [
     ["cream", "Cream"],
     ["creamSoft", "Cream soft"],
@@ -635,63 +982,297 @@ function ThemeSection({ store, setStore, saveStore }: SectionProps) {
     ["ink", "Ink"],
     ["inkSoft", "Ink soft"],
   ] as const;
+
+  async function uploadLogo(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadAndGetUrl(file);
+    if (url) setStore({ ...store, theme: { ...store.theme, logo: url } });
+  }
+
   return (
     <section className="admin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-serif text-3xl">Theme</h2>
-        <button className="admin-dark" onClick={() => saveStore(store, "Theme saved.")}>Save theme</button>
+        <h2 className="font-serif text-3xl">Site Theme</h2>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            className="admin-secondary"
+            onClick={() => {
+              if (!window.confirm("Reset all colours and radius to the MAZAL default?")) return;
+              setStore({ ...store, theme: { ...store.theme, ...DEFAULT_THEME_VALUES } });
+            }}
+          >
+            Reset to default
+          </button>
+          <button className="admin-dark" onClick={() => saveStore(store, "Theme saved.")}>Save theme</button>
+        </div>
       </div>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {themeKeys.map(([key, label]) => (
-          <label key={key} className="flex items-center justify-between gap-4 border border-sand-deep bg-cream px-3 py-2">
-            <span className="text-sm">{label}</span>
-            <input
-              type="color"
-              value={store.theme[key]}
-              onChange={(e) => setStore({ ...store, theme: { ...store.theme, [key]: e.target.value } })}
-            />
-          </label>
-        ))}
-        <TextField label="Corner radius" value={store.theme.radius} onChange={(v) => setStore({ ...store, theme: { ...store.theme, radius: v } })} />
-        <TextField label="Logo URL" value={store.theme.logo ?? ""} onChange={(v) => setStore({ ...store, theme: { ...store.theme, logo: v } })} />
-      </div>
+
+      <Fieldset title="Brand Colors">
+        <div className="grid gap-4 md:grid-cols-2">
+          {themeKeys.map(([key, label]) => (
+            <label key={key} className="flex items-center justify-between gap-4 border border-sand-deep bg-cream px-3 py-2">
+              <div className="flex items-center gap-3">
+                <span className="h-8 w-8 border border-ink/10" style={{ backgroundColor: store.theme[key] }} />
+                <span className="text-sm">{label}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-ink-soft">{store.theme[key]}</span>
+                <input
+                  type="color"
+                  value={store.theme[key]}
+                  onChange={(e) => setStore({ ...store, theme: { ...store.theme, [key]: e.target.value } })}
+                  className="h-8 w-8 cursor-pointer border-0"
+                />
+              </div>
+            </label>
+          ))}
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Logo">
+        <div className="flex items-center gap-6">
+          {store.theme.logo && (
+            <div className="relative h-16 w-40 overflow-hidden bg-sand">
+              <Image src={store.theme.logo} alt="Logo" fill className="object-contain" />
+            </div>
+          )}
+          <div>
+            <label className="admin-secondary inline-block cursor-pointer">
+              Upload logo
+              <input className="hidden" type="file" accept="image/*" onChange={uploadLogo} />
+            </label>
+            {store.theme.logo && (
+              <button type="button" className="ml-3 text-xs text-red-800" onClick={() => setStore({ ...store, theme: { ...store.theme, logo: "" } })}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Layout">
+        <TextField label="Corner radius (e.g. 16px, 0)" value={store.theme.radius} onChange={(v) => setStore({ ...store, theme: { ...store.theme, radius: v } })} />
+      </Fieldset>
     </section>
   );
 }
 
-type SectionProps = {
-  store: StoreData;
-  setStore: (store: StoreData) => void;
-  saveStore: (store: StoreData, message?: string) => Promise<StoreData | null>;
-};
+/* ──────────────────── Pages ────────────────────────── */
 
-function PagesSection({ store, saveStore }: SectionProps) {
+function PagesSection({ store, saveStore, uploadAndGetUrl }: SectionProps & { uploadAndGetUrl: (f: File) => Promise<string | null> }) {
   const [content, setContent] = useState<SiteContent>(store.content);
   const [pages, setPages] = useState(store.pages);
+
   const save = () => saveStore({ ...store, content, pages }, "Page content saved.");
+
+  async function uploadHomeImage(key: string) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const url = await uploadAndGetUrl(file);
+      if (url) setPages((p) => ({ ...p, home: { ...p.home, [key]: url } }));
+    };
+    input.click();
+  }
+
   return (
     <section className="admin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-serif text-3xl">Pages & Text</h2>
+        <h2 className="font-serif text-3xl">Pages &amp; Content</h2>
         <button className="admin-dark" onClick={save}>Save pages</button>
       </div>
-      <div className="mt-6 grid gap-5 md:grid-cols-2">
-        <TextField label="Hero eyebrow" value={content.heroEyebrow} onChange={(v) => setContent({ ...content, heroEyebrow: v })} />
-        <TextField label="Hero title" value={content.heroTitle} onChange={(v) => setContent({ ...content, heroTitle: v })} />
-        <TextArea label="Hero subtitle" value={content.heroSubtitle} onChange={(v) => setContent({ ...content, heroSubtitle: v })} />
-        <TextArea label="Announcements" value={content.announcements.join("\n")} onChange={(v) => setContent({ ...content, announcements: v.split("\n").filter(Boolean) })} />
-        <TextField label="Shop title" value={pages.shop.title} onChange={(v) => setPages({ ...pages, shop: { ...pages.shop, title: v } })} />
-        <TextArea label="Shop intro" value={pages.shop.blurb} onChange={(v) => setPages({ ...pages, shop: { ...pages.shop, blurb: v } })} />
-        <TextField label="About title" value={pages.about.title} onChange={(v) => setPages({ ...pages, about: { ...pages.about, title: v } })} />
-        <TextArea label="About body" value={pages.about.body} onChange={(v) => setPages({ ...pages, about: { ...pages.about, body: v } })} />
-        <TextField label="Contact title" value={pages.contact.title} onChange={(v) => setPages({ ...pages, contact: { ...pages.contact, title: v } })} />
-        <TextArea label="Contact body" value={pages.contact.body} onChange={(v) => setPages({ ...pages, contact: { ...pages.contact, body: v } })} />
-        <TextField label="Footer newsletter title" value={pages.footer.newsletterTitle} onChange={(v) => setPages({ ...pages, footer: { ...pages.footer, newsletterTitle: v } })} />
-        <TextArea label="Footer newsletter body" value={pages.footer.newsletterBody} onChange={(v) => setPages({ ...pages, footer: { ...pages.footer, newsletterBody: v } })} />
-      </div>
+
+      <Fieldset title="Hero Section">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Eyebrow" value={content.heroEyebrow} onChange={(v) => setContent({ ...content, heroEyebrow: v })} />
+          <TextField label="Title" value={content.heroTitle} onChange={(v) => setContent({ ...content, heroTitle: v })} />
+          <div className="md:col-span-2">
+            <TextArea label="Subtitle" value={content.heroSubtitle} onChange={(v) => setContent({ ...content, heroSubtitle: v })} />
+          </div>
+          <TextField label="CTA button text" value={content.heroCtaText} onChange={(v) => setContent({ ...content, heroCtaText: v })} />
+          <TextField label="CTA button link" value={content.heroCtaHref} onChange={(v) => setContent({ ...content, heroCtaHref: v })} />
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Announcement Bar">
+        <TextArea
+          label="Announcements (one per line — rotates automatically)"
+          value={content.announcements.join("\n")}
+          onChange={(v) => setContent({ ...content, announcements: v.split("\n").filter(Boolean) })}
+        />
+      </Fieldset>
+
+      <Fieldset title="Homepage Editorial">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Editorial eyebrow" value={pages.home.editorialEyebrow ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, editorialEyebrow: v } })} />
+          <TextField label="Editorial title" value={pages.home.editorialTitle ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, editorialTitle: v } })} />
+          <div className="md:col-span-2">
+            <TextArea label="Editorial body" value={pages.home.editorialBody ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, editorialBody: v } })} />
+          </div>
+          <TextField label="Editorial button text" value={pages.home.editorialCtaText ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, editorialCtaText: v } })} />
+          <TextField label="Editorial button link" value={pages.home.editorialCtaHref ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, editorialCtaHref: v } })} />
+        </div>
+        <div className="mt-4">
+          <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">Editorial image</span>
+          <div className="mt-2 flex items-center gap-4">
+            {pages.home.editorialImage && (
+              <div className="relative h-24 w-36 overflow-hidden bg-sand">
+                <Image src={pages.home.editorialImage} alt="" fill className="object-cover" />
+              </div>
+            )}
+            <button type="button" className="admin-secondary" onClick={() => uploadHomeImage("editorialImage")}>Upload image</button>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <TextField label="Story eyebrow" value={pages.home.storyEyebrow ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, storyEyebrow: v } })} />
+          <TextField label="Story title" value={pages.home.storyTitle ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, storyTitle: v } })} />
+          <div className="md:col-span-2">
+            <TextArea label="Story body" value={pages.home.storyBody ?? ""} onChange={(v) => setPages({ ...pages, home: { ...pages.home, storyBody: v } })} />
+          </div>
+        </div>
+        <div className="mt-4">
+          <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">Statement image</span>
+          <div className="mt-2 flex items-center gap-4">
+            {pages.home.statementImage && (
+              <div className="relative h-24 w-36 overflow-hidden bg-sand">
+                <Image src={pages.home.statementImage} alt="" fill className="object-cover" />
+              </div>
+            )}
+            <button type="button" className="admin-secondary" onClick={() => uploadHomeImage("statementImage")}>Upload image</button>
+          </div>
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Shop Page">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Title" value={pages.shop.title} onChange={(v) => setPages({ ...pages, shop: { ...pages.shop, title: v } })} />
+          <div className="md:col-span-2">
+            <TextArea label="Intro text" value={pages.shop.blurb} onChange={(v) => setPages({ ...pages, shop: { ...pages.shop, blurb: v } })} />
+          </div>
+        </div>
+      </Fieldset>
+
+      <Fieldset title="About Page">
+        <TextField label="Title" value={pages.about.title} onChange={(v) => setPages({ ...pages, about: { ...pages.about, title: v } })} />
+        <TextArea label="Body" value={pages.about.body} onChange={(v) => setPages({ ...pages, about: { ...pages.about, body: v } })} />
+      </Fieldset>
+
+      <Fieldset title="Contact Page">
+        <TextField label="Title" value={pages.contact.title} onChange={(v) => setPages({ ...pages, contact: { ...pages.contact, title: v } })} />
+        <TextArea label="Body" value={pages.contact.body} onChange={(v) => setPages({ ...pages, contact: { ...pages.contact, body: v } })} />
+      </Fieldset>
+
+      <Fieldset title="Footer">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Newsletter title" value={pages.footer.newsletterTitle} onChange={(v) => setPages({ ...pages, footer: { ...pages.footer, newsletterTitle: v } })} />
+          <TextField label="Wordmark" value={pages.footer.wordmark} onChange={(v) => setPages({ ...pages, footer: { ...pages.footer, wordmark: v } })} />
+          <div className="md:col-span-2">
+            <TextArea label="Newsletter body" value={pages.footer.newsletterBody} onChange={(v) => setPages({ ...pages, footer: { ...pages.footer, newsletterBody: v } })} />
+          </div>
+        </div>
+
+        <h4 className="mt-6 text-xs uppercase tracking-[0.16em] text-ink-soft">Footer Link Columns</h4>
+        {pages.footer.columns.map((col, ci) => (
+          <div key={ci} className="mt-3 border border-sand-deep bg-cream p-4">
+            <div className="flex items-center justify-between gap-3">
+              <TextField
+                label={`Column ${ci + 1} title`}
+                value={col.title}
+                onChange={(v) => {
+                  const cols = [...pages.footer.columns];
+                  cols[ci] = { ...col, title: v };
+                  setPages({ ...pages, footer: { ...pages.footer, columns: cols } });
+                }}
+              />
+              <button
+                type="button"
+                className="admin-danger mt-4"
+                onClick={() => {
+                  const cols = pages.footer.columns.filter((_, i) => i !== ci);
+                  setPages({ ...pages, footer: { ...pages.footer, columns: cols } });
+                }}
+              >
+                Remove
+              </button>
+            </div>
+            {col.links.map((link, li) => (
+              <div key={li} className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
+                <input
+                  className="border border-sand-deep bg-cream-soft px-2 py-1.5 text-sm"
+                  value={link.label}
+                  placeholder="Label"
+                  onChange={(e) => {
+                    const cols = [...pages.footer.columns];
+                    const links = [...col.links];
+                    links[li] = { ...link, label: e.target.value };
+                    cols[ci] = { ...col, links };
+                    setPages({ ...pages, footer: { ...pages.footer, columns: cols } });
+                  }}
+                />
+                <input
+                  className="border border-sand-deep bg-cream-soft px-2 py-1.5 text-sm"
+                  value={link.href}
+                  placeholder="/path"
+                  onChange={(e) => {
+                    const cols = [...pages.footer.columns];
+                    const links = [...col.links];
+                    links[li] = { ...link, href: e.target.value };
+                    cols[ci] = { ...col, links };
+                    setPages({ ...pages, footer: { ...pages.footer, columns: cols } });
+                  }}
+                />
+                <button
+                  type="button"
+                  className="text-xs text-red-800"
+                  onClick={() => {
+                    const cols = [...pages.footer.columns];
+                    cols[ci] = { ...col, links: col.links.filter((_, i) => i !== li) };
+                    setPages({ ...pages, footer: { ...pages.footer, columns: cols } });
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="mt-2 text-xs text-bronze underline"
+              onClick={() => {
+                const cols = [...pages.footer.columns];
+                cols[ci] = { ...col, links: [...col.links, { label: "New Link", href: "/" }] };
+                setPages({ ...pages, footer: { ...pages.footer, columns: cols } });
+              }}
+            >
+              + Add link
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="admin-secondary mt-3"
+          onClick={() => {
+            setPages({
+              ...pages,
+              footer: {
+                ...pages.footer,
+                columns: [...pages.footer.columns, { title: "New Column", links: [] }],
+              },
+            });
+          }}
+        >
+          + Add column
+        </button>
+      </Fieldset>
     </section>
   );
 }
+
+/* ──────────────────── SEO ──────────────────────────── */
 
 const SEO_PAGES: { key: string; label: string }[] = [
   { key: "home", label: "Home page" },
@@ -734,73 +1315,119 @@ function SeoSection({ store, saveStore }: SectionProps) {
         Leave a page field blank to use the global defaults below.
       </p>
 
-      <h3 className="mt-7 text-xs uppercase tracking-[0.16em] text-ink-soft">Global defaults</h3>
-      <div className="mt-3 grid gap-4 md:grid-cols-2">
-        <TextField label="Site URL (domain)" value={url} onChange={setUrl} />
-        <TextField label="Default page title" value={seo.defaultTitle} onChange={(v) => setSeo({ ...seo, defaultTitle: v })} />
-        <TextField label="Title template (must include %s)" value={seo.titleTemplate} onChange={(v) => setSeo({ ...seo, titleTemplate: v })} />
-        <TextField label="Social share image URL" value={seo.defaultOgImage} onChange={(v) => setSeo({ ...seo, defaultOgImage: v })} />
-        <div className="md:col-span-2">
-          <TextArea label="Default meta description (≈150–160 characters)" value={seo.defaultDescription} onChange={(v) => setSeo({ ...seo, defaultDescription: v })} />
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" className="accent-bronze" checked={seo.indexable} onChange={(e) => setSeo({ ...seo, indexable: e.target.checked })} />
-          Allow search engines to index the site
-        </label>
-      </div>
-
-      <h3 className="mt-8 text-xs uppercase tracking-[0.16em] text-ink-soft">Per-page SEO</h3>
-      <div className="mt-3 space-y-4">
-        {SEO_PAGES.map(({ key, label }) => (
-          <div key={key} className="grid gap-3 border border-sand-deep bg-cream p-4 md:grid-cols-2">
-            <p className="md:col-span-2 text-sm font-medium">{label}</p>
-            <TextField label="SEO title" value={pageSeo[key]?.title ?? ""} onChange={(v) => setPage(key, "title", v)} />
-            <TextField label="Share image URL" value={pageSeo[key]?.ogImage ?? ""} onChange={(v) => setPage(key, "ogImage", v)} />
-            <div className="md:col-span-2">
-              <TextArea label="Meta description" value={pageSeo[key]?.description ?? ""} onChange={(v) => setPage(key, "description", v)} />
-            </div>
+      <Fieldset title="Global Defaults">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Site URL (domain)" value={url} onChange={setUrl} />
+          <TextField label="Default page title" value={seo.defaultTitle} onChange={(v) => setSeo({ ...seo, defaultTitle: v })} />
+          <TextField label="Title template (must include %s)" value={seo.titleTemplate} onChange={(v) => setSeo({ ...seo, titleTemplate: v })} />
+          <TextField label="Social share image URL" value={seo.defaultOgImage} onChange={(v) => setSeo({ ...seo, defaultOgImage: v })} />
+          <div className="md:col-span-2">
+            <TextArea label="Default meta description (≈150–160 chars)" value={seo.defaultDescription} onChange={(v) => setSeo({ ...seo, defaultDescription: v })} />
           </div>
-        ))}
-      </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" className="accent-bronze" checked={seo.indexable} onChange={(e) => setSeo({ ...seo, indexable: e.target.checked })} />
+            Allow search engines to index the site
+          </label>
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Per-Page SEO">
+        <div className="space-y-4">
+          {SEO_PAGES.map(({ key, label }) => (
+            <div key={key} className="grid gap-3 border border-sand-deep bg-cream p-4 md:grid-cols-2">
+              <p className="md:col-span-2 text-sm font-medium">{label}</p>
+              <TextField label="SEO title" value={pageSeo[key]?.title ?? ""} onChange={(v) => setPage(key, "title", v)} />
+              <TextField label="Share image URL" value={pageSeo[key]?.ogImage ?? ""} onChange={(v) => setPage(key, "ogImage", v)} />
+              <div className="md:col-span-2">
+                <TextArea label="Meta description" value={pageSeo[key]?.description ?? ""} onChange={(v) => setPage(key, "description", v)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Fieldset>
       <p className="mt-4 text-sm text-ink-soft">
-        Per-product and per-article SEO (title, description, link/slug) are edited
-        in the Products and Journal tabs.
+        Per-product and per-article SEO are edited in the Products and Journal tabs.
       </p>
     </section>
   );
 }
 
-function CategoriesSection({ store, setStore, saveStore }: SectionProps) {
+/* ──────────────────── Categories ────────────────────── */
+
+function CategoriesSection({ store, setStore, saveStore, uploadAndGetUrl }: SectionProps & { uploadAndGetUrl: (f: File) => Promise<string | null> }) {
   const update = (index: number, category: StoreCategory) => {
     const categories = [...store.categories];
     categories[index] = category;
     setStore({ ...store, categories });
   };
+
+  async function uploadCategoryImage(index: number) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const url = await uploadAndGetUrl(file);
+      if (url) {
+        const categories = [...store.categories];
+        categories[index] = { ...categories[index], image: url };
+        setStore({ ...store, categories });
+      }
+    };
+    input.click();
+  }
+
   return (
     <section className="admin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-serif text-3xl">Categories</h2>
         <div className="flex gap-3">
-          <button type="button" className="admin-secondary" onClick={() => setStore({ ...store, categories: [...store.categories, { value: "new-category", label: "New Category", blurb: "", order: store.categories.length }] })}>Add</button>
+          <button
+            type="button"
+            className="admin-secondary"
+            onClick={() => setStore({ ...store, categories: [...store.categories, { value: "new-category", label: "New Category", blurb: "", order: store.categories.length }] })}
+          >
+            + Add
+          </button>
           <button className="admin-dark" onClick={() => saveStore(store, "Categories saved.")}>Save categories</button>
         </div>
       </div>
       <div className="mt-6 space-y-4">
         {store.categories.map((category, i) => (
-          <div key={`${category.value}-${i}`} className="grid gap-3 border border-sand-deep bg-cream p-4 md:grid-cols-5">
-            <TextField label="Value" value={category.value} onChange={(v) => update(i, { ...category, value: slugify(v) })} />
-            <TextField label="Label" value={category.label} onChange={(v) => update(i, { ...category, label: v })} />
-            <TextField label="Image URL" value={category.image ?? ""} onChange={(v) => update(i, { ...category, image: v })} />
-            <TextField label="Order" type="number" value={String(category.order)} onChange={(v) => update(i, { ...category, order: Number(v) })} />
-            <label className="flex items-end gap-2 text-sm"><input type="checkbox" checked={category.hidden ?? false} onChange={(e) => update(i, { ...category, hidden: e.target.checked })} /> Hide</label>
-            <div className="md:col-span-5">
-              <TextArea label="Intro text (shown on the category page)" value={category.blurb} onChange={(v) => update(i, { ...category, blurb: v })} />
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <TextField label="SEO title" value={category.seoTitle ?? ""} onChange={(v) => update(i, { ...category, seoTitle: v })} />
-                <TextField label="Meta description" value={category.seoDescription ?? ""} onChange={(v) => update(i, { ...category, seoDescription: v })} />
-              </div>
-              <button type="button" className="mt-2 text-xs uppercase tracking-[0.14em] text-red-800" onClick={() => setStore({ ...store, categories: store.categories.filter((_, idx) => idx !== i) })}>Delete category</button>
+          <div key={`${category.value}-${i}`} className="border border-sand-deep bg-cream p-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <TextField label="Value (slug)" value={category.value} onChange={(v) => update(i, { ...category, value: slugify(v) })} />
+              <TextField label="Label" value={category.label} onChange={(v) => update(i, { ...category, label: v })} />
+              <TextField label="Order" type="number" value={String(category.order)} onChange={(v) => update(i, { ...category, order: Number(v) })} />
+              <label className="flex items-end gap-2 pb-1 text-sm"><input type="checkbox" checked={category.hidden ?? false} onChange={(e) => update(i, { ...category, hidden: e.target.checked })} /> Hide from site</label>
             </div>
+            <div className="mt-3 flex items-center gap-4">
+              <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">Image</span>
+              {category.image && (
+                <div className="relative h-16 w-24 overflow-hidden bg-sand">
+                  <Image src={category.image} alt="" fill className="object-cover" />
+                </div>
+              )}
+              <button type="button" className="admin-secondary" onClick={() => uploadCategoryImage(i)}>Upload image</button>
+            </div>
+            <div className="mt-3">
+              <TextArea label="Intro text (shown on category page)" value={category.blurb} onChange={(v) => update(i, { ...category, blurb: v })} />
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <TextField label="SEO title" value={category.seoTitle ?? ""} onChange={(v) => update(i, { ...category, seoTitle: v })} />
+              <TextField label="Meta description" value={category.seoDescription ?? ""} onChange={(v) => update(i, { ...category, seoDescription: v })} />
+            </div>
+            <button
+              type="button"
+              className="admin-danger mt-3"
+              onClick={() => {
+                if (!window.confirm(`Delete category "${category.label}"?`)) return;
+                setStore({ ...store, categories: store.categories.filter((_, idx) => idx !== i) });
+              }}
+            >
+              Delete category
+            </button>
           </div>
         ))}
       </div>
@@ -808,69 +1435,232 @@ function CategoriesSection({ store, setStore, saveStore }: SectionProps) {
   );
 }
 
-function JournalSection({ store, setStore, saveStore }: SectionProps) {
+/* ──────────────────── Journal ───────────────────────── */
+
+function JournalSection({ store, setStore, saveStore, uploadAndGetUrl }: SectionProps & { uploadAndGetUrl: (f: File) => Promise<string | null> }) {
   const update = (index: number, article: Article) => {
     const articles = [...store.articles];
     articles[index] = article;
     setStore({ ...store, articles });
   };
+
+  async function uploadArticleImage(index: number) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const url = await uploadAndGetUrl(file);
+      if (url) {
+        const articles = [...store.articles];
+        articles[index] = { ...articles[index], image: url };
+        setStore({ ...store, articles });
+      }
+    };
+    input.click();
+  }
+
   return (
     <section className="admin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-serif text-3xl">Journal</h2>
         <div className="flex gap-3">
-          <button type="button" className="admin-secondary" onClick={() => setStore({ ...store, articles: [{ slug: "new-post", title: "New Post", excerpt: "", category: "Style Notes", readTime: "3 min read", date: new Date().toISOString().slice(0, 10), image: "/images/brand/statement.jpg", body: [{ type: "p", text: "Write the post body here." }] }, ...store.articles] })}>Add</button>
+          <button
+            type="button"
+            className="admin-secondary"
+            onClick={() => setStore({
+              ...store,
+              articles: [
+                {
+                  slug: "new-post",
+                  title: "New Post",
+                  excerpt: "",
+                  category: "Style Notes",
+                  readTime: "3 min read",
+                  date: new Date().toISOString().slice(0, 10),
+                  image: "/images/brand/statement.jpg",
+                  body: [{ type: "p", text: "Write the post body here." }],
+                },
+                ...store.articles,
+              ],
+            })}
+          >
+            + New post
+          </button>
           <button className="admin-dark" onClick={() => saveStore(store, "Journal saved.")}>Save journal</button>
         </div>
       </div>
       <div className="mt-6 space-y-5">
         {store.articles.map((article, i) => (
-          <div key={`${article.slug}-${i}`} className="grid gap-3 border border-sand-deep bg-cream p-4 md:grid-cols-2">
-            <TextField label="Title" value={article.title} onChange={(v) => update(i, { ...article, title: v, slug: article.slug || slugify(v) })} />
-            <TextField label="Slug" value={article.slug} onChange={(v) => update(i, { ...article, slug: slugify(v) })} />
-            <TextField label="Category" value={article.category} onChange={(v) => update(i, { ...article, category: v })} />
-            <TextField label="Date" value={article.date} onChange={(v) => update(i, { ...article, date: v })} />
-            <TextField label="Cover image" value={article.image} onChange={(v) => update(i, { ...article, image: v })} />
-            <TextField label="Read time" value={article.readTime} onChange={(v) => update(i, { ...article, readTime: v })} />
-            <div className="md:col-span-2">
-              <TextArea label="Excerpt" value={article.excerpt} onChange={(v) => update(i, { ...article, excerpt: v })} />
-              <TextArea label="Body. Use lines starting with ## for headings." value={article.body.map((b) => b.type === "h2" ? `## ${b.text}` : b.text).join("\n\n")} onChange={(v) => update(i, { ...article, body: v.split(/\n\n+/).map((part): ArticleBlock => part.startsWith("## ") ? { type: "h2", text: part.slice(3).trim() } : { type: "p", text: part.trim() }).filter((b) => b.text) })} />
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <TextField label="SEO title (optional)" value={article.seoTitle ?? ""} onChange={(v) => update(i, { ...article, seoTitle: v })} />
-                <TextField label="Meta description (optional)" value={article.seoDescription ?? ""} onChange={(v) => update(i, { ...article, seoDescription: v })} />
-              </div>
-              <button type="button" className="mt-2 text-xs uppercase tracking-[0.14em] text-red-800" onClick={() => setStore({ ...store, articles: store.articles.filter((_, idx) => idx !== i) })}>Delete post</button>
+          <div key={`${article.slug}-${i}`} className="border border-sand-deep bg-cream p-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <TextField label="Title" value={article.title} onChange={(v) => update(i, { ...article, title: v, slug: article.slug || slugify(v) })} />
+              <TextField label="Slug" value={article.slug} onChange={(v) => update(i, { ...article, slug: slugify(v) })} />
+              <TextField label="Category" value={article.category} onChange={(v) => update(i, { ...article, category: v })} />
+              <TextField label="Date" value={article.date} onChange={(v) => update(i, { ...article, date: v })} />
+              <TextField label="Read time" value={article.readTime} onChange={(v) => update(i, { ...article, readTime: v })} />
             </div>
+            <div className="mt-3 flex items-center gap-4">
+              <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">Cover image</span>
+              {article.image && (
+                <div className="relative h-16 w-24 overflow-hidden bg-sand">
+                  <Image src={article.image} alt="" fill className="object-cover" />
+                </div>
+              )}
+              <button type="button" className="admin-secondary" onClick={() => uploadArticleImage(i)}>Upload image</button>
+            </div>
+            <div className="mt-3">
+              <TextArea label="Excerpt" value={article.excerpt} onChange={(v) => update(i, { ...article, excerpt: v })} />
+              <TextArea
+                label="Body (use ## for headings, separate paragraphs with blank lines)"
+                value={article.body.map((b) => b.type === "h2" ? `## ${b.text}` : b.text).join("\n\n")}
+                onChange={(v) => update(i, {
+                  ...article,
+                  body: v.split(/\n\n+/).map((part): ArticleBlock =>
+                    part.startsWith("## ") ? { type: "h2", text: part.slice(3).trim() } : { type: "p", text: part.trim() }
+                  ).filter((b) => b.text),
+                })}
+              />
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <TextField label="SEO title (optional)" value={article.seoTitle ?? ""} onChange={(v) => update(i, { ...article, seoTitle: v })} />
+              <TextField label="Meta description (optional)" value={article.seoDescription ?? ""} onChange={(v) => update(i, { ...article, seoDescription: v })} />
+            </div>
+            <button
+              type="button"
+              className="admin-danger mt-3"
+              onClick={() => {
+                if (!window.confirm(`Delete "${article.title}"?`)) return;
+                setStore({ ...store, articles: store.articles.filter((_, idx) => idx !== i) });
+              }}
+            >
+              Delete post
+            </button>
           </div>
         ))}
+        {store.articles.length === 0 && (
+          <p className="py-8 text-center text-sm text-ink-soft">No journal posts yet.</p>
+        )}
       </div>
     </section>
   );
 }
 
+/* ──────────────────── Settings ──────────────────────── */
+
 function SettingsSection({ store, setStore, saveStore }: SectionProps) {
-  const settings = store.settings;
+  const s = store.settings;
+  const set = (patch: Partial<SiteSettings>) =>
+    setStore({ ...store, settings: { ...s, ...patch } });
+
   return (
     <section className="admin-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-serif text-3xl">Site Settings</h2>
         <button className="admin-dark" onClick={() => saveStore(store, "Settings saved.")}>Save settings</button>
       </div>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <TextField label="Site name" value={settings.name} onChange={(v) => setStore({ ...store, settings: { ...settings, name: v } })} />
-        <TextField label="Tagline" value={settings.tagline} onChange={(v) => setStore({ ...store, settings: { ...settings, tagline: v } })} />
-        <TextField label="Domain URL" value={settings.url} onChange={(v) => setStore({ ...store, settings: { ...settings, url: v } })} />
-        <TextField label="Currency" value={settings.currency} onChange={(v) => setStore({ ...store, settings: { ...settings, currency: v } })} />
-        <TextField label="Free shipping threshold" type="number" value={String(settings.freeShippingThreshold)} onChange={(v) => setStore({ ...store, settings: { ...settings, freeShippingThreshold: Number(v) } })} />
-        <TextField label="Promo code" value={settings.firstOrderCode} onChange={(v) => setStore({ ...store, settings: { ...settings, firstOrderCode: v } })} />
-        <TextField label="Promo discount %" type="number" value={String(settings.firstOrderDiscount)} onChange={(v) => setStore({ ...store, settings: { ...settings, firstOrderDiscount: Number(v) } })} />
-        <TextField label="WhatsApp number" value={settings.whatsapp.number} onChange={(v) => setStore({ ...store, settings: { ...settings, whatsapp: { ...settings.whatsapp, number: v } } })} />
-        <TextField label="Instagram URL" value={settings.social.instagram} onChange={(v) => setStore({ ...store, settings: { ...settings, social: { ...settings.social, instagram: v } } })} />
-        <TextField label="Email" value={settings.contact.email} onChange={(v) => setStore({ ...store, settings: { ...settings, contact: { ...settings.contact, email: v } } })} />
-        <TextField label="Phone" value={settings.contact.phone} onChange={(v) => setStore({ ...store, settings: { ...settings, contact: { ...settings.contact, phone: v } } })} />
-        <TextArea label="Address" value={settings.contact.addressLine} onChange={(v) => setStore({ ...store, settings: { ...settings, contact: { ...settings.contact, addressLine: v } } })} />
-      </div>
+
+      <Fieldset title="General">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Site name" value={s.name} onChange={(v) => set({ name: v })} />
+          <TextField label="Tagline" value={s.tagline} onChange={(v) => set({ tagline: v })} />
+          <TextField label="Domain URL" value={s.url} onChange={(v) => set({ url: v })} />
+          <TextField label="Currency" value={s.currency} onChange={(v) => set({ currency: v })} />
+          <TextField label="Free shipping threshold" type="number" value={String(s.freeShippingThreshold)} onChange={(v) => set({ freeShippingThreshold: Number(v) })} />
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Promotions">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Promo code" value={s.firstOrderCode} onChange={(v) => set({ firstOrderCode: v })} />
+          <TextField label="Promo discount %" type="number" value={String(s.firstOrderDiscount)} onChange={(v) => set({ firstOrderDiscount: Number(v) })} />
+        </div>
+      </Fieldset>
+
+      <Fieldset title="WhatsApp">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="WhatsApp number" value={s.whatsapp.number} onChange={(v) => set({ whatsapp: { ...s.whatsapp, number: v } })} />
+          <TextField label="Default message" value={s.whatsapp.defaultMessage} onChange={(v) => set({ whatsapp: { ...s.whatsapp, defaultMessage: v } })} />
+          <TextField label="Styling message" value={s.whatsapp.stylingMessage} onChange={(v) => set({ whatsapp: { ...s.whatsapp, stylingMessage: v } })} />
+          <TextField label="Order support message" value={s.whatsapp.orderSupportMessage} onChange={(v) => set({ whatsapp: { ...s.whatsapp, orderSupportMessage: v } })} />
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Social Links">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Instagram URL" value={s.social.instagram} onChange={(v) => set({ social: { ...s.social, instagram: v } })} />
+          <TextField label="Instagram handle" value={s.social.instagramHandle} onChange={(v) => set({ social: { ...s.social, instagramHandle: v } })} />
+          <TextField label="TikTok URL" value={s.social.tiktok} onChange={(v) => set({ social: { ...s.social, tiktok: v } })} />
+          <TextField label="Pinterest URL" value={s.social.pinterest} onChange={(v) => set({ social: { ...s.social, pinterest: v } })} />
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Reviews">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Google Review URL" value={s.googleReviewUrl} onChange={(v) => set({ googleReviewUrl: v })} />
+          <TextField label="Average rating" type="number" value={String(s.ratingAverage)} onChange={(v) => set({ ratingAverage: Number(v) })} />
+          <TextField label="Review count" type="number" value={String(s.ratingCount)} onChange={(v) => set({ ratingCount: Number(v) })} />
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Contact Information">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField label="Email" value={s.contact.email} onChange={(v) => set({ contact: { ...s.contact, email: v } })} />
+          <TextField label="Phone" value={s.contact.phone} onChange={(v) => set({ contact: { ...s.contact, phone: v } })} />
+          <TextField label="Hours" value={s.contact.hours} onChange={(v) => set({ contact: { ...s.contact, hours: v } })} />
+          <div className="md:col-span-2">
+            <TextArea label="Address" value={s.contact.addressLine} onChange={(v) => set({ contact: { ...s.contact, addressLine: v } })} />
+          </div>
+        </div>
+      </Fieldset>
+
+      <Fieldset title="Stats (shown on homepage)">
+        {s.stats.map((stat, i) => (
+          <div key={i} className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
+            <input
+              className="border border-sand-deep bg-cream px-2 py-1.5 text-sm"
+              value={stat.value}
+              placeholder="Value (e.g. 10,000+)"
+              onChange={(e) => {
+                const stats = [...s.stats];
+                stats[i] = { ...stat, value: e.target.value };
+                set({ stats });
+              }}
+            />
+            <input
+              className="border border-sand-deep bg-cream px-2 py-1.5 text-sm"
+              value={stat.label}
+              placeholder="Label"
+              onChange={(e) => {
+                const stats = [...s.stats];
+                stats[i] = { ...stat, label: e.target.value };
+                set({ stats });
+              }}
+            />
+            <button type="button" className="text-xs text-red-800" onClick={() => set({ stats: s.stats.filter((_, idx) => idx !== i) })}>×</button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="mt-2 text-xs text-bronze underline"
+          onClick={() => set({ stats: [...s.stats, { value: "", label: "" }] })}
+        >
+          + Add stat
+        </button>
+      </Fieldset>
     </section>
+  );
+}
+
+/* ──────────────── Shared form primitives ────────────── */
+
+function Fieldset({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="mt-6 border-t border-sand-deep pt-5">
+      <h3 className="mb-4 text-xs uppercase tracking-[0.16em] text-ink-soft">{title}</h3>
+      {children}
+    </div>
   );
 }
 

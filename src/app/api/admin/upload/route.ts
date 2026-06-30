@@ -67,6 +67,7 @@ export async function POST(req: Request) {
       name: outName,
       type: outType,
       createdAt: new Date().toISOString(),
+      alt: "",
     },
     url,
   });

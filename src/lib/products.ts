@@ -46,6 +46,7 @@ export interface Product {
   image?: string;
   images?: string[];
   featured?: boolean;
+  published?: boolean; // false → hidden from public shop & homepage (default visible)
   createdAt?: string; // ISO — drives "new arrivals" ordering
   seoTitle?: string; // optional SEO override (admin-controlled)
   seoDescription?: string; // optional meta-description override

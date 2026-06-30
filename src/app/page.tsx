@@ -41,7 +41,9 @@ function getNewArrivals(products: Product[], limit = 8) {
 }
 
 export default async function Home() {
-  const { products, content, categories } = await getStoreData();
+  const { products: allProducts, content, categories, pages } = await getStoreData();
+  const products = allProducts.filter((p) => p.published !== false);
+  const home = pages.home;
   const newArrivals = getNewArrivals(products, 8);
   const bestSellers = getBadged(products, "bestseller");
   const trending = getBadged(products, "trending");
@@ -84,8 +86,8 @@ export default async function Home() {
         <div className="grid items-stretch md:grid-cols-2">
           <div className="relative aspect-square md:aspect-auto">
             <Image
-              src="/images/brand/collection-feature.jpg"
-              alt="Effortless sophistication — a MAZAL look in a marble hall."
+              src={home.editorialImage || "/images/brand/collection-feature.jpg"}
+              alt={home.editorialTitle || "Effortless sophistication — a MAZAL look in a marble hall."}
               fill
               sizes="(min-width: 768px) 50vw, 100vw"
               className="object-cover"
@@ -93,20 +95,18 @@ export default async function Home() {
           </div>
           <div className="flex items-center">
             <Reveal className="px-6 py-16 md:px-14 lg:px-20">
-              <p className="eyebrow">Effortless Sophistication</p>
+              <p className="eyebrow">{home.editorialEyebrow}</p>
               <h2 className="mt-4 font-serif text-4xl leading-tight text-ink md:text-5xl">
-                An edit of quiet statement pieces
+                {home.editorialTitle}
               </h2>
-              <p className="mt-5 max-w-md text-ink-soft">
-                Fluid silhouettes, warm neutral tones, and fabrics that move
-                with you. Each MAZAL piece is considered down to the last seam —
-                made to be worn, and worn again.
-              </p>
-              <div className="mt-8">
-                <Button href="/shop" variant="outline">
-                  Discover the Collection
-                </Button>
-              </div>
+              <p className="mt-5 max-w-md text-ink-soft">{home.editorialBody}</p>
+              {home.editorialCtaText && (
+                <div className="mt-8">
+                  <Button href={home.editorialCtaHref || "/shop"} variant="outline">
+                    {home.editorialCtaText}
+                  </Button>
+                </div>
+              )}
             </Reveal>
           </div>
         </div>
@@ -155,20 +155,15 @@ export default async function Home() {
           </Reveal>
 
           <Reveal delay={120}>
-            <p className="eyebrow">Our Story</p>
+            <p className="eyebrow">{home.storyEyebrow}</p>
             <h2 className="mt-4 font-serif text-4xl leading-tight text-ink md:text-5xl">
-              Designed to endure
+              {home.storyTitle}
             </h2>
-            <p className="mt-6 text-ink-soft">
-              MAZAL — meaning <em>still</em> — was founded on a simple belief:
-              that true elegance is calm, unhurried, and made to last. We design
-              modest pieces with the restraint of a maison and the warmth of
-              home.
-            </p>
-            <p className="mt-4 text-ink-soft">
-              From the first sketch to the final stitch, every garment is
-              crafted with intention — never trend-led, always timeless.
-            </p>
+            {(home.storyBody || "").split(/\n\n+/).filter(Boolean).map((para, i) => (
+              <p key={i} className={i === 0 ? "mt-6 text-ink-soft" : "mt-4 text-ink-soft"}>
+                {para}
+              </p>
+            ))}
             <div className="mt-8">
               <Button href="/about" variant="ghost">
                 Read our story →
@@ -181,7 +176,7 @@ export default async function Home() {
       {/* ── Statement band ───────────────────────────────── */}
       <section className="relative h-[56vh] min-h-[380px] w-full overflow-hidden">
         <Image
-          src="/images/brand/statement.jpg"
+          src={home.statementImage || "/images/brand/statement.jpg"}
           alt="Still Elegant — MAZAL."
           fill
           sizes="100vw"

@@ -153,6 +153,7 @@ export type MediaAsset = {
   name: string;
   type: string;
   createdAt: string;
+  alt?: string; // accessible/SEO alt text, editable in the Media Library
 };
 
 export type PageContent = {
@@ -231,11 +232,14 @@ export const DEFAULT_PAGES: PageContent = {
     editorialEyebrow: "Effortless Sophistication",
     editorialTitle: "An edit of quiet statement pieces",
     editorialBody:
-      "Fluid silhouettes, warm neutral tones, and fabrics that move with you. Each MAZAL piece is considered down to the last seam - made to be worn, and worn again.",
+      "Fluid silhouettes, warm neutral tones, and fabrics that move with you. Each MAZAL piece is considered down to the last seam — made to be worn, and worn again.",
+    editorialCtaText: "Discover the Collection",
+    editorialCtaHref: "/shop",
+    editorialImage: "/images/brand/collection-feature.jpg",
     storyEyebrow: "Our Story",
     storyTitle: "Designed to endure",
     storyBody:
-      "MAZAL was founded on a simple belief: that true elegance is calm, unhurried, and made to last.",
+      "MAZAL — meaning still — was founded on a simple belief: that true elegance is calm, unhurried, and made to last. We design modest pieces with the restraint of a maison and the warmth of home.\n\nFrom the first sketch to the final stitch, every garment is crafted with intention — never trend-led, always timeless.",
     statementImage: "/images/brand/statement.jpg",
   },
   about: {

@@ -137,9 +137,10 @@ export default async function ShopPage({
         : `Explore MAZAL ${heading.toLowerCase()} pieces.`))
     : store.pages.shop.blurb;
 
+  const visibleProducts = store.products.filter((p) => p.published !== false);
   const listed = category
-    ? store.products.filter((p) => p.category === category)
-    : store.products;
+    ? visibleProducts.filter((p) => p.category === category)
+    : visibleProducts;
   const base = (store.settings.url || SITE.url).replace(/\/$/, "");
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -203,7 +204,7 @@ export default async function ShopPage({
       <Container className="pb-20">
         <Suspense fallback={<p className="text-ink-soft">Loading...</p>}>
           <ShopClient
-            products={store.products}
+            products={visibleProducts}
             categories={store.categories}
             initialCategory={category}
             initialSort={initialSort}
