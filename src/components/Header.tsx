@@ -16,7 +16,7 @@ const NAV = [
   { label: "Contact", href: "/contact" },
 ];
 
-export function Header() {
+export function Header({ showAccount = true }: { showAccount?: boolean }) {
   const { count, openCart } = useCart();
   const { count: wishCount } = useWishlist();
   const pathname = usePathname();
@@ -79,16 +79,18 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <Link
-              href="/account"
-              className="hidden items-center text-ink transition-colors hover:text-bronze sm:flex"
-              aria-label="My account"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-                <circle cx="12" cy="8" r="3.5" />
-                <path d="M5 20a7 7 0 0 1 14 0" strokeLinecap="round" />
-              </svg>
-            </Link>
+            {showAccount && (
+              <Link
+                href="/account"
+                className="hidden items-center text-ink transition-colors hover:text-bronze sm:flex"
+                aria-label="My account"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                  <circle cx="12" cy="8" r="3.5" />
+                  <path d="M5 20a7 7 0 0 1 14 0" strokeLinecap="round" />
+                </svg>
+              </Link>
+            )}
             <Link
               href="/wishlist"
               className="relative hidden items-center text-ink transition-colors hover:text-bronze sm:flex"

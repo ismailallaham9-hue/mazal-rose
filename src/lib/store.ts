@@ -121,6 +121,7 @@ export type SiteSettings = {
   url: string;
   currency: string;
   freeShippingThreshold: number;
+  showCustomerAccount: boolean;
   firstOrderCode: string;
   firstOrderDiscount: number;
   whatsapp: {
@@ -216,6 +217,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   url: SITE.url,
   currency: SITE.currency,
   freeShippingThreshold: SITE.freeShippingThreshold,
+  showCustomerAccount: false,
   firstOrderCode: SITE.firstOrderCode,
   firstOrderDiscount: SITE.firstOrderDiscount,
   whatsapp: { ...SITE.whatsapp },

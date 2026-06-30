@@ -34,6 +34,7 @@ const COLUMNS = [
 
 export function Footer({
   content,
+  showAccount = true,
 }: {
   content?: {
     newsletterTitle: string;
@@ -41,8 +42,15 @@ export function Footer({
     wordmark: string;
     columns: { title: string; links: { label: string; href: string }[] }[];
   };
+  showAccount?: boolean;
 }) {
-  const columns = content?.columns?.length ? content.columns : COLUMNS;
+  const sourceColumns = content?.columns?.length ? content.columns : COLUMNS;
+  const columns = showAccount
+    ? sourceColumns
+    : sourceColumns.map((column) => ({
+        ...column,
+        links: column.links.filter((link) => link.href !== "/account"),
+      }));
   return (
     <footer className="mt-24 overflow-hidden bg-ink text-cream-soft">
       <Container className="pt-16 md:pt-20">

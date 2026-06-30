@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import Script from "next/script";
+import { connection } from "next/server";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
@@ -73,6 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  await connection();
   const { content, pages, theme, settings } = await getStoreData();
   const base = settings.url || "https://mazal.ae";
   const orgJsonLd = {
@@ -127,9 +129,9 @@ export default async function RootLayout({
             <SmoothScroll />
             <VeilIntro />
             <AnnouncementMarquee messages={content.announcements} />
-            <Header />
+            <Header showAccount={settings.showCustomerAccount} />
             <main className="flex-1">{children}</main>
-            <Footer content={pages.footer} />
+            <Footer content={pages.footer} showAccount={settings.showCustomerAccount} />
             <CartDrawer />
             <FloatingWhatsApp />
           </WishlistProvider>

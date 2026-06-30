@@ -1571,6 +1571,27 @@ function SettingsSection({ store, setStore, saveStore }: SectionProps) {
         </div>
       </Fieldset>
 
+      <Fieldset title="Customer Account">
+        <label className="flex max-w-2xl items-start gap-3 border border-sand-deep bg-cream-soft p-4">
+          <input
+            type="checkbox"
+            className="mt-1 accent-bronze"
+            checked={s.showCustomerAccount}
+            onChange={(e) => set({ showCustomerAccount: e.target.checked })}
+          />
+          <span>
+            <span className="block text-sm font-medium text-ink">
+              Show customer account on the website
+            </span>
+            <span className="mt-1 block text-sm text-ink-soft">
+              Keep this off until real customer login, order history, and rewards
+              are connected. When off, the header icon and footer account link
+              are hidden.
+            </span>
+          </span>
+        </label>
+      </Fieldset>
+
       <Fieldset title="Promotions">
         <div className="grid gap-4 md:grid-cols-2">
           <TextField label="Promo code" value={s.firstOrderCode} onChange={(v) => set({ firstOrderCode: v })} />
