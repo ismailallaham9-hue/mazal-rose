@@ -3,13 +3,15 @@
  * the public site reads.
  *
  * Persistence is automatic by environment:
+ *   • Production (Render) → a mounted disk directory via MAZAL_DATA_DIR.
  *   • Production (Vercel) → a JSON blob in Vercel Blob storage
  *     (needs the BLOB_READ_WRITE_TOKEN env var, added when you enable Blob).
- *   • Production (Render) → a mounted disk directory via MAZAL_DATA_DIR.
- *   • Local dev          → a JSON file at /data/store.json
- *   • Neither configured  → the built-in seed catalogue (read-only)
+ *   • Local dev           → a JSON file at /data/store.json.
+ *   • Neither configured  → the built-in seed catalogue (read-only).
  *
- * Images upload to Vercel Blob, a Render disk, or /public/uploads in dev.
+ * When both Render disk and Vercel Blob are configured, Render disk wins so
+ * admin edits and uploads stay with the live Render service and avoid Blob
+ * operation limits. Blob remains a fallback for older deployments.
  */
 import "server-only";
 import { ARTICLES, type Article } from "./articles";
@@ -18,10 +20,8 @@ import { SITE } from "./site";
 
 /**
  * In-process cache for the Blob store. Vercel Blob's `list()` is a metered
- * "advanced operation", and the server runs as one long-lived process on
- * Render, so we cache the parsed store in memory and only re-read from Blob
- * once an hour (or immediately after an admin save). This keeps us far under
- * the free operations quota instead of calling list() on every page view.
+ * "advanced operation", so we cache the parsed store in memory and only re-read
+ * from Blob once an hour (or immediately after an admin save).
  */
 let blobMemCache: { data: StoreData; at: number } | null = null;
 const BLOB_MEM_TTL = 60 * 60 * 1000; // 1 hour
@@ -410,45 +410,76 @@ const hasDisk = () => !!RENDER_DATA_DIR;
 
 async function localStoreFile() {
   const path = await import("node:path");
-  const dir = RENDER_DATA_DIR || path.join(process.cwd(), "data");
+  const dir =
+    RENDER_DATA_DIR || path.join(/*turbopackIgnore: true*/ process.cwd(), "data");
   return { path, dir, file: path.join(dir, "store.json") };
 }
 
-/** Read the full store. Never throws — falls back to the seed catalogue. */
-export async function getStoreData(): Promise<StoreData> {
-  if (hasBlob()) {
-    // Serve from the in-memory cache while it's fresh (avoids a metered list()).
-    if (blobMemCache && Date.now() - blobMemCache.at < BLOB_MEM_TTL) {
-      return blobMemCache.data;
-    }
-    try {
-      const { list } = await import("@vercel/blob");
-      const { blobs } = await list({ prefix: STORE_KEY });
-      const found = blobs.find((b) => b.pathname === STORE_KEY);
-      if (found) {
-        const res = await fetch(found.url, { cache: "no-store" });
-        if (res.ok) {
-          const data = normalize(await res.json());
-          blobMemCache = { data, at: Date.now() };
-          return data;
-        }
-      }
-    } catch {
-      /* fall through */
-    }
-    // On a transient read failure, prefer stale cache over reverting to seed.
-    if (blobMemCache) return blobMemCache.data;
-    return seedData();
-  }
-  // Render disk or local dev
+async function readDiskStore(): Promise<StoreData | null> {
   try {
     const fs = await import("node:fs/promises");
     const { file } = await localStoreFile();
     const raw = await fs.readFile(file, "utf8");
     return normalize(JSON.parse(raw));
   } catch {
-    return seedData();
+    return null;
   }
+}
+
+async function readBlobStore(): Promise<StoreData | null> {
+  if (!hasBlob()) return null;
+  // Serve from the in-memory cache while it's fresh (avoids a metered list()).
+  if (blobMemCache && Date.now() - blobMemCache.at < BLOB_MEM_TTL) {
+    return blobMemCache.data;
+  }
+  try {
+    const { list } = await import("@vercel/blob");
+    const { blobs } = await list({ prefix: STORE_KEY });
+    const found = blobs.find((b) => b.pathname === STORE_KEY);
+    if (found) {
+      const res = await fetch(found.url, { cache: "no-store" });
+      if (res.ok) {
+        const data = normalize(await res.json());
+        blobMemCache = { data, at: Date.now() };
+        return data;
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+  // On a transient read failure, prefer stale cache over reverting to seed.
+  return blobMemCache?.data ?? null;
+}
+
+async function writeDiskStore(json: string): Promise<void> {
+  const fs = await import("node:fs/promises");
+  const { dir, file } = await localStoreFile();
+  await fs.mkdir(dir, { recursive: true });
+  const tmp = `${file}.${Date.now()}.tmp`;
+  await fs.writeFile(tmp, json, "utf8");
+  await fs.rename(tmp, file);
+}
+
+async function writeBlobStore(payload: StoreData, json: string): Promise<void> {
+  const { put } = await import("@vercel/blob");
+  await put(STORE_KEY, json, {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    cacheControlMaxAge: 0,
+  });
+  // Refresh the in-memory cache immediately so admin edits show at once
+  // without another Blob read.
+  blobMemCache = { data: normalize(payload), at: Date.now() };
+}
+
+/** Read the full store. Never throws — falls back to the seed catalogue. */
+export async function getStoreData(): Promise<StoreData> {
+  if (hasDisk()) {
+    return (await readDiskStore()) ?? (await readBlobStore()) ?? seedData();
+  }
+  return (await readBlobStore()) ?? (await readDiskStore()) ?? seedData();
 }
 
 /** Persist the full store. */
@@ -456,24 +487,15 @@ export async function saveStoreData(data: StoreData): Promise<void> {
   const payload: StoreData = { ...data, updatedAt: new Date().toISOString() };
   const json = JSON.stringify(payload, null, 2);
 
-  if (hasBlob()) {
-    const { put } = await import("@vercel/blob");
-    await put(STORE_KEY, json, {
-      access: "public",
-      contentType: "application/json",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-      cacheControlMaxAge: 0,
-    });
-    // Refresh the in-memory cache immediately so admin edits show at once
-    // without another Blob read.
-    blobMemCache = { data: normalize(payload), at: Date.now() };
+  if (hasDisk()) {
+    await writeDiskStore(json);
     return;
   }
-  const fs = await import("node:fs/promises");
-  const { dir, file } = await localStoreFile();
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(file, json, "utf8");
+  if (hasBlob()) {
+    await writeBlobStore(payload, json);
+    return;
+  }
+  await writeDiskStore(json);
 }
 
 /** Convenience: just the catalogue. */
@@ -501,7 +523,7 @@ export async function uploadImage(
   const safe =
     Date.now() + "-" + filename.replace(/[^a-zA-Z0-9.\-_]/g, "_").slice(-60);
 
-  if (hasBlob()) {
+  if (!hasDisk() && hasBlob()) {
     const { put } = await import("@vercel/blob");
     const blob = await put(`mazal/uploads/${safe}`, bytes, {
       access: "public",
@@ -514,7 +536,11 @@ export async function uploadImage(
   const path = await import("node:path");
   const dir = RENDER_DATA_DIR
     ? path.join(RENDER_DATA_DIR, "uploads")
-    : path.join(process.cwd(), "public", "uploads");
+    : path.join(
+        /*turbopackIgnore: true*/ process.cwd(),
+        "public",
+        "uploads",
+      );
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, safe), bytes);
   return `/uploads/${safe}`;
@@ -526,7 +552,12 @@ export async function readUploadedFile(filename: string) {
   const path = await import("node:path");
   const candidates = [
     ...(RENDER_DATA_DIR ? [path.join(RENDER_DATA_DIR, "uploads", safe)] : []),
-    path.join(process.cwd(), "public", "uploads", safe),
+    path.join(
+      /*turbopackIgnore: true*/ process.cwd(),
+      "public",
+      "uploads",
+      safe,
+    ),
   ];
   for (const file of candidates) {
     try {
