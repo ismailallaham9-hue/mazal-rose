@@ -16,6 +16,16 @@ import { ARTICLES, type Article } from "./articles";
 import { CATEGORIES, PRODUCTS, type Product } from "./products";
 import { SITE } from "./site";
 
+/**
+ * In-process cache for the Blob store. Vercel Blob's `list()` is a metered
+ * "advanced operation", and the server runs as one long-lived process on
+ * Render, so we cache the parsed store in memory and only re-read from Blob
+ * once an hour (or immediately after an admin save). This keeps us far under
+ * the free operations quota instead of calling list() on every page view.
+ */
+let blobMemCache: { data: StoreData; at: number } | null = null;
+const BLOB_MEM_TTL = 60 * 60 * 1000; // 1 hour
+
 export type SiteContent = {
   heroEyebrow: string;
   heroTitle: string;
@@ -403,17 +413,27 @@ async function localStoreFile() {
 /** Read the full store. Never throws — falls back to the seed catalogue. */
 export async function getStoreData(): Promise<StoreData> {
   if (hasBlob()) {
+    // Serve from the in-memory cache while it's fresh (avoids a metered list()).
+    if (blobMemCache && Date.now() - blobMemCache.at < BLOB_MEM_TTL) {
+      return blobMemCache.data;
+    }
     try {
       const { list } = await import("@vercel/blob");
       const { blobs } = await list({ prefix: STORE_KEY });
       const found = blobs.find((b) => b.pathname === STORE_KEY);
       if (found) {
-        const res = await fetch(found.url, { next: { revalidate: 15 } });
-        if (res.ok) return normalize(await res.json());
+        const res = await fetch(found.url, { cache: "no-store" });
+        if (res.ok) {
+          const data = normalize(await res.json());
+          blobMemCache = { data, at: Date.now() };
+          return data;
+        }
       }
     } catch {
-      /* fall through to seed */
+      /* fall through */
     }
+    // On a transient read failure, prefer stale cache over reverting to seed.
+    if (blobMemCache) return blobMemCache.data;
     return seedData();
   }
   // Render disk or local dev
@@ -441,6 +461,9 @@ export async function saveStoreData(data: StoreData): Promise<void> {
       allowOverwrite: true,
       cacheControlMaxAge: 0,
     });
+    // Refresh the in-memory cache immediately so admin edits show at once
+    // without another Blob read.
+    blobMemCache = { data: normalize(payload), at: Date.now() };
     return;
   }
   const fs = await import("node:fs/promises");
