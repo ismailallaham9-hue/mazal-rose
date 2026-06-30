@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ContactForm } from "@/components/ContactForm";
@@ -104,8 +105,11 @@ export default function ContactPage() {
               content: (
                 <p>
                   We offer 14-day hassle-free returns and exchanges on unworn
-                  items with tags attached. Refunds are processed within 5–7
-                  working days.
+                  items with tags attached. Read the full{" "}
+                  <Link href="/returns" className="link-underline text-bronze hover:text-bronze-deep">
+                    Returns & Exchanges policy
+                  </Link>{" "}
+                  for eligibility, refunds, and exchange steps.
                 </p>
               ),
             },

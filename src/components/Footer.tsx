@@ -25,7 +25,7 @@ const COLUMNS = [
     title: "Support",
     links: [
       { label: "My Account", href: "/account" },
-      { label: "Shipping & Returns", href: "/contact" },
+      { label: "Returns & Exchanges", href: "/returns" },
       { label: "Wishlist", href: "/wishlist" },
       { label: "FAQ", href: "/contact" },
     ],

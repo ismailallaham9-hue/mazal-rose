@@ -287,8 +287,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 content: (
                   <p>
                     Enjoy 14-day hassle-free returns and exchanges on unworn
-                    pieces with tags attached. Refunds are processed within 5–7
-                    working days to your original payment method.
+                    pieces with tags attached. Read the full{" "}
+                    <Link href="/returns" className="link-underline text-bronze hover:text-bronze-deep">
+                      Returns & Exchanges policy
+                    </Link>{" "}
+                    for eligibility, refunds, and exchange steps.
                   </p>
                 ),
               },

@@ -283,7 +283,7 @@ export const DEFAULT_PAGES: PageContent = {
         title: "Support",
         links: [
           { label: "My Account", href: "/account" },
-          { label: "Shipping & Returns", href: "/contact" },
+          { label: "Returns & Exchanges", href: "/returns" },
           { label: "Wishlist", href: "/wishlist" },
           { label: "FAQ", href: "/contact" },
         ],
@@ -310,6 +310,11 @@ export const DEFAULT_PAGES: PageContent = {
       title: "Contact & Client Care",
       description:
         "Reach the MAZAL team for orders, styling and client care in the UAE. Chat on WhatsApp or message us — we reply within one working day.",
+    },
+    returns: {
+      title: "Returns & Exchanges",
+      description:
+        "Read MAZAL's returns and exchanges policy, including eligibility, timelines, refunds, exchanges and client care support.",
     },
     journal: {
       title: "The Journal — Modest Style Notes & Guides",
@@ -387,6 +392,26 @@ function seedData(): StoreData {
 function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
   const seed = seedData();
   if (!raw || typeof raw !== "object") return seed;
+  const rawPages: Partial<PageContent> = raw.pages ?? {};
+  const pages = {
+    ...seed.pages,
+    ...rawPages,
+    footer: {
+      ...seed.pages.footer,
+      ...(rawPages.footer ?? {}),
+      columns: Array.isArray(rawPages.footer?.columns)
+        ? rawPages.footer.columns.map((column) => ({
+            ...column,
+            links: column.links.map((link) =>
+              link.label === "Shipping & Returns" && link.href === "/contact"
+                ? { ...link, label: "Returns & Exchanges", href: "/returns" }
+                : link,
+            ),
+          }))
+        : seed.pages.footer.columns,
+    },
+    seo: { ...seed.pages.seo, ...(rawPages.seo ?? {}) },
+  };
   return {
     products: Array.isArray(raw.products) ? raw.products : seed.products,
     content: { ...seed.content, ...(raw.content ?? {}) },
@@ -400,7 +425,7 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
         ? (raw.seoRecords as Record<string, SeoRecord>)
         : {},
     media: Array.isArray(raw.media) ? raw.media : seed.media,
-    pages: { ...seed.pages, ...(raw.pages ?? {}) },
+    pages,
     updatedAt: raw.updatedAt,
   };
 }

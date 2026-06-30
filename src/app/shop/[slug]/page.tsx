@@ -153,7 +153,7 @@ export default async function ProductPage({
         name: "What is your return policy?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "We offer 14-day hassle-free returns and exchanges on unworn items with tags attached.",
+          text: "We offer 14-day hassle-free returns and exchanges on unworn items with tags attached. Full eligibility and exchange steps are available on the Returns & Exchanges page.",
         },
       },
       {
