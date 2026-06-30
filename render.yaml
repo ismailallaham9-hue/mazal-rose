@@ -2,11 +2,9 @@ services:
   - type: web
     name: mazal-rose
     runtime: node
-    # Free plan for a preview deploy. NOTE: the free plan has NO persistent disk,
-    # so admin-panel edits/uploads reset on restart/redeploy and the service sleeps
-    # when idle. To make admin changes persist, switch `plan` to `starter` and
-    # re-add the `MAZAL_DATA_DIR` env var + `disk` block (see render.starter.yaml).
-    plan: free
+    # Starter plan: always-on (no cold starts) + a persistent disk so admin
+    # uploads/edits are stored on the server with NO operations limit.
+    plan: starter
     # --include=dev is required: NODE_ENV=production makes npm omit devDependencies,
     # but Next needs build-time devDeps (@tailwindcss/postcss, tailwindcss, typescript).
     buildCommand: npm ci --include=dev && npm run build
@@ -17,3 +15,10 @@ services:
         value: production
       - key: ADMIN_PASSWORD
         sync: false
+      # Store admin content + uploaded media on the mounted disk (below).
+      - key: MAZAL_DATA_DIR
+        value: /var/data/mazal
+    disk:
+      name: mazal-data
+      mountPath: /var/data
+      sizeGB: 1
