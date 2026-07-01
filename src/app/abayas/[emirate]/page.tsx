@@ -7,6 +7,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { Button } from "@/components/Button";
 import { getStoreData } from "@/lib/store";
 import { SITE } from "@/lib/site";
+import { jsonLd, publishedSeo } from "@/lib/seo";
 
 const EMIRATES: Record<string, { name: string; short: string }> = {
   dubai: { name: "Dubai", short: "Dubai" },
@@ -29,7 +30,7 @@ export async function generateMetadata({
   const e = EMIRATES[emirate];
   if (!e) return { title: "Not found" };
   const store = await getStoreData();
-  const rec = store.seoRecords?.[`city:${emirate}`];
+  const rec = publishedSeo(store.seoRecords?.[`city:${emirate}`]);
   const title = rec?.seoTitle?.trim() || `Luxury Abayas in ${e.short}`;
   const description =
     rec?.metaDescription?.trim() ||
@@ -103,8 +104,8 @@ export default async function EmiratePage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }} />
 
       <Container className="pt-8">
         <Breadcrumbs

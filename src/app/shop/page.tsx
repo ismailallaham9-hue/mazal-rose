@@ -7,6 +7,7 @@ import { ShopClient } from "@/components/ShopClient";
 import { CATEGORIES, CATEGORY_LABEL, type Category } from "@/lib/products";
 import { getStoreData } from "@/lib/store";
 import { SITE } from "@/lib/site";
+import { absoluteUrl, jsonLd, publishedSeo } from "@/lib/seo";
 
 const CATEGORY_FAQ: Record<string, { q: string; a: string }[]> = {
   abayas: [
@@ -64,6 +65,7 @@ export async function generateMetadata({
   if (customCategory || isCategory(category)) {
     const label =
       customCategory?.label ?? CATEGORIES.find((c) => c.value === category)!.label;
+    const rec = publishedSeo(store.seoRecords?.[`category:${category}`]);
     const seoMap: Record<string, { title: string; description: string }> = {
       abayas: {
         title: "Luxury Abayas Online UAE",
@@ -85,25 +87,44 @@ export async function generateMetadata({
     // Admin-editable category SEO (Categories tab) takes priority.
     return {
       title:
+        rec?.seoTitle?.trim() ||
         customCategory?.seoTitle?.trim() ||
         seo?.title ||
         `${label} — Shop ${label} UAE`,
       description:
+        rec?.metaDescription?.trim() ||
         customCategory?.seoDescription?.trim() ||
         seo?.description ||
         `Shop MAZAL ${label.toLowerCase()} — quiet-luxury modest fashion crafted with intention. Free GCC delivery over AED 500.`,
-      alternates: { canonical: `/shop?category=${category}` },
+      ...(rec && (rec.index === false || rec.follow === false)
+        ? { robots: { index: rec.index !== false, follow: rec.follow !== false } }
+        : {}),
+      alternates: { canonical: rec?.canonical?.trim() || `/shop?category=${category}` },
+      openGraph: {
+        title: rec?.ogTitle?.trim() || customCategory?.seoTitle?.trim() || seo?.title || `${label} — MAZAL`,
+        description: rec?.ogDescription?.trim() || customCategory?.seoDescription?.trim() || seo?.description,
+        url: rec?.canonical?.trim() || `/shop?category=${category}`,
+        images: absoluteUrl(store.settings.url || SITE.url, rec?.ogImage || customCategory?.image)
+          ? [absoluteUrl(store.settings.url || SITE.url, rec?.ogImage || customCategory?.image)!]
+          : undefined,
+        type: "website",
+      },
     };
   }
-  const title = store.pages.seo.shop?.title ?? "Shop All - The Collection";
+  const rec = publishedSeo(store.seoRecords?.shop);
+  const title = rec?.seoTitle?.trim() || store.pages.seo.shop?.title || "Shop All - The Collection";
   const description =
-    store.pages.seo.shop?.description ??
+    rec?.metaDescription?.trim() ||
+    store.pages.seo.shop?.description ||
     "Shop the full MAZAL collection - abayas, kaftans, dresses, accessories and more. Premium modest fashion designed to endure.";
   return {
     title,
     description,
-    alternates: { canonical: "/shop" },
-    openGraph: { title, description, url: "/shop", type: "website" },
+    ...(rec && (rec.index === false || rec.follow === false)
+      ? { robots: { index: rec.index !== false, follow: rec.follow !== false } }
+      : {}),
+    alternates: { canonical: rec?.canonical?.trim() || "/shop" },
+    openGraph: { title: rec?.ogTitle?.trim() || title, description: rec?.ogDescription?.trim() || description, url: rec?.canonical?.trim() || "/shop", type: "website" },
   };
 }
 
@@ -178,10 +199,10 @@ export default async function ShopPage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListJsonLd) }} />
       {faqJsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }} />
       )}
       <Container className="pt-8">
         <Breadcrumbs

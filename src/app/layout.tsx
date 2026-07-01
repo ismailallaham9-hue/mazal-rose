@@ -14,6 +14,7 @@ import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { VeilIntro } from "@/components/VeilIntro";
 import { getStoreData } from "@/lib/store";
+import { jsonLd } from "@/lib/seo";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -122,7 +123,7 @@ export default async function RootLayout({
         </Script>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(orgJsonLd) }}
         />
         <CartProvider settings={settings}>
           <WishlistProvider>

@@ -8,21 +8,25 @@ import { ADMIN_COOKIE, isAuthed } from "@/lib/admin-auth";
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const noindex = (res: NextResponse) => {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return res;
+  };
 
   const isLoginPage = pathname === "/admin/login";
   const isLoginApi = pathname === "/api/admin/login";
-  if (isLoginPage || isLoginApi) return NextResponse.next();
+  if (isLoginPage || isLoginApi) return noindex(NextResponse.next());
 
   const authed = await isAuthed(req.cookies.get(ADMIN_COOKIE)?.value);
-  if (authed) return NextResponse.next();
+  if (authed) return noindex(NextResponse.next());
 
   if (pathname.startsWith("/api/admin")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return noindex(NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
   }
   const url = req.nextUrl.clone();
   url.pathname = "/admin/login";
   url.searchParams.set("next", pathname);
-  return NextResponse.redirect(url);
+  return noindex(NextResponse.redirect(url));
 }
 
 export const config = {

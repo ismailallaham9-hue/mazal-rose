@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { CATEGORIES } from "@/lib/products";
 import { getStoreData } from "@/lib/store";
+import { publishedSeo } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const store = await getStoreData();
@@ -9,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = (store.settings.url || "https://mazal.ae").replace(/\/$/, "");
   // Content Studio can exclude an entity from the sitemap or mark it noindex.
   const excluded = (key: string) => {
-    const r = store.seoRecords?.[key];
+    const r = publishedSeo(store.seoRecords?.[key]);
     return !!r && (r.sitemapInclude === false || r.index === false);
   };
   // Only indexable, public routes. /account, /wishlist, /cart and /checkout

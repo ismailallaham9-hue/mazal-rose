@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ProductRail } from "@/components/ProductRail";
 import { SITE } from "@/lib/site";
 import { getStoreData } from "@/lib/store";
+import { absoluteUrl, jsonLd as serializeJsonLd, publishedSeo } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const { articles } = await getStoreData();
@@ -18,28 +19,36 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { articles } = await getStoreData();
+  const store = await getStoreData();
+  const { articles } = store;
   const article = articles.find((a) => a.slug === slug);
   if (!article) return { title: "Not found" };
-  const title = article.seoTitle?.trim() ? article.seoTitle : article.title;
-  const description = article.seoDescription?.trim()
-    ? article.seoDescription
-    : article.excerpt;
+  const rec = publishedSeo(store.seoRecords?.[`article:${article.slug}`]);
+  const title = rec?.seoTitle?.trim() || article.seoTitle?.trim() || article.title;
+  const description = rec?.metaDescription?.trim() || article.seoDescription?.trim() || article.excerpt;
+  const canonical = rec?.canonical?.trim() || `/journal/${article.slug}`;
+  const robots =
+    rec && (rec.index === false || rec.follow === false)
+      ? { index: rec.index !== false, follow: rec.follow !== false }
+      : undefined;
+  const image = absoluteUrl(store.settings.url || SITE.url, rec?.ogImage || article.image);
   return {
     title,
     description,
-    alternates: { canonical: `/journal/${article.slug}` },
+    ...(robots ? { robots } : {}),
+    alternates: { canonical },
     openGraph: {
-      title: `${article.title} - MAZAL Journal`,
-      description,
-      images: [article.image],
+      title: rec?.ogTitle?.trim() || `${article.title} - MAZAL Journal`,
+      description: rec?.ogDescription?.trim() || description,
+      url: canonical,
+      images: image ? [image] : undefined,
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${article.title} - MAZAL Journal`,
-      description,
-      images: [article.image],
+      title: rec?.twitterTitle?.trim() || rec?.ogTitle?.trim() || `${article.title} - MAZAL Journal`,
+      description: rec?.twitterDescription?.trim() || rec?.ogDescription?.trim() || description,
+      images: absoluteUrl(store.settings.url || SITE.url, rec?.twitterImage) ? [absoluteUrl(store.settings.url || SITE.url, rec?.twitterImage)!] : image ? [image] : undefined,
     },
   };
 }
@@ -50,35 +59,34 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { articles, products } = await getStoreData();
+  const { articles, products, settings } = await getStoreData();
   const article = articles.find((a) => a.slug === slug);
   if (!article) notFound();
+  const base = (settings.url || SITE.url).replace(/\/$/, "");
 
   const related = (article.relatedSlugs ?? [])
     .map((s) => products.find((p) => p.slug === s || p.id === s))
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
-  const absImage = /^https?:\/\//i.test(article.image)
-    ? article.image
-    : `${SITE.url.replace(/\/$/, "")}${article.image.startsWith("/") ? "" : "/"}${article.image}`;
-  const jsonLd = {
+  const absImage = absoluteUrl(base, article.image) ?? `${base}/images/brand/logo.png`;
+  const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.title,
     description: article.excerpt,
     image: [absImage],
     datePublished: article.date,
-    author: { "@type": "Organization", name: SITE.name },
-    publisher: { "@type": "Organization", name: SITE.name },
+    author: { "@type": "Organization", name: settings.name },
+    publisher: { "@type": "Organization", name: settings.name },
   };
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: SITE.url },
-      { "@type": "ListItem", position: 2, name: "Journal", item: `${SITE.url}/journal` },
-      { "@type": "ListItem", position: 3, name: article.title, item: `${SITE.url}/journal/${article.slug}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: base },
+      { "@type": "ListItem", position: 2, name: "Journal", item: `${base}/journal` },
+      { "@type": "ListItem", position: 3, name: article.title, item: `${base}/journal/${article.slug}` },
     ],
   };
 
@@ -86,11 +94,11 @@ export default async function ArticlePage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
       />
 
       <Container className="pt-8">

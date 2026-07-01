@@ -14,6 +14,7 @@ import {
 } from "@/lib/products";
 import { SITE } from "@/lib/site";
 import { getProductsFromStore, getStoreData } from "@/lib/store";
+import { absoluteUrl, jsonLd, publishedSeo } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const products = await getProductsFromStore();
@@ -64,30 +65,42 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = findProduct(await getProductsFromStore(), slug);
+  const store = await getStoreData();
+  const product = findProduct(store.products, slug);
   if (!product) return { title: "Not found" };
-  const title = product.seoTitle?.trim()
-    ? product.seoTitle
-    : `${product.name} — ${CATEGORY_LABEL[product.category]}`;
-  const description = product.seoDescription?.trim()
-    ? product.seoDescription
-    : product.description.slice(0, 160);
-  const ogImage = product.image ?? "/images/brand/hero.jpg";
+  const rec = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
+  const title =
+    rec?.seoTitle?.trim() ||
+    product.seoTitle?.trim() ||
+    `${product.name} — ${CATEGORY_LABEL[product.category]}`;
+  const description =
+    rec?.metaDescription?.trim() ||
+    product.seoDescription?.trim() ||
+    product.description.slice(0, 160);
+  const base = store.settings.url || SITE.url;
+  const ogImage = absoluteUrl(base, rec?.ogImage || product.image || "/images/brand/hero.jpg");
+  const canonical = rec?.canonical?.trim() || `/shop/${product.slug}`;
+  const robots =
+    rec && (rec.index === false || rec.follow === false)
+      ? { index: rec.index !== false, follow: rec.follow !== false }
+      : undefined;
   return {
     title,
     description,
-    alternates: { canonical: `/shop/${product.slug}` },
+    ...(robots ? { robots } : {}),
+    alternates: { canonical },
     openGraph: {
-      title: `${product.name} · MAZAL`,
-      description,
-      images: [ogImage],
+      title: rec?.ogTitle?.trim() || `${product.name} · MAZAL`,
+      description: rec?.ogDescription?.trim() || description,
+      url: canonical,
+      images: ogImage ? [ogImage] : undefined,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${product.name} · MAZAL`,
-      description,
-      images: [ogImage],
+      title: rec?.twitterTitle?.trim() || rec?.ogTitle?.trim() || `${product.name} · MAZAL`,
+      description: rec?.twitterDescription?.trim() || rec?.ogDescription?.trim() || description,
+      images: absoluteUrl(base, rec?.twitterImage) ? [absoluteUrl(base, rec?.twitterImage)!] : ogImage ? [ogImage] : undefined,
     },
   };
 }
@@ -104,6 +117,7 @@ export default async function ProductPage({
   const base = (settings.url || SITE.url).replace(/\/$/, "");
   const product = findProduct(products, slug);
   if (!product) notFound();
+  const seo = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
 
   const completeLook = completeTheLook(products, product, 3);
   const fbtExtras = completeLook.slice(0, 2);
@@ -114,8 +128,8 @@ export default async function ProductPage({
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: product.description,
-    image: [product.image ?? `${base}/images/brand/hero.jpg`],
+    description: seo?.longDescription || seo?.shortDescription || product.longDescription || product.description,
+    image: [absoluteUrl(base, seo?.ogImage || product.image) ?? `${base}/images/brand/hero.jpg`],
     category: CATEGORY_LABEL[product.category],
     brand: { "@type": "Brand", name: settings.name },
     offers: {
@@ -156,7 +170,7 @@ export default async function ProductPage({
         name: "What is your return policy?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "We offer 14-day hassle-free returns and exchanges on unworn items with tags attached. Full eligibility and exchange steps are available on the Returns & Exchanges page.",
+          text: seo?.returnExchangeInformation || "We offer 14-day hassle-free returns and exchanges on unworn items with tags attached. Full eligibility and exchange steps are available on the Returns & Exchanges page.",
         },
       },
       {
@@ -195,15 +209,15 @@ export default async function ProductPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(productJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }}
       />
 
       <Container className="pt-8">

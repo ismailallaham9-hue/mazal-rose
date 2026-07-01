@@ -161,10 +161,42 @@ export type SchemaType =
   | "FAQPage"
   | "BreadcrumbList";
 
-/** Rich, per-entity SEO record edited in the Content Studio. Keyed in
- *  store.seoRecords by entity id, e.g. "home", "shop", "category:abayas",
- *  "product:sukoon-abaya", "city:dubai", "article:<slug>", "page:about". */
-export type SeoRecord = {
+export type SeoRecordStatus = "draft" | "published";
+
+export type SeoFAQ = {
+  q: string;
+  a: string;
+};
+
+export type SeoContentFields = {
+  pageTitle?: string;
+  h1?: string;
+  heroEyebrow?: string;
+  heroHeading?: string;
+  heroSubheading?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  intro?: string;
+  body?: string;
+  sections?: { h2: string; body: string; image?: string; ctaText?: string; ctaLink?: string }[];
+  faqs?: SeoFAQ[];
+  productName?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  specifications?: string;
+  fabric?: string;
+  colorOptions?: string;
+  sizeOptions?: string;
+  fitNotes?: string;
+  careInstructions?: string;
+  deliveryInformation?: string;
+  returnExchangeInformation?: string;
+  stylingNotes?: string;
+  occasionUseCase?: string;
+  imageAltText?: string;
+};
+
+export type SeoFields = SeoContentFields & {
   seoTitle?: string;
   metaDescription?: string;
   focusKeyword?: string;
@@ -178,10 +210,26 @@ export type SeoRecord = {
   twitterTitle?: string;
   twitterDescription?: string;
   twitterImage?: string;
+  searchIntentNotes?: string;
+  internalLinkSuggestions?: string;
+  faqSchema?: SeoFAQ[];
+  imageAltSuggestions?: string;
   schemaType?: SchemaType;
   sitemapInclude?: boolean; // default true
-  sitemapPriority?: number; // 0.0–1.0
+  sitemapPriority?: number; // 0.0-1.0
   sitemapChangefreq?: string; // weekly/monthly/...
+};
+
+/** Rich, per-entity SEO record edited in the Content Studio. Keyed in
+ *  store.seoRecords by entity id, e.g. "home", "shop", "category:abayas",
+ *  "product:sukoon-abaya", "city:dubai", "article:<slug>", "page:about". */
+export type SeoRecord = SeoFields & {
+  status?: SeoRecordStatus;
+  published?: SeoFields;
+  draft?: SeoFields;
+  updatedAt?: string;
+  publishedAt?: string;
+  updatedBy?: string;
 };
 
 export type StoreCategory = {
@@ -448,8 +496,199 @@ const CATEGORY_SEO_SEED: Record<string, { seoTitle: string; seoDescription: stri
   },
 };
 
-function seedData(): StoreData {
+const CITY_SEO_SEED: { slug: string; name: string }[] = [
+  { slug: "dubai", name: "Dubai" },
+  { slug: "abu-dhabi", name: "Abu Dhabi" },
+  { slug: "sharjah", name: "Sharjah" },
+  { slug: "ajman", name: "Ajman" },
+  { slug: "ras-al-khaimah", name: "Ras Al Khaimah" },
+];
+
+function publishedRecord(fields: SeoFields): SeoRecord {
   return {
+    ...fields,
+    status: "published",
+    published: { ...fields },
+    publishedAt: new Date(0).toISOString(),
+  };
+}
+
+function recordForProduct(product: Product): SeoRecord {
+  const title = product.seoTitle || `${product.name} | Luxury ${product.category} UAE`;
+  const description =
+    product.seoDescription ||
+    `${product.description} Shop MAZAL online in the UAE with refined delivery, returns and client care.`.slice(0, 160);
+  return publishedRecord({
+    pageTitle: product.name,
+    h1: product.name,
+    productName: product.name,
+    shortDescription: product.description,
+    longDescription: product.longDescription || product.description,
+    specifications: product.specifications || `Category: ${product.category}\nSizes: ${product.sizes.join(", ")}\nColours: ${product.colors.map((c) => c.name).join(", ")}`,
+    fabric: product.material,
+    colorOptions: product.colors.map((c) => c.name).join(", "),
+    sizeOptions: product.sizes.join(", "),
+    fitNotes: product.fitNotes || "Designed for an elegant, modest drape. Choose your usual size for a relaxed MAZAL fit.",
+    careInstructions: product.care?.join("\n"),
+    deliveryInformation: product.deliveryInfo || "UAE and GCC delivery is available, with complimentary delivery over AED 500.",
+    returnExchangeInformation: product.returnInfo || "Eligible unworn pieces can be returned or exchanged according to the MAZAL Returns & Exchanges policy.",
+    stylingNotes: product.stylingNotes || "Style with quiet accessories and tonal layers for a refined Gulf wardrobe.",
+    imageAltText: product.imageAltText || `${product.name} luxury modest fashion by MAZAL UAE`,
+    seoTitle: title,
+    metaDescription: description,
+    focusKeyword: product.category === "abayas" ? "luxury abayas UAE" : product.category === "kaftans" ? "luxury kaftans UAE" : "modest fashion Dubai",
+    canonical: `/shop/${product.slug}`,
+    index: product.published !== false,
+    follow: true,
+    ogTitle: `${product.name} · MAZAL`,
+    ogDescription: description,
+    ogImage: product.image,
+    twitterTitle: `${product.name} · MAZAL`,
+    twitterDescription: description,
+    twitterImage: product.image,
+    schemaType: "Product",
+    sitemapInclude: product.published !== false,
+    sitemapPriority: 0.6,
+    sitemapChangefreq: "weekly",
+  });
+}
+
+function buildSeedSeoRecords(seed: Omit<StoreData, "seoRecords">): Record<string, SeoRecord> {
+  const records: Record<string, SeoRecord> = {
+    global: publishedRecord({
+      seoTitle: seed.seo.defaultTitle,
+      metaDescription: seed.seo.defaultDescription,
+      canonical: "/",
+      index: seed.seo.indexable,
+      follow: true,
+      ogImage: seed.seo.defaultOgImage,
+      schemaType: "Organization",
+      sitemapInclude: true,
+      sitemapPriority: 1,
+      sitemapChangefreq: "weekly",
+    }),
+    home: publishedRecord({
+      pageTitle: seed.content.heroTitle,
+      h1: seed.content.heroTitle,
+      heroEyebrow: seed.content.heroEyebrow,
+      heroHeading: seed.content.heroTitle,
+      heroSubheading: seed.content.heroSubtitle,
+      ctaText: seed.content.heroCtaText,
+      ctaLink: seed.content.heroCtaHref,
+      intro: seed.content.heroSubtitle,
+      seoTitle: seed.pages.seo.home?.title || seed.seo.defaultTitle,
+      metaDescription: seed.pages.seo.home?.description || seed.seo.defaultDescription,
+      canonical: "/",
+      index: true,
+      follow: true,
+      ogImage: seed.pages.seo.home?.ogImage || seed.seo.defaultOgImage,
+      schemaType: "Organization",
+      sitemapInclude: true,
+      sitemapPriority: 1,
+      sitemapChangefreq: "weekly",
+    }),
+    shop: publishedRecord({
+      pageTitle: seed.pages.shop.title,
+      h1: seed.pages.shop.title,
+      intro: seed.pages.shop.blurb,
+      body: seed.pages.shop.blurb,
+      seoTitle: seed.pages.seo.shop?.title || "Luxury Abayas, Kaftans & Modest Dresses UAE",
+      metaDescription: seed.pages.seo.shop?.description || seed.seo.defaultDescription,
+      canonical: "/shop",
+      index: true,
+      follow: true,
+      schemaType: "CollectionPage",
+      sitemapInclude: true,
+      sitemapPriority: 0.8,
+      sitemapChangefreq: "weekly",
+    }),
+  };
+
+  for (const key of ["about", "contact", "returns", "rewards", "journal"] as const) {
+    const seo = seed.pages.seo[key];
+    const page = key === "about" ? seed.pages.about : key === "contact" ? seed.pages.contact : undefined;
+    records[`page:${key}`] = publishedRecord({
+      pageTitle: page?.title || key[0].toUpperCase() + key.slice(1),
+      h1: page?.title || key[0].toUpperCase() + key.slice(1),
+      body: page?.body,
+      seoTitle: seo?.title || `${key[0].toUpperCase() + key.slice(1)} | MAZAL`,
+      metaDescription: seo?.description || seed.seo.defaultDescription,
+      canonical: key === "returns" ? "/returns" : key === "journal" ? "/journal" : `/${key}`,
+      index: true,
+      follow: true,
+      schemaType: key === "journal" ? "CollectionPage" : "WebPage",
+      sitemapInclude: true,
+      sitemapPriority: 0.7,
+      sitemapChangefreq: "monthly",
+    });
+  }
+
+  for (const category of seed.categories) {
+    records[`category:${category.value}`] = publishedRecord({
+      pageTitle: category.label,
+      h1: category.label,
+      intro: category.blurb,
+      body: category.blurb,
+      seoTitle: category.seoTitle || `${category.label} Online UAE | MAZAL`,
+      metaDescription: category.seoDescription || `Shop MAZAL ${category.label.toLowerCase()} in the UAE. Quiet luxury, premium fabrics and free GCC delivery over AED 500.`,
+      focusKeyword: category.value === "abayas" ? "luxury abayas UAE" : category.value === "kaftans" ? "luxury kaftans UAE" : `${category.label.toLowerCase()} UAE`,
+      canonical: `/shop?category=${category.value}`,
+      index: !category.hidden,
+      follow: true,
+      ogImage: category.image,
+      schemaType: "CollectionPage",
+      sitemapInclude: !category.hidden,
+      sitemapPriority: 0.7,
+      sitemapChangefreq: "weekly",
+    });
+  }
+
+  for (const city of CITY_SEO_SEED) {
+    records[`city:${city.slug}`] = publishedRecord({
+      pageTitle: `Luxury Abayas in ${city.name}`,
+      h1: `Luxury Abayas in ${city.name}`,
+      intro: `Discover MAZAL luxury abayas, designer kaftans and modest dresses in ${city.name}.`,
+      body: `MAZAL brings quiet luxury modest fashion to ${city.name}, with refined abayas, kaftans and dresses crafted for the modern Gulf wardrobe.`,
+      seoTitle: `Luxury Abayas in ${city.name} | MAZAL`,
+      metaDescription: `Shop MAZAL luxury abayas, kaftans and modest dresses in ${city.name}. Premium fabrics, fast UAE delivery and free delivery over AED 500.`,
+      focusKeyword: city.slug === "dubai" ? "abayas Dubai" : "luxury abayas UAE",
+      canonical: `/abayas/${city.slug}`,
+      index: true,
+      follow: true,
+      schemaType: "CollectionPage",
+      sitemapInclude: true,
+      sitemapPriority: 0.6,
+      sitemapChangefreq: "monthly",
+    });
+  }
+
+  for (const product of seed.products) records[`product:${product.slug}`] = recordForProduct(product);
+
+  for (const article of seed.articles) {
+    records[`article:${article.slug}`] = publishedRecord({
+      pageTitle: article.title,
+      h1: article.title,
+      intro: article.excerpt,
+      body: article.body.map((block) => block.text).join("\n\n"),
+      seoTitle: article.seoTitle || `${article.title} | MAZAL Journal`,
+      metaDescription: article.seoDescription || article.excerpt,
+      canonical: `/journal/${article.slug}`,
+      index: true,
+      follow: true,
+      ogImage: article.image,
+      twitterImage: article.image,
+      schemaType: "Article",
+      sitemapInclude: true,
+      sitemapPriority: 0.5,
+      sitemapChangefreq: "monthly",
+    });
+  }
+
+  return records;
+}
+
+function seedData(): StoreData {
+  const seed: Omit<StoreData, "seoRecords"> = {
     products: PRODUCTS.map((p) => ({ ...p })),
     content: { ...DEFAULT_CONTENT },
     theme: { ...DEFAULT_THEME },
@@ -468,7 +707,6 @@ function seedData(): StoreData {
     emailEvents: [],
     settings: { ...DEFAULT_SETTINGS },
     seo: { ...DEFAULT_SEO },
-    seoRecords: {},
     media: [],
     pages: {
       ...DEFAULT_PAGES,
@@ -485,6 +723,10 @@ function seedData(): StoreData {
       },
       seo: { ...DEFAULT_PAGES.seo },
     },
+  };
+  return {
+    ...seed,
+    seoRecords: buildSeedSeoRecords(seed),
   };
 }
 
@@ -538,7 +780,7 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     },
     seo: { ...seed.pages.seo, ...(rawPages.seo ?? {}) },
   };
-  return {
+  const normalizedBase = {
     products: Array.isArray(raw.products) ? raw.products : seed.products,
     content: { ...seed.content, ...(raw.content ?? {}) },
     theme: { ...seed.theme, ...(raw.theme ?? {}) },
@@ -561,6 +803,15 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     media: Array.isArray(raw.media) ? raw.media : seed.media,
     pages,
     updatedAt: raw.updatedAt,
+  };
+  const seeded = buildSeedSeoRecords(normalizedBase);
+  const incomingRecords =
+    raw.seoRecords && typeof raw.seoRecords === "object"
+      ? (raw.seoRecords as Record<string, SeoRecord>)
+      : {};
+  return {
+    ...normalizedBase,
+    seoRecords: { ...seeded, ...incomingRecords },
   };
 }
 

@@ -37,6 +37,15 @@ export interface Product {
   compareAtPrice?: number; // AED — original price when on sale
   category: Category;
   description: string;
+  longDescription?: string;
+  specifications?: string;
+  fitNotes?: string;
+  deliveryInfo?: string;
+  returnInfo?: string;
+  stylingNotes?: string;
+  occasionUseCase?: string;
+  faqs?: { q: string; a: string }[];
+  imageAltText?: string;
   sizes: string[];
   colors: ColorOption[];
   material?: string;

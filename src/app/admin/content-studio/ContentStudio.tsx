@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { SeoRecord, StoreCategory, StoreData } from "@/lib/store";
-import type { Product } from "@/lib/products";
-import type { Article, ArticleBlock } from "@/lib/articles";
+import type { SeoFields, SeoRecord, StoreData } from "@/lib/store";
 import {
   scoreSeo,
   suggestForCategory,
@@ -39,6 +37,42 @@ const SCHEMA_TYPES = [
   "FAQPage",
   "BreadcrumbList",
 ] as const;
+
+const CONTENT_TYPES = ["Page", "Product", "Category", "City", "Article", "Global"] as const;
+const entityContentType = (type: EntityType) =>
+  type === "product" ? "Product" : type === "category" ? "Category" : type === "city" ? "City" : type === "article" ? "Article" : type === "global" ? "Global" : "Page";
+
+function liveSeo(record?: SeoRecord): SeoFields {
+  if (!record) return {};
+  if (record.published) return record.published;
+  if (record.status === "draft") return {};
+  const legacy: SeoRecord = { ...record };
+  delete legacy.draft;
+  delete legacy.published;
+  delete legacy.status;
+  delete legacy.updatedAt;
+  delete legacy.updatedBy;
+  delete legacy.publishedAt;
+  return legacy;
+}
+
+function editSeo(record?: SeoRecord): SeoFields {
+  return { ...liveSeo(record), ...(record?.draft ?? {}) };
+}
+
+function splitFaqs(value?: string) {
+  return (value ?? "")
+    .split(/\n{2,}/)
+    .map((block) => {
+      const [q = "", ...answer] = block.split("\n");
+      return { q: q.replace(/^Q:\s*/i, "").trim(), a: answer.join("\n").replace(/^A:\s*/i, "").trim() };
+    })
+    .filter((faq) => faq.q || faq.a);
+}
+
+function joinFaqs(faqs?: { q: string; a: string }[]) {
+  return (faqs ?? []).map((faq) => `${faq.q}\n${faq.a}`).join("\n\n");
+}
 
 export function ContentStudio({
   initialStore,
@@ -76,20 +110,29 @@ export function ContentStudio({
   const entity = entities.find((e) => e.key === selectedKey) ?? entities[1];
 
   const rec: SeoRecord = store.seoRecords[entity.key] ?? {};
-  const setRec = (patch: Partial<SeoRecord>) =>
-    setStore((s) => ({ ...s, seoRecords: { ...s.seoRecords, [entity.key]: { ...s.seoRecords[entity.key], ...patch } } }));
+  const draft = editSeo(rec);
+  const setRec = (patch: Partial<SeoFields>) =>
+    setStore((s) => {
+      const current = s.seoRecords[entity.key] ?? {};
+      return {
+        ...s,
+        seoRecords: {
+          ...s.seoRecords,
+          [entity.key]: {
+            ...current,
+            status: "draft",
+            draft: { ...editSeo(current), ...patch },
+            updatedAt: new Date().toISOString(),
+            updatedBy: "Admin",
+          },
+        },
+      };
+    });
 
   // ── content getters/setters by entity ──────────────────────────────
   const category = entity.type === "category" ? store.categories.find((c) => c.value === entity.ref) : undefined;
   const product = entity.type === "product" ? store.products.find((p) => p.slug === entity.ref) : undefined;
   const article = entity.type === "article" ? store.articles.find((a) => a.slug === entity.ref) : undefined;
-
-  const updateCategory = (patch: Partial<StoreCategory>) =>
-    setStore((s) => ({ ...s, categories: s.categories.map((c) => (c.value === entity.ref ? { ...c, ...patch } : c)) }));
-  const updateProduct = (patch: Partial<Product>) =>
-    setStore((s) => ({ ...s, products: s.products.map((p) => (p.slug === entity.ref ? { ...p, ...patch } : p)) }));
-  const updateArticle = (patch: Partial<Article>) =>
-    setStore((s) => ({ ...s, articles: s.articles.map((a) => (a.slug === entity.ref ? { ...a, ...patch } : a)) }));
 
   // ── derive H1 / intro / body for scoring ───────────────────────────
   const ctx: StudyContext = useMemo(() => {
@@ -104,11 +147,11 @@ export function ContentStudio({
     if (entity.type === "shop")
       return { type: "shop", name: "Shop", h1: store.pages.shop.title, intro: store.pages.shop.blurb, bodyText: store.pages.shop.blurb };
     if (entity.type === "city")
-      return { type: "city", name: CITIES.find((c) => c.slug === entity.ref)?.name ?? "", h1: `Luxury Abayas in ${CITIES.find((c) => c.slug === entity.ref)?.name}`, intro: rec.metaDescription, bodyText: rec.metaDescription };
+      return { type: "city", name: CITIES.find((c) => c.slug === entity.ref)?.name ?? "", h1: draft.h1 || `Luxury Abayas in ${CITIES.find((c) => c.slug === entity.ref)?.name}`, intro: draft.intro || draft.metaDescription, bodyText: draft.body || draft.metaDescription };
     if (entity.type === "page")
-      return { type: "page", name: entity.label, h1: entity.label, intro: rec.metaDescription, bodyText: rec.metaDescription };
+      return { type: "page", name: entity.label, h1: draft.h1 || entity.label, intro: draft.intro || draft.metaDescription, bodyText: draft.body || draft.metaDescription };
     return { type: "global", name: store.settings.name, h1: store.seo.defaultTitle, intro: store.seo.defaultDescription, bodyText: store.seo.defaultDescription };
-  }, [entity, category, product, article, store, rec.metaDescription]);
+  }, [entity, category, product, article, store, draft.h1, draft.intro, draft.body, draft.metaDescription]);
 
   // Effective values: show what's actually live (from existing fields) until
   // the Studio record overrides them, so the score reflects reality.
@@ -133,9 +176,9 @@ export function ContentStudio({
       pageKeyFor ? store.pages.seo[pageKeyFor]?.ogImage : undefined,
   };
   const eff = {
-    seoTitle: rec.seoTitle ?? existing.title ?? "",
-    metaDescription: rec.metaDescription ?? existing.desc ?? "",
-    ogImage: rec.ogImage ?? existing.og ?? "",
+    seoTitle: draft.seoTitle ?? existing.title ?? "",
+    metaDescription: draft.metaDescription ?? existing.desc ?? "",
+    ogImage: draft.ogImage ?? existing.og ?? "",
   };
 
   const { score, checks } = scoreSeo({ ...rec, ...eff }, ctx);
@@ -146,44 +189,96 @@ export function ContentStudio({
   const previewDesc = eff.metaDescription || store.seo.defaultDescription;
 
   // ── save: mirror SEO into the live-wired fields + persist ───────────
-  async function save() {
+  async function persist(next: StoreData, success: string) {
     setBusy(true);
-    setStatus("Saving…");
-    const next: StoreData = JSON.parse(JSON.stringify(store));
-    const r = next.seoRecords[entity.key] ?? {};
-    const t = r.seoTitle?.trim();
-    const d = r.metaDescription?.trim();
-    const og = r.ogImage?.trim();
-    if (entity.type === "category") {
-      const c = next.categories.find((x) => x.value === entity.ref);
-      if (c) { if (t) c.seoTitle = t; if (d) c.seoDescription = d; }
-    } else if (entity.type === "product") {
-      const p = next.products.find((x) => x.slug === entity.ref);
-      if (p) { if (t) p.seoTitle = t; if (d) p.seoDescription = d; }
-    } else if (entity.type === "article") {
-      const a = next.articles.find((x) => x.slug === entity.ref);
-      if (a) { if (t) a.seoTitle = t; if (d) a.seoDescription = d; }
-    } else if (entity.type === "global") {
-      if (t) next.seo.defaultTitle = t;
-      if (d) next.seo.defaultDescription = d;
-      if (og) next.seo.defaultOgImage = og;
-    } else {
-      const pk = entity.type === "home" ? "home" : entity.type === "shop" ? "shop" : entity.ref ?? entity.key;
-      next.pages.seo[pk] = { ...(next.pages.seo[pk] ?? {}), ...(t ? { title: t } : {}), ...(d ? { description: d } : {}), ...(og ? { ogImage: og } : {}) };
-    }
+    setStatus("Saving...");
     const resp = await fetch("/api/admin/store", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
     const data = await resp.json().catch(() => ({}));
     setBusy(false);
     if (!resp.ok) { setStatus(data.error || "Could not save."); return; }
     setStore(data.store);
-    setStatus("Saved — live on the site.");
+    setStatus(success);
+  }
+
+  async function saveDraft() {
+    const next: StoreData = JSON.parse(JSON.stringify(store));
+    next.seoRecords[entity.key] = {
+      ...(next.seoRecords[entity.key] ?? {}),
+      status: "draft",
+      draft: { ...draft },
+      updatedAt: new Date().toISOString(),
+      updatedBy: "Admin",
+    };
+    await persist(next, "Draft saved — live website unchanged.");
+  }
+
+  async function publish() {
+    const next: StoreData = JSON.parse(JSON.stringify(store));
+    const r = { ...(next.seoRecords[entity.key] ?? {}), published: { ...draft }, status: "published" as const, publishedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), updatedBy: "Admin" };
+    next.seoRecords[entity.key] = r;
+    const live = r.published ?? {};
+    const t = live.seoTitle?.trim();
+    const d = live.metaDescription?.trim();
+    const og = live.ogImage?.trim();
+    if (entity.type === "category") {
+      const c = next.categories.find((x) => x.value === entity.ref);
+      if (c) { if (live.h1) c.label = live.h1; if (live.intro || live.body) c.blurb = live.intro || live.body || c.blurb; if (t) c.seoTitle = t; if (d) c.seoDescription = d; }
+    } else if (entity.type === "product") {
+      const p = next.products.find((x) => x.slug === entity.ref);
+      if (p) {
+        if (live.productName || live.h1) p.name = live.productName || live.h1 || p.name;
+        if (live.shortDescription) p.description = live.shortDescription;
+        if (live.longDescription) p.longDescription = live.longDescription;
+        if (live.specifications) p.specifications = live.specifications;
+        if (live.fabric) p.material = live.fabric;
+        if (live.careInstructions) p.care = live.careInstructions.split("\n").map((x) => x.trim()).filter(Boolean);
+        if (live.fitNotes) p.fitNotes = live.fitNotes;
+        if (live.deliveryInformation) p.deliveryInfo = live.deliveryInformation;
+        if (live.returnExchangeInformation) p.returnInfo = live.returnExchangeInformation;
+        if (live.stylingNotes) p.stylingNotes = live.stylingNotes;
+        if (live.occasionUseCase) p.occasionUseCase = live.occasionUseCase;
+        if (live.imageAltText) p.imageAltText = live.imageAltText;
+        if (t) p.seoTitle = t;
+        if (d) p.seoDescription = d;
+      }
+    } else if (entity.type === "article") {
+      const a = next.articles.find((x) => x.slug === entity.ref);
+      if (a) { if (live.h1 || live.pageTitle) a.title = live.h1 || live.pageTitle || a.title; if (live.intro) a.excerpt = live.intro; if (live.body) a.body = live.body.split(/\n\n+/).map((part) => part.startsWith("## ") ? { type: "h2" as const, text: part.slice(3).trim() } : { type: "p" as const, text: part.trim() }).filter((b) => b.text); if (t) a.seoTitle = t; if (d) a.seoDescription = d; }
+    } else if (entity.type === "global") {
+      if (t) next.seo.defaultTitle = t;
+      if (d) next.seo.defaultDescription = d;
+      if (og) next.seo.defaultOgImage = og;
+    } else if (entity.type === "home") {
+      if (live.heroEyebrow) next.content.heroEyebrow = live.heroEyebrow;
+      if (live.heroHeading || live.h1) next.content.heroTitle = live.heroHeading || live.h1 || next.content.heroTitle;
+      if (live.heroSubheading || live.intro) next.content.heroSubtitle = live.heroSubheading || live.intro || next.content.heroSubtitle;
+      if (live.ctaText) next.content.heroCtaText = live.ctaText;
+      if (live.ctaLink) next.content.heroCtaHref = live.ctaLink;
+      next.pages.seo.home = { ...(next.pages.seo.home ?? {}), ...(t ? { title: t } : {}), ...(d ? { description: d } : {}), ...(og ? { ogImage: og } : {}) };
+    } else if (entity.type === "shop") {
+      if (live.h1 || live.pageTitle) next.pages.shop.title = live.h1 || live.pageTitle || next.pages.shop.title;
+      if (live.intro || live.body) next.pages.shop.blurb = live.intro || live.body || next.pages.shop.blurb;
+      next.pages.seo.shop = { ...(next.pages.seo.shop ?? {}), ...(t ? { title: t } : {}), ...(d ? { description: d } : {}), ...(og ? { ogImage: og } : {}) };
+    } else {
+      const pk = entity.ref ?? entity.key;
+      if (entity.type === "page" && entity.ref === "about") {
+        if (live.h1 || live.pageTitle) next.pages.about.title = live.h1 || live.pageTitle || next.pages.about.title;
+        if (live.body) next.pages.about.body = live.body;
+      }
+      if (entity.type === "page" && entity.ref === "contact") {
+        if (live.h1 || live.pageTitle) next.pages.contact.title = live.h1 || live.pageTitle || next.pages.contact.title;
+        if (live.body) next.pages.contact.body = live.body;
+      }
+      next.pages.seo[pk] = { ...(next.pages.seo[pk] ?? {}), ...(t ? { title: t } : {}), ...(d ? { description: d } : {}), ...(og ? { ogImage: og } : {}) };
+    }
+    await persist(next, "Published — live metadata/content updated.");
   }
 
   function applySuggestions() {
     if (entity.type === "category" && category) {
       const s = suggestForCategory(category.label, category.value);
       setRec({ seoTitle: s.seoTitle, metaDescription: s.metaDescription, focusKeyword: s.focusKeyword, secondaryKeywords: s.secondaryKeywords, ogTitle: s.ogTitle, ogDescription: s.ogDescription, schemaType: "CollectionPage", sitemapInclude: true });
-      updateCategory({ blurb: category.blurb && category.blurb.length > 40 ? category.blurb : s.intro });
+      if (!category.blurb || category.blurb.length <= 40) setRec({ intro: s.intro, body: s.body, h1: s.h1, pageTitle: s.h1, faqs: s.faqs, faqSchema: s.faqs, imageAltText: s.imageAlt });
       setStatus("Suggestions applied — review, then Save.");
     } else {
       // Generic title/description suggestion from the entity name
@@ -191,7 +286,7 @@ export function ContentStudio({
       setRec({
         seoTitle: `${name} | MAZAL`.slice(0, 60),
         metaDescription: `${name} by MAZAL — quiet luxury modest fashion in the UAE. Premium fabrics, timeless design and free GCC delivery over AED 500.`.slice(0, 160),
-        schemaType: rec.schemaType ?? (entity.type === "product" ? "Product" : entity.type === "article" ? "Article" : "WebPage"),
+        schemaType: draft.schemaType ?? (entity.type === "product" ? "Product" : entity.type === "article" ? "Article" : "WebPage"),
       });
       setStatus("Suggestions applied — review, then Save.");
     }
@@ -220,9 +315,14 @@ export function ContentStudio({
                 </optgroup>
               ))}
             </select>
+            <select className="border border-sand-deep bg-cream-soft px-3 py-2 text-sm text-ink outline-none focus:border-bronze" value={entityContentType(entity.type)} onChange={() => undefined}>
+              {CONTENT_TYPES.map((type) => <option key={type}>{type}</option>)}
+            </select>
+            <span className="rounded-full border border-sand-deep px-3 py-1 text-xs uppercase tracking-[0.12em] text-ink-soft">{rec.status === "draft" ? "Draft" : "Published"}</span>
             <span className={`rounded-full px-3 py-1 text-xs font-medium text-cream-soft ${band.cls}`}>{score} · {band.label}</span>
             <a href={entity.path} target="_blank" rel="noreferrer" className="admin-secondary">Preview</a>
-            <button type="button" className="admin-dark" disabled={busy} onClick={save}>Save</button>
+            <button type="button" className="admin-secondary" disabled={busy} onClick={saveDraft}>Save Draft</button>
+            <button type="button" className="admin-dark" disabled={busy} onClick={publish}>Publish</button>
             <Link href="/admin" className="admin-secondary">Exit</Link>
           </div>
         </header>
@@ -250,29 +350,29 @@ export function ContentStudio({
               )}
               {entity.type === "home" && (
                 <>
-                  <Field label="Hero eyebrow" value={store.content.heroEyebrow} onChange={(v) => setStore((s) => ({ ...s, content: { ...s.content, heroEyebrow: v } }))} />
-                  <Field label="Hero heading (H1)" value={store.content.heroTitle} onChange={(v) => setStore((s) => ({ ...s, content: { ...s.content, heroTitle: v } }))} />
-                  <Area label="Hero subheading" value={store.content.heroSubtitle} onChange={(v) => setStore((s) => ({ ...s, content: { ...s.content, heroSubtitle: v } }))} />
-                  <Field label="CTA text" value={store.content.heroCtaText} onChange={(v) => setStore((s) => ({ ...s, content: { ...s.content, heroCtaText: v } }))} />
-                  <Field label="CTA link" value={store.content.heroCtaHref} onChange={(v) => setStore((s) => ({ ...s, content: { ...s.content, heroCtaHref: v } }))} />
+                  <Field label="Hero eyebrow" value={draft.heroEyebrow ?? store.content.heroEyebrow} onChange={(v) => setRec({ heroEyebrow: v })} />
+                  <Field label="Hero heading (H1)" value={draft.heroHeading ?? draft.h1 ?? store.content.heroTitle} onChange={(v) => setRec({ heroHeading: v, h1: v, pageTitle: v })} />
+                  <Area label="Hero subheading" value={draft.heroSubheading ?? store.content.heroSubtitle} onChange={(v) => setRec({ heroSubheading: v, intro: v })} />
+                  <Field label="CTA text" value={draft.ctaText ?? store.content.heroCtaText} onChange={(v) => setRec({ ctaText: v })} />
+                  <Field label="CTA link" value={draft.ctaLink ?? store.content.heroCtaHref} onChange={(v) => setRec({ ctaLink: v })} />
                 </>
               )}
               {entity.type === "shop" && (
                 <>
-                  <Field label="Page title (H1)" value={store.pages.shop.title} onChange={(v) => setStore((s) => ({ ...s, pages: { ...s.pages, shop: { ...s.pages.shop, title: v } } }))} />
-                  <Area label="Intro paragraph" value={store.pages.shop.blurb} onChange={(v) => setStore((s) => ({ ...s, pages: { ...s.pages, shop: { ...s.pages.shop, blurb: v } } }))} />
+                  <Field label="Page title (H1)" value={draft.h1 ?? store.pages.shop.title} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
+                  <Area label="Intro paragraph" value={draft.intro ?? store.pages.shop.blurb} onChange={(v) => setRec({ intro: v, body: v })} />
                 </>
               )}
               {entity.type === "page" && entity.ref === "about" && (
                 <>
-                  <Field label="Title (H1)" value={store.pages.about.title} onChange={(v) => setStore((s) => ({ ...s, pages: { ...s.pages, about: { ...s.pages.about, title: v } } }))} />
-                  <Area label="Body" value={store.pages.about.body} onChange={(v) => setStore((s) => ({ ...s, pages: { ...s.pages, about: { ...s.pages.about, body: v } } }))} />
+                  <Field label="Title (H1)" value={draft.h1 ?? store.pages.about.title} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
+                  <Area label="Body" value={draft.body ?? store.pages.about.body} onChange={(v) => setRec({ body: v, intro: v.slice(0, 220) })} />
                 </>
               )}
               {entity.type === "page" && entity.ref === "contact" && (
                 <>
-                  <Field label="Title (H1)" value={store.pages.contact.title} onChange={(v) => setStore((s) => ({ ...s, pages: { ...s.pages, contact: { ...s.pages.contact, title: v } } }))} />
-                  <Area label="Body" value={store.pages.contact.body} onChange={(v) => setStore((s) => ({ ...s, pages: { ...s.pages, contact: { ...s.pages.contact, body: v } } }))} />
+                  <Field label="Title (H1)" value={draft.h1 ?? store.pages.contact.title} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
+                  <Area label="Body" value={draft.body ?? store.pages.contact.body} onChange={(v) => setRec({ body: v, intro: v.slice(0, 220) })} />
                 </>
               )}
               {entity.type === "page" && (entity.ref === "rewards" || entity.ref === "journal") && (
@@ -280,26 +380,42 @@ export function ContentStudio({
               )}
               {entity.type === "category" && category && (
                 <>
-                  <Field label="Category name (H1)" value={category.label} onChange={(v) => updateCategory({ label: v })} />
-                  <Area label="Intro / SEO body" value={category.blurb} onChange={(v) => updateCategory({ blurb: v })} />
+                  <Field label="Category name (H1)" value={draft.h1 ?? category.label} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
+                  <Area label="Intro / SEO body" value={draft.intro ?? draft.body ?? category.blurb} onChange={(v) => setRec({ intro: v, body: v })} />
                 </>
               )}
               {entity.type === "city" && (
-                <p className="text-sm text-ink-soft">City landing page content is generated from a template in code. Use the SEO Studio to control its title, description, and social preview for {ctx.name}.</p>
+                <>
+                  <Field label="Page title / H1" value={draft.h1 ?? ctx.h1 ?? ""} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
+                  <Area label="Intro paragraph" value={draft.intro ?? ""} onChange={(v) => setRec({ intro: v })} />
+                  <Area label="Main body content" value={draft.body ?? ""} onChange={(v) => setRec({ body: v })} />
+                  <Area label="FAQ questions and answers" value={joinFaqs(draft.faqs)} onChange={(v) => setRec({ faqs: splitFaqs(v), faqSchema: splitFaqs(v) })} />
+                </>
               )}
               {entity.type === "product" && product && (
                 <>
-                  <Field label="Product name (H1)" value={product.name} onChange={(v) => updateProduct({ name: v })} />
-                  <Area label="Description" value={product.description} onChange={(v) => updateProduct({ description: v })} />
-                  <Field label="Material" value={product.material ?? ""} onChange={(v) => updateProduct({ material: v })} />
-                  <Area label="Care (one per line)" value={(product.care ?? []).join("\n")} onChange={(v) => updateProduct({ care: v.split("\n").map((x) => x.trim()).filter(Boolean) })} />
+                  <Field label="Product name" value={draft.productName ?? product.name} onChange={(v) => setRec({ productName: v, h1: v, pageTitle: v })} />
+                  <Area label="Short product description" value={draft.shortDescription ?? product.description} onChange={(v) => setRec({ shortDescription: v })} />
+                  <Area label="Long product body description" value={draft.longDescription ?? product.longDescription ?? product.description} onChange={(v) => setRec({ longDescription: v, body: v })} />
+                  <Area label="Product specifications" value={draft.specifications ?? product.specifications ?? ""} onChange={(v) => setRec({ specifications: v })} />
+                  <Field label="Fabric / material" value={draft.fabric ?? product.material ?? ""} onChange={(v) => setRec({ fabric: v })} />
+                  <Field label="Color options" value={draft.colorOptions ?? product.colors.map((c) => c.name).join(", ")} onChange={(v) => setRec({ colorOptions: v })} />
+                  <Field label="Size options" value={draft.sizeOptions ?? product.sizes.join(", ")} onChange={(v) => setRec({ sizeOptions: v })} />
+                  <Area label="Fit notes" value={draft.fitNotes ?? product.fitNotes ?? ""} onChange={(v) => setRec({ fitNotes: v })} />
+                  <Area label="Care instructions" value={draft.careInstructions ?? (product.care ?? []).join("\n")} onChange={(v) => setRec({ careInstructions: v })} />
+                  <Area label="Delivery information" value={draft.deliveryInformation ?? product.deliveryInfo ?? ""} onChange={(v) => setRec({ deliveryInformation: v })} />
+                  <Area label="Return/exchange information" value={draft.returnExchangeInformation ?? product.returnInfo ?? ""} onChange={(v) => setRec({ returnExchangeInformation: v })} />
+                  <Area label="Styling notes" value={draft.stylingNotes ?? product.stylingNotes ?? ""} onChange={(v) => setRec({ stylingNotes: v })} />
+                  <Area label="Occasion / use case" value={draft.occasionUseCase ?? product.occasionUseCase ?? ""} onChange={(v) => setRec({ occasionUseCase: v })} />
+                  <Area label="FAQ questions and answers" value={joinFaqs(draft.faqs ?? product.faqs)} onChange={(v) => setRec({ faqs: splitFaqs(v), faqSchema: splitFaqs(v) })} />
+                  <Field label="Product image alt text" value={draft.imageAltText ?? product.imageAltText ?? ""} onChange={(v) => setRec({ imageAltText: v, imageAltSuggestions: v })} />
                 </>
               )}
               {entity.type === "article" && article && (
                 <>
-                  <Field label="Title (H1)" value={article.title} onChange={(v) => updateArticle({ title: v })} />
-                  <Area label="Excerpt" value={article.excerpt} onChange={(v) => updateArticle({ excerpt: v })} />
-                  <Area label="Body" value={article.body.map((b) => (b.type === "h2" ? `## ${b.text}` : b.text)).join("\n\n")} onChange={(v) => updateArticle({ body: v.split(/\n\n+/).map((part): ArticleBlock => (part.startsWith("## ") ? { type: "h2", text: part.slice(3).trim() } : { type: "p", text: part.trim() })).filter((b) => b.text) })} />
+                  <Field label="Title (H1)" value={draft.h1 ?? article.title} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
+                  <Area label="Excerpt" value={draft.intro ?? article.excerpt} onChange={(v) => setRec({ intro: v })} />
+                  <Area label="Body" value={draft.body ?? article.body.map((b) => (b.type === "h2" ? `## ${b.text}` : b.text)).join("\n\n")} onChange={(v) => setRec({ body: v })} />
                 </>
               )}
             </div>
@@ -326,37 +442,50 @@ export function ContentStudio({
               <Counter label="SEO title" value={eff.seoTitle} onChange={(v) => setRec({ seoTitle: v })} min={45} max={60} />
               <Counter label="Meta description" value={eff.metaDescription} onChange={(v) => setRec({ metaDescription: v })} min={140} max={160} area />
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Focus keyword" value={rec.focusKeyword ?? ""} onChange={(v) => setRec({ focusKeyword: v })} />
-                <Field label="Secondary keywords (comma-sep)" value={rec.secondaryKeywords ?? ""} onChange={(v) => setRec({ secondaryKeywords: v })} />
-                <Field label="URL slug / path" value={rec.canonical ?? entity.path} onChange={(v) => setRec({ canonical: v })} />
-                <Select label="Schema type" value={rec.schemaType ?? "WebPage"} onChange={(v) => setRec({ schemaType: v as SeoRecord["schemaType"] })} options={SCHEMA_TYPES as unknown as string[]} />
+                <Field label="Focus keyphrase" value={draft.focusKeyword ?? ""} onChange={(v) => setRec({ focusKeyword: v })} />
+                <Field label="Secondary keyphrases" value={draft.secondaryKeywords ?? ""} onChange={(v) => setRec({ secondaryKeywords: v })} />
+                <Field label="URL slug / canonical path" value={draft.canonical ?? entity.path} onChange={(v) => setRec({ canonical: v })} />
+                <Field label="Canonical URL" value={draft.canonical ?? entity.path} onChange={(v) => setRec({ canonical: v })} />
+                <Select label="Schema type" value={draft.schemaType ?? "WebPage"} onChange={(v) => setRec({ schemaType: v as SeoRecord["schemaType"] })} options={SCHEMA_TYPES as unknown as string[]} />
+                <Field label="Sitemap priority" value={String(draft.sitemapPriority ?? "")} onChange={(v) => setRec({ sitemapPriority: v ? Number(v) : undefined })} />
+                <Select label="Sitemap changefreq" value={draft.sitemapChangefreq ?? "weekly"} onChange={(v) => setRec({ sitemapChangefreq: v })} options={["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]} />
               </div>
               <div className="flex flex-wrap gap-5">
-                <Toggle label="Index" checked={rec.index !== false} onChange={(b) => setRec({ index: b })} />
-                <Toggle label="Follow" checked={rec.follow !== false} onChange={(b) => setRec({ follow: b })} />
-                <Toggle label="Include in sitemap" checked={rec.sitemapInclude !== false} onChange={(b) => setRec({ sitemapInclude: b })} />
+                <Toggle label="Robots index" checked={draft.index !== false} onChange={(b) => setRec({ index: b })} />
+                <Toggle label="Robots follow" checked={draft.follow !== false} onChange={(b) => setRec({ follow: b })} />
+                <Toggle label="Include in sitemap" checked={draft.sitemapInclude !== false} onChange={(b) => setRec({ sitemapInclude: b })} />
               </div>
 
               <details className="border-t border-sand-deep/60 pt-3">
                 <summary className="cursor-pointer text-xs uppercase tracking-[0.16em] text-ink-soft">Open Graph &amp; Twitter</summary>
                 <div className="mt-3 grid gap-4 md:grid-cols-2">
-                  <Field label="OG title" value={rec.ogTitle ?? ""} onChange={(v) => setRec({ ogTitle: v })} />
-                  <Field label="OG image URL" value={rec.ogImage ?? eff.ogImage} onChange={(v) => setRec({ ogImage: v })} />
-                  <Area label="OG description" value={rec.ogDescription ?? ""} onChange={(v) => setRec({ ogDescription: v })} />
-                  <Field label="Twitter title" value={rec.twitterTitle ?? ""} onChange={(v) => setRec({ twitterTitle: v })} />
-                  <Field label="Twitter image URL" value={rec.twitterImage ?? ""} onChange={(v) => setRec({ twitterImage: v })} />
-                  <Area label="Twitter description" value={rec.twitterDescription ?? ""} onChange={(v) => setRec({ twitterDescription: v })} />
+                  <Field label="Open Graph title" value={draft.ogTitle ?? ""} onChange={(v) => setRec({ ogTitle: v })} />
+                  <Field label="Open Graph image" value={draft.ogImage ?? eff.ogImage} onChange={(v) => setRec({ ogImage: v })} />
+                  <Area label="Open Graph description" value={draft.ogDescription ?? ""} onChange={(v) => setRec({ ogDescription: v })} />
+                  <Field label="Twitter title" value={draft.twitterTitle ?? ""} onChange={(v) => setRec({ twitterTitle: v })} />
+                  <Field label="Twitter image" value={draft.twitterImage ?? ""} onChange={(v) => setRec({ twitterImage: v })} />
+                  <Area label="Twitter description" value={draft.twitterDescription ?? ""} onChange={(v) => setRec({ twitterDescription: v })} />
+                </div>
+              </details>
+
+              <details className="border-t border-sand-deep/60 pt-3">
+                <summary className="cursor-pointer text-xs uppercase tracking-[0.16em] text-ink-soft">Strategy, FAQ schema &amp; links</summary>
+                <div className="mt-3 grid gap-4">
+                  <Area label="Search intent notes" value={draft.searchIntentNotes ?? ""} onChange={(v) => setRec({ searchIntentNotes: v })} />
+                  <Area label="Internal link suggestions" value={draft.internalLinkSuggestions ?? ""} onChange={(v) => setRec({ internalLinkSuggestions: v })} />
+                  <Area label="FAQ schema questions/answers" value={joinFaqs(draft.faqSchema ?? draft.faqs)} onChange={(v) => setRec({ faqSchema: splitFaqs(v) })} />
+                  <Area label="Image alt text suggestions" value={draft.imageAltSuggestions ?? draft.imageAltText ?? ""} onChange={(v) => setRec({ imageAltSuggestions: v, imageAltText: v })} />
                 </div>
               </details>
 
               {/* Social preview */}
               <div className="overflow-hidden rounded border border-sand-deep">
                 <div className="flex h-28 items-center justify-center bg-sand text-xs text-ink-soft">
-                  {(rec.ogImage || store.seo.defaultOgImage) ? "Share image set" : "No share image"}
+                  {(draft.ogImage || store.seo.defaultOgImage) ? "Share image set" : "No share image"}
                 </div>
                 <div className="bg-cream-soft p-3">
-                  <p className="truncate text-sm font-medium text-ink">{rec.ogTitle || previewTitle}</p>
-                  <p className="line-clamp-2 text-xs text-ink-soft">{rec.ogDescription || previewDesc}</p>
+                  <p className="truncate text-sm font-medium text-ink">{draft.ogTitle || previewTitle}</p>
+                  <p className="line-clamp-2 text-xs text-ink-soft">{draft.ogDescription || previewDesc}</p>
                   <p className="mt-1 text-[0.65rem] uppercase tracking-[0.12em] text-ink-soft">{base.replace(/^https?:\/\//, "")}</p>
                 </div>
               </div>

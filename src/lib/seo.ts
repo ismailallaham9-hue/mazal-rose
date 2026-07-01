@@ -4,13 +4,39 @@
  * canonical site URL come from store.seo and store.settings.url.
  */
 import type { Metadata } from "next";
-import { getStoreData } from "@/lib/store";
+import { getStoreData, type SeoFields, type SeoRecord } from "@/lib/store";
 
 /** Absolute-ize a site-relative path/image against the canonical site URL. */
 function abs(base: string, value?: string): string | undefined {
   if (!value) return undefined;
   if (/^https?:\/\//i.test(value)) return value;
   return `${base.replace(/\/$/, "")}${value.startsWith("/") ? "" : "/"}${value}`;
+}
+
+export function publishedSeo(record?: SeoRecord): SeoFields | undefined {
+  if (!record) return undefined;
+  if (record.published) return record.published;
+  if (record.status === "draft") return undefined;
+  const legacy: SeoRecord = { ...record };
+  delete legacy.draft;
+  delete legacy.published;
+  delete legacy.status;
+  delete legacy.updatedAt;
+  delete legacy.updatedBy;
+  delete legacy.publishedAt;
+  return legacy;
+}
+
+export function draftSeo(record?: SeoRecord): SeoFields {
+  return { ...(publishedSeo(record) ?? {}), ...(record?.draft ?? {}) };
+}
+
+export function absoluteUrl(base: string, value?: string): string | undefined {
+  return abs(base, value);
+}
+
+export function jsonLd(payload: unknown): string {
+  return JSON.stringify(payload).replace(/</g, "\\u003c");
 }
 
 /**
@@ -32,7 +58,7 @@ export async function pageMetadata(opts: {
   const store = await getStoreData();
   const base = store.settings.url || "https://mazal.ae";
   const pageSeo = opts.pageKey ? store.pages.seo?.[opts.pageKey] : undefined;
-  const rec = opts.recordKey ? store.seoRecords?.[opts.recordKey] : undefined;
+  const rec = publishedSeo(opts.recordKey ? store.seoRecords?.[opts.recordKey] : undefined);
 
   const title = rec?.seoTitle?.trim() || pageSeo?.title?.trim() || opts.fallbackTitle;
   const description =
