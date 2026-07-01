@@ -40,7 +40,7 @@ MAZAL_DATA_DIR=/var/data/mazal
 NODE_ENV=production
 RESEND_API_KEY=<optional, for live email sending>
 RESEND_FROM=MAZAL <care@mazal.ae>
-ADMIN_EMAIL=<where new-order/contact alerts should go>
+ADMIN_EMAIL=care@mazal.ae
 ```
 
 `BLOB_READ_WRITE_TOKEN` is optional. If you set it, the app will use Vercel Blob

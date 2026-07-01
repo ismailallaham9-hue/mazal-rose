@@ -25,7 +25,7 @@ services:
       - key: RESEND_FROM
         value: MAZAL <care@mazal.ae>
       - key: ADMIN_EMAIL
-        sync: false
+        value: care@mazal.ae
     disk:
       name: mazal-data
       mountPath: /var/data
