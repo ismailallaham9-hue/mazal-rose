@@ -19,6 +19,7 @@ import {
 } from "@/lib/admin-product";
 import type { Article, ArticleBlock } from "@/lib/articles";
 import type { Badge, Category, Product } from "@/lib/products";
+import { variantLabel } from "@/lib/products";
 import type {
   MediaAsset,
   SiteContent,
@@ -72,6 +73,7 @@ type ProductDraft = {
   material: string;
   care: string;
   stock: string;
+  variantStock: string;
   badges: Badge[];
   image: string;
   images: string[];
@@ -94,6 +96,7 @@ const emptyProduct: ProductDraft = {
   material: "",
   care: "",
   stock: "10",
+  variantStock: "",
   badges: [],
   image: "",
   images: [],
@@ -139,6 +142,11 @@ function productToDraft(product: Product): ProductDraft {
     material: product.material ?? "",
     care: (product.care ?? []).join("\n"),
     stock: String(product.stock ?? 10),
+    variantStock: product.variantStock
+      ? Object.entries(product.variantStock)
+          .map(([key, qty]) => `${variantLabel(key)} = ${qty}`)
+          .join("\n")
+      : "",
     badges: product.badges ?? [],
     image: product.image ?? images[0] ?? "",
     images,
@@ -161,6 +169,21 @@ function productPayload(draft: ProductDraft) {
   const images = Array.from(
     new Set([draft.image, ...draft.images].map((u) => u.trim()).filter(Boolean)),
   );
+  const variantStock = Object.fromEntries(
+    draft.variantStock
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [variant, qtyRaw] = line.split("=").map((part) => part?.trim());
+        const [sizeRaw, colorRaw] = (variant ?? "").split("/").map((part) => part?.trim());
+        const qty = Math.max(0, Math.floor(Number(qtyRaw)));
+        return sizeRaw && colorRaw && Number.isFinite(qty)
+          ? [`${sizeRaw}::${colorRaw}`, qty]
+          : null;
+      })
+      .filter((entry): entry is [string, number] => Boolean(entry)),
+  );
   return {
     id: draft.id,
     slug: draft.slug || slugify(draft.name),
@@ -176,6 +199,7 @@ function productPayload(draft: ProductDraft) {
     material: draft.material,
     care: draft.care.split("\n").map((s) => s.trim()).filter(Boolean),
     stock: Number(draft.stock),
+    variantStock: Object.keys(variantStock).length ? variantStock : undefined,
     badges: draft.badges,
     image: images[0],
     images,
@@ -388,6 +412,29 @@ export function AdminDashboard({
     showToast("Product deleted.");
   }
 
+  async function notifyOrder(id: string) {
+    setBusy(true);
+    const res = await fetch(`/api/admin/orders/${encodeURIComponent(id)}/notify`, {
+      method: "POST",
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      showToast(data.error || "Customer notification failed.", "error");
+      return;
+    }
+    setStore((s) => ({
+      ...s,
+      orders: s.orders.map((order) =>
+        order.id === id && data.order ? data.order : order,
+      ),
+      emailEvents: Array.isArray(data.emailEvents)
+        ? [...data.emailEvents, ...s.emailEvents]
+        : s.emailEvents,
+    }));
+    showToast("Customer notification queued.");
+  }
+
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     window.location.href = "/admin/login";
@@ -461,7 +508,12 @@ export function AdminDashboard({
               />
             )}
             {tab === "orders" && (
-              <OrdersSection store={store} setStore={setStore} saveStore={saveStore} />
+              <OrdersSection
+                store={store}
+                setStore={setStore}
+                saveStore={saveStore}
+                notifyOrder={notifyOrder}
+              />
             )}
             {tab === "messages" && (
               <MessagesSection store={store} setStore={setStore} saveStore={saveStore} />
@@ -696,7 +748,8 @@ function OrdersSection({
   store,
   setStore,
   saveStore,
-}: SectionProps) {
+  notifyOrder,
+}: SectionProps & { notifyOrder: (id: string) => Promise<void> }) {
   const updateOrder = (id: string, patch: Partial<StoreOrder>) => {
     setStore({
       ...store,
@@ -717,12 +770,20 @@ function OrdersSection({
             Orders submitted from checkout. Customer accounts are still off.
           </p>
         </div>
-        <button
-          className="admin-dark"
-          onClick={() => saveStore(store, "Orders saved.")}
-        >
-          Save order changes
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <a className="admin-secondary" href="/api/admin/export?kind=orders">
+            Export orders
+          </a>
+          <a className="admin-secondary" href="/api/admin/export?kind=backup">
+            Full backup
+          </a>
+          <button
+            className="admin-dark"
+            onClick={() => saveStore(store, "Orders saved.")}
+          >
+            Save order changes
+          </button>
+        </div>
       </div>
 
       <div className="mt-6 space-y-4">
@@ -807,11 +868,87 @@ function OrdersSection({
                     <strong className="text-ink">Note:</strong> {order.note}
                   </p>
                 )}
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <input
+                    value={order.carrier ?? ""}
+                    onChange={(e) => updateOrder(order.id, { carrier: e.target.value })}
+                    placeholder="Carrier"
+                    className="border border-sand-deep bg-cream-soft px-3 py-2"
+                  />
+                  <input
+                    value={order.trackingNumber ?? ""}
+                    onChange={(e) =>
+                      updateOrder(order.id, { trackingNumber: e.target.value })
+                    }
+                    placeholder="Tracking number"
+                    className="border border-sand-deep bg-cream-soft px-3 py-2"
+                  />
+                  <input
+                    value={order.trackingUrl ?? ""}
+                    onChange={(e) =>
+                      updateOrder(order.id, { trackingUrl: e.target.value })
+                    }
+                    placeholder="Tracking URL"
+                    className="border border-sand-deep bg-cream-soft px-3 py-2 sm:col-span-2"
+                  />
+                </div>
+                <textarea
+                  value={order.internalNotes ?? ""}
+                  onChange={(e) =>
+                    updateOrder(order.id, { internalNotes: e.target.value })
+                  }
+                  rows={3}
+                  placeholder="Internal notes"
+                  className="mt-2 w-full border border-sand-deep bg-cream-soft px-3 py-2"
+                />
                 <div className="mt-3 border-t border-sand-deep pt-3">
                   <p>Subtotal: {money(order.subtotal)}</p>
                   {order.discount > 0 && <p>Discount: -{money(order.discount)}</p>}
                   {order.deliveryFee > 0 && <p>Delivery: {money(order.deliveryFee)}</p>}
                   <p className="font-medium text-ink">Total: {money(order.total)}</p>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <a
+                    className="admin-secondary"
+                    href={`/api/admin/orders/${order.id}/document?type=invoice`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Invoice
+                  </a>
+                  <a
+                    className="admin-secondary"
+                    href={`/api/admin/orders/${order.id}/document?type=packing`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Packing slip
+                  </a>
+                  {order.trackingUrl && (
+                    <a
+                      className="admin-secondary"
+                      href={order.trackingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Track
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    className="admin-dark"
+                    onClick={async () => {
+                      const saved = await saveStore(store, "Order saved.");
+                      if (saved) await notifyOrder(order.id);
+                    }}
+                  >
+                    Notify customer
+                  </button>
+                  {order.customerNotifiedAt && (
+                    <span className="self-center text-xs text-ink-soft">
+                      Last notified {new Date(order.customerNotifiedAt).toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -865,12 +1002,17 @@ function MessagesSection({ store, setStore, saveStore }: SectionProps) {
               Contact form messages saved from the website.
             </p>
           </div>
-          <button
-            className="admin-dark"
-            onClick={() => saveStore(store, "Messages saved.")}
-          >
-            Save message changes
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <a className="admin-secondary" href="/api/admin/export?kind=inquiries">
+              Export messages
+            </a>
+            <button
+              className="admin-dark"
+              onClick={() => saveStore(store, "Messages saved.")}
+            >
+              Save message changes
+            </button>
+          </div>
         </div>
 
         <div className="mt-5 divide-y divide-sand-deep/60 border border-sand-deep">
@@ -921,6 +1063,9 @@ function MessagesSection({ store, setStore, saveStore }: SectionProps) {
               {store.subscribers.length === 1 ? "" : "s"}.
             </p>
           </div>
+          <a className="admin-secondary" href="/api/admin/export?kind=subscribers">
+            Export subscribers
+          </a>
           <button type="button" className="admin-secondary" onClick={downloadSubscribers}>
             Download CSV
           </button>
@@ -937,6 +1082,38 @@ function MessagesSection({ store, setStore, saveStore }: SectionProps) {
           {store.subscribers.length === 0 && (
             <p className="bg-cream px-4 py-8 text-center text-sm text-ink-soft">
               No subscribers yet.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="admin-card">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-3xl">Email notifications</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              Sent emails appear as sent. Without RESEND_API_KEY, they are queued here.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 max-h-80 overflow-auto border border-sand-deep">
+          {store.emailEvents.map((event) => (
+            <div key={event.id} className="grid gap-2 border-b border-sand-deep/60 bg-cream px-3 py-2 text-sm md:grid-cols-[120px_1fr_1fr]">
+              <span className={event.status === "failed" ? "text-red-800" : event.status === "sent" ? "text-green-800" : "text-bronze"}>
+                {event.status}
+              </span>
+              <span>{event.subject}</span>
+              <span className="text-ink-soft">
+                {event.to} · {new Date(event.createdAt).toLocaleString()}
+              </span>
+              {event.error && (
+                <span className="md:col-span-3 text-xs text-red-800">{event.error}</span>
+              )}
+            </div>
+          ))}
+          {store.emailEvents.length === 0 && (
+            <p className="bg-cream px-4 py-8 text-center text-sm text-ink-soft">
+              No email events yet.
             </p>
           )}
         </div>
@@ -1064,6 +1241,16 @@ function ProductsSection(props: {
             ]}
           />
           <TextField label="Stock" type="number" value={props.draft.stock} onChange={(v) => update("stock", v)} />
+          <div className="md:col-span-2">
+            <TextArea
+              label="Variant stock (optional: Size / Color = Qty, one per line)"
+              value={props.draft.variantStock}
+              onChange={(v) => update("variantStock", v)}
+            />
+            <p className="mt-1 text-xs text-ink-soft">
+              Example: S / Noir = 3. If empty, the product uses the total Stock field.
+            </p>
+          </div>
           <TextField label="Sizes (comma-separated)" value={props.draft.sizes} onChange={(v) => update("sizes", v)} />
           <TextField label="Material" value={props.draft.material} onChange={(v) => update("material", v)} />
           <div className="md:col-span-2">

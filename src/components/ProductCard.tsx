@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import type { Product } from "@/lib/products";
-import { CATEGORY_LABEL, discountPercent } from "@/lib/products";
+import {
+  CATEGORY_LABEL,
+  discountPercent,
+  firstAvailableVariant,
+  totalStock,
+} from "@/lib/products";
 import { formatAED } from "@/lib/format";
 import { ProductImage } from "./ProductImage";
 import { Tilt3D } from "./Tilt3D";
@@ -22,17 +27,21 @@ export function ProductCard({
   const { has, toggle } = useWishlist();
   const wished = has(product.id);
   const off = discountPercent(product);
-  const lowStock = typeof product.stock === "number" && product.stock <= 5;
+  const stock = totalStock(product);
+  const lowStock = stock > 0 && stock <= 5;
+  const outOfStock = stock <= 0;
 
   function quickAdd(e: React.MouseEvent) {
     e.preventDefault();
+    const variant = firstAvailableVariant(product);
+    if (!variant || outOfStock) return;
     addItem({
       productId: product.id,
       name: product.name,
       price: product.price,
       image: product.image ?? "",
-      size: product.sizes[0],
-      color: product.colors[0]?.name ?? "Default",
+      size: variant.size,
+      color: variant.color,
     });
   }
 
@@ -69,15 +78,16 @@ export function ProductCard({
         {/* Low stock + quick add */}
         {lowStock && (
           <div className="pointer-events-none absolute bottom-2 left-2">
-            <Pill className="bg-ink/80 text-cream-soft">Only {product.stock} left</Pill>
+            <Pill className="bg-ink/80 text-cream-soft">Only {stock} left</Pill>
           </div>
         )}
         <button
           type="button"
           onClick={quickAdd}
-          className="absolute inset-x-0 bottom-0 translate-y-full bg-ink/90 py-3 text-[0.7rem] uppercase tracking-[0.2em] text-cream-soft opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
+          disabled={outOfStock}
+          className="absolute inset-x-0 bottom-0 translate-y-full bg-ink/90 py-3 text-[0.7rem] uppercase tracking-[0.2em] text-cream-soft opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Quick Add
+          {outOfStock ? "Out of Stock" : "Quick Add"}
         </button>
       </Tilt3D>
 

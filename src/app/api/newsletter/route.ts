@@ -4,6 +4,7 @@ import {
   saveStoreData,
   type StoreSubscriber,
 } from "@/lib/store";
+import { sendEmails, subscriberEmails } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -40,9 +41,14 @@ export async function POST(req: Request) {
       };
 
   if (!exists) {
+    const emailEvents = await sendEmails(
+      store.settings,
+      subscriberEmails(store.settings, subscriber),
+    );
     await saveStoreData({
       ...store,
       subscribers: [subscriber, ...store.subscribers],
+      emailEvents: [...emailEvents, ...store.emailEvents],
     });
   }
 

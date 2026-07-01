@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ProductImage } from "./ProductImage";
 import { useCart } from "@/lib/cart-context";
 import { formatAED } from "@/lib/format";
-import type { Product } from "@/lib/products";
+import { firstAvailableVariant, totalStock, type Product } from "@/lib/products";
 
 /** "Frequently bought together" cross-sell with an add-all bundle action. */
 export function FrequentlyBoughtTogether({
@@ -19,16 +19,18 @@ export function FrequentlyBoughtTogether({
   const total = bundle.reduce((s, p) => s + p.price, 0);
 
   function addAll() {
-    bundle.forEach((p) =>
+    bundle.forEach((p) => {
+      const variant = firstAvailableVariant(p);
+      if (!variant || totalStock(p) <= 0) return;
       addItem({
         productId: p.id,
         name: p.name,
         price: p.price,
         image: p.image ?? "",
-        size: p.sizes[0],
-        color: p.colors[0]?.name ?? "Default",
-      }),
-    );
+        size: variant.size,
+        color: variant.color,
+      });
+    });
   }
 
   if (!extras.length) return null;

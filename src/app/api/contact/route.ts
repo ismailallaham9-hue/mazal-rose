@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStoreData, saveStoreData, type StoreInquiry } from "@/lib/store";
+import { contactEmails, sendEmails } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -32,9 +33,15 @@ export async function POST(req: Request) {
     message,
   };
 
+  const emailEvents = await sendEmails(
+    store.settings,
+    contactEmails(store.settings, inquiry),
+  );
+
   await saveStoreData({
     ...store,
     inquiries: [inquiry, ...store.inquiries],
+    emailEvents: [...emailEvents, ...store.emailEvents],
   });
 
   return NextResponse.json({ inquiry });

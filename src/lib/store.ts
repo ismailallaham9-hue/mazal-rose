@@ -44,6 +44,7 @@ export type StoreData = {
   orders: StoreOrder[];
   inquiries: StoreInquiry[];
   subscribers: StoreSubscriber[];
+  emailEvents: StoreEmailEvent[];
   settings: SiteSettings;
   media: MediaAsset[];
   pages: PageContent;
@@ -105,6 +106,11 @@ export type StoreOrder = {
   total: number;
   promoCode?: string | null;
   note?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  internalNotes?: string;
+  customerNotifiedAt?: string;
 };
 
 export type StoreInquiry = {
@@ -122,6 +128,18 @@ export type StoreSubscriber = {
   createdAt: string;
   email: string;
   source: "footer" | "newsletter" | "checkout" | "manual";
+};
+
+export type StoreEmailEvent = {
+  id: string;
+  createdAt: string;
+  to: string;
+  subject: string;
+  status: "sent" | "queued" | "failed";
+  provider?: string;
+  error?: string;
+  context: "order" | "contact" | "newsletter" | "order-status";
+  relatedId?: string;
 };
 
 /** Global SEO defaults the admin panel controls. The site URL lives in
@@ -447,6 +465,7 @@ function seedData(): StoreData {
     orders: [],
     inquiries: [],
     subscribers: [],
+    emailEvents: [],
     settings: { ...DEFAULT_SETTINGS },
     seo: { ...DEFAULT_SEO },
     seoRecords: {},
@@ -530,6 +549,9 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     subscribers: Array.isArray(raw.subscribers)
       ? raw.subscribers
       : seed.subscribers,
+    emailEvents: Array.isArray(raw.emailEvents)
+      ? raw.emailEvents
+      : seed.emailEvents,
     settings,
     seo: { ...seed.seo, ...(raw.seo ?? {}) },
     seoRecords:
@@ -595,6 +617,23 @@ async function writeDiskStore(json: string): Promise<void> {
   const tmp = `${file}.${Date.now()}.tmp`;
   await fs.writeFile(tmp, json, "utf8");
   await fs.rename(tmp, file);
+
+  try {
+    const path = await import("node:path");
+    const backupDir = path.join(dir, "backups");
+    await fs.mkdir(backupDir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    await fs.writeFile(path.join(backupDir, `store-${stamp}.json`), json, "utf8");
+    const backups = (await fs.readdir(backupDir))
+      .filter((name) => name.startsWith("store-") && name.endsWith(".json"))
+      .sort()
+      .reverse();
+    await Promise.all(
+      backups.slice(20).map((name) => fs.unlink(path.join(backupDir, name))),
+    );
+  } catch {
+    // Backups should never block the live save path.
+  }
 }
 
 async function writeBlobStore(payload: StoreData, json: string): Promise<void> {

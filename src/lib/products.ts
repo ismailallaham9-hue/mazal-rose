@@ -27,6 +27,8 @@ export interface ColorOption {
   hex: string;
 }
 
+export type VariantStock = Record<string, number>;
+
 export interface Product {
   id: string;
   slug: string;
@@ -42,6 +44,7 @@ export interface Product {
   rating?: number; // 0–5
   reviewCount?: number;
   stock?: number; // remaining units (drives low-stock urgency)
+  variantStock?: VariantStock; // key: "Size::Color", overrides product stock when present
   badges?: Badge[];
   image?: string;
   images?: string[];
@@ -50,6 +53,45 @@ export interface Product {
   createdAt?: string; // ISO — drives "new arrivals" ordering
   seoTitle?: string; // optional SEO override (admin-controlled)
   seoDescription?: string; // optional meta-description override
+}
+
+export function variantKey(size: string, color: string): string {
+  return `${size.trim()}::${color.trim()}`;
+}
+
+export function variantLabel(key: string): string {
+  const [size, color] = key.split("::");
+  return `${size || "One Size"} / ${color || "Default"}`;
+}
+
+export function variantStock(product: Product, size?: string | null, color?: string | null): number {
+  const entries = product.variantStock ?? {};
+  if (Object.keys(entries).length && size && color) {
+    return Math.max(0, entries[variantKey(size, color)] ?? 0);
+  }
+  return Math.max(0, product.stock ?? 0);
+}
+
+export function totalStock(product: Product): number {
+  const entries = Object.values(product.variantStock ?? {});
+  if (entries.length) {
+    return entries.reduce((sum, qty) => sum + Math.max(0, Number(qty) || 0), 0);
+  }
+  return Math.max(0, product.stock ?? 0);
+}
+
+export function firstAvailableVariant(product: Product): { size: string; color: string } | null {
+  for (const size of product.sizes) {
+    for (const color of product.colors) {
+      if (variantStock(product, size, color.name) > 0) {
+        return { size, color: color.name };
+      }
+    }
+  }
+  if (product.sizes[0] && product.colors[0]?.name) {
+    return { size: product.sizes[0], color: product.colors[0].name };
+  }
+  return null;
 }
 
 export const CATEGORIES: { value: Category; label: string; blurb: string }[] = [

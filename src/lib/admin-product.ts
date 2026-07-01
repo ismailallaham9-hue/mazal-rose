@@ -81,6 +81,14 @@ export function normalizeProduct(
           .map((line) => line.trim())
           .filter(Boolean)
       : existing?.care;
+  const variantStock =
+    input.variantStock && typeof input.variantStock === "object"
+      ? Object.fromEntries(
+          Object.entries(input.variantStock as Record<string, unknown>)
+            .map(([key, value]) => [key, Math.max(0, Math.floor(num(value)))])
+            .filter(([key]) => Boolean(key)),
+        )
+      : existing?.variantStock;
 
   return {
     id: String(input.id ?? existing?.id ?? `p-${Date.now().toString(36)}`),
@@ -102,6 +110,7 @@ export function normalizeProduct(
     rating: existing?.rating ?? 5,
     reviewCount: existing?.reviewCount ?? 0,
     stock: input.stock !== undefined ? num(input.stock, 10) : existing?.stock ?? 10,
+    variantStock,
     badges: Array.isArray(input.badges)
       ? (input.badges as Badge[])
       : existing?.badges,

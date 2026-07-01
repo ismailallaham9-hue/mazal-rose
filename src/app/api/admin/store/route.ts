@@ -80,6 +80,9 @@ export async function POST(req: Request) {
     subscribers: Array.isArray(body.subscribers)
       ? body.subscribers
       : current.subscribers,
+    emailEvents: Array.isArray(body.emailEvents)
+      ? body.emailEvents
+      : current.emailEvents,
     media: Array.isArray(body.media) ? body.media : current.media,
   };
 

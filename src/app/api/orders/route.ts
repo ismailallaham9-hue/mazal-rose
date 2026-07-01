@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import {
+  totalStock,
+  variantKey,
+  variantStock,
+  type Product,
+} from "@/lib/products";
+import {
   getStoreData,
   saveStoreData,
   type StoreData,
@@ -7,6 +13,7 @@ import {
   type StorePaymentMethod,
 } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
+import { orderEmails, sendEmails } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -33,6 +40,40 @@ function orderNumber(existing: StoreData["orders"]) {
   const suffix = String(existing.length + 1).padStart(4, "0");
   const day = new Date().toISOString().slice(2, 10).replaceAll("-", "");
   return `MZL-${day}-${suffix}`;
+}
+
+function stockError(products: Product[], items: StoreOrder["items"]) {
+  for (const item of items) {
+    const product = products.find((entry) => entry.id === item.productId);
+    if (!product) return `${item.name} is no longer available.`;
+    if (variantStock(product, item.size, item.color) < item.quantity) {
+      return `${item.name} (${item.size} / ${item.color}) has only ${variantStock(
+        product,
+        item.size,
+        item.color,
+      )} left.`;
+    }
+  }
+  return null;
+}
+
+function reduceProductStock(product: Product, items: StoreOrder["items"]): Product {
+  const ordered = items
+    .filter((item) => item.productId === product.id)
+    .reduce((sum, item) => sum + item.quantity, 0);
+  if (!ordered) return product;
+
+  if (product.variantStock && Object.keys(product.variantStock).length) {
+    const variantStockMap = { ...product.variantStock };
+    for (const item of items.filter((entry) => entry.productId === product.id)) {
+      const key = variantKey(item.size, item.color);
+      variantStockMap[key] = Math.max(0, (variantStockMap[key] ?? 0) - item.quantity);
+    }
+    return { ...product, variantStock: variantStockMap, stock: totalStock({ ...product, variantStock: variantStockMap }) };
+  }
+
+  if (typeof product.stock !== "number") return product;
+  return { ...product, stock: Math.max(0, product.stock - ordered) };
 }
 
 export async function POST(req: Request) {
@@ -76,6 +117,10 @@ export async function POST(req: Request) {
   }
 
   const store = await getStoreData();
+  const unavailable = stockError(store.products, items);
+  if (unavailable) {
+    return NextResponse.json({ error: unavailable }, { status: 409 });
+  }
   const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
   const promoCode = clean(body.promoCode) || null;
   const discount = promoCode
@@ -114,15 +159,13 @@ export async function POST(req: Request) {
     total,
     promoCode,
     note: clean(body.note),
+    carrier: "",
+    trackingNumber: "",
+    trackingUrl: "",
+    internalNotes: "",
   };
 
-  const products = store.products.map((product) => {
-    const ordered = items
-      .filter((item) => item.productId === product.id)
-      .reduce((sum, item) => sum + item.quantity, 0);
-    if (!ordered || typeof product.stock !== "number") return product;
-    return { ...product, stock: Math.max(0, product.stock - ordered) };
-  });
+  const products = store.products.map((product) => reduceProductStock(product, items));
 
   const subscribers =
     clean(body.newsletterOptIn) === "true" &&
@@ -138,11 +181,14 @@ export async function POST(req: Request) {
         ]
       : store.subscribers;
 
+  const emailEvents = await sendEmails(store.settings, orderEmails(store.settings, order));
+
   await saveStoreData({
     ...store,
     products,
     orders: [order, ...store.orders],
     subscribers,
+    emailEvents: [...emailEvents, ...store.emailEvents],
   });
   revalidateStorefront({ products, articles: store.articles });
 

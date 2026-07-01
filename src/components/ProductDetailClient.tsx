@@ -14,7 +14,9 @@ import type { SiteSettings } from "@/lib/store";
 import {
   CATEGORY_LABEL,
   discountPercent,
+  totalStock,
   type Product,
+  variantStock,
 } from "@/lib/products";
 import { clsx } from "@/lib/clsx";
 
@@ -43,7 +45,11 @@ export function ProductDetailClient({
   const [sizeError, setSizeError] = useState(false);
 
   const off = discountPercent(product);
-  const lowStock = typeof product.stock === "number" && product.stock <= 6;
+  const availableStock = totalStock(product);
+  const selectedStock = size ? variantStock(product, size, color.name) : availableStock;
+  const lowStock = availableStock > 0 && availableStock <= 6;
+  const outOfStock = availableStock <= 0;
+  const selectedOutOfStock = selectedStock <= 0;
 
   // Track recently viewed.
   useEffect(() => {
@@ -66,6 +72,7 @@ export function ProductDetailClient({
       setSizeError(true);
       return;
     }
+    if (selectedOutOfStock) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -140,21 +147,26 @@ export function ProductDetailClient({
             Colour — <span className="text-ink-soft">{color.name}</span>
           </p>
           <div className="mt-3 flex gap-2.5">
-            {product.colors.map((c) => (
+            {product.colors.map((c) => {
+              const colorAvailable = !size || variantStock(product, size, c.name) > 0;
+              return (
               <button
                 key={c.name}
                 type="button"
                 onClick={() => setColor(c)}
+                disabled={!colorAvailable}
                 title={c.name}
                 aria-pressed={color.name === c.name}
                 className={clsx(
                   "h-9 w-9 rounded-full ring-1 ring-ink/15 transition-all",
                   color.name === c.name &&
                     "ring-2 ring-bronze ring-offset-2 ring-offset-cream",
+                  !colorAvailable && "cursor-not-allowed opacity-30",
                 )}
                 style={{ backgroundColor: c.hex }}
               />
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -169,7 +181,9 @@ export function ProductDetailClient({
             </a>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {product.sizes.map((s) => (
+            {product.sizes.map((s) => {
+              const sizeAvailable = variantStock(product, s, color.name) > 0;
+              return (
               <button
                 key={s}
                 type="button"
@@ -177,16 +191,19 @@ export function ProductDetailClient({
                   setSize(s);
                   setSizeError(false);
                 }}
+                disabled={!sizeAvailable}
                 className={clsx(
                   "min-w-12 border px-3 py-2.5 text-sm transition-colors",
                   size === s
                     ? "border-bronze bg-bronze text-cream-soft"
                     : "border-sand-deep text-ink hover:border-bronze",
+                  !sizeAvailable && "cursor-not-allowed opacity-40 line-through",
                 )}
               >
                 {s}
               </button>
-            ))}
+              );
+            })}
           </div>
           {sizeError && (
             <p className="mt-2 text-xs text-[#8a3f2b]">Please select a size.</p>
@@ -194,10 +211,14 @@ export function ProductDetailClient({
         </div>
 
         {/* Stock urgency */}
-        {lowStock && (
+        {outOfStock ? (
+          <p className="mt-5 inline-flex items-center gap-2 text-sm text-[#8a3f2b]">
+            This piece is currently out of stock
+          </p>
+        ) : lowStock && (
           <p className="mt-5 inline-flex items-center gap-2 text-sm text-[#8a3f2b]">
             <span className="h-2 w-2 animate-pulse rounded-full bg-[#8a3f2b]" />
-            Selling fast — only {product.stock} left in stock
+            Selling fast — only {availableStock} left in stock
           </p>
         )}
 
@@ -225,9 +246,12 @@ export function ProductDetailClient({
           <button
             type="button"
             onClick={addToCart}
-            className="flex-1 bg-bronze py-3 text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
+            disabled={outOfStock || selectedOutOfStock}
+            className="flex-1 bg-bronze py-3 text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Add to Bag — {formatAED(product.price * qty)}
+            {outOfStock || selectedOutOfStock
+              ? "Out of Stock"
+              : `Add to Bag — ${formatAED(product.price * qty)}`}
           </button>
           <button
             type="button"
