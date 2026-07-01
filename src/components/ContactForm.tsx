@@ -4,10 +4,31 @@ import { useState } from "react";
 
 export function ContactForm() {
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // No backend yet — wire to an API route / email service later.
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    const form = new FormData(e.currentTarget);
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: form.get("name"),
+        email: form.get("email"),
+        subject: form.get("subject"),
+        message: form.get("message"),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSubmitting(false);
+    if (!res.ok) {
+      setError(data.error || "Message could not be sent. Please try again.");
+      return;
+    }
     setDone(true);
   }
 
@@ -43,10 +64,12 @@ export function ContactForm() {
       </div>
       <button
         type="submit"
+        disabled={submitting}
         className="bg-bronze px-8 py-4 text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
       >
-        Send Message
+        {submitting ? "Sending..." : "Send Message"}
       </button>
+      {error && <p className="text-sm text-[#8a3f2b]">{error}</p>}
     </form>
   );
 }

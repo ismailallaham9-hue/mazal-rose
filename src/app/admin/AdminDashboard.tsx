@@ -23,6 +23,10 @@ import type {
   MediaAsset,
   SiteContent,
   SiteSettings,
+  StoreInquiry,
+  StoreOrder,
+  StoreOrderStatus,
+  StoreSubscriber,
   StoreCategory,
   StoreData,
 } from "@/lib/store";
@@ -31,6 +35,8 @@ import type {
 
 type Tab =
   | "dashboard"
+  | "orders"
+  | "messages"
   | "products"
   | "media"
   | "theme"
@@ -99,6 +105,8 @@ const emptyProduct: ProductDraft = {
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
+  { id: "orders", label: "Orders" },
+  { id: "messages", label: "Messages" },
   { id: "products", label: "Products" },
   { id: "media", label: "Media" },
   { id: "theme", label: "Theme" },
@@ -452,6 +460,12 @@ export function AdminDashboard({
                 }}
               />
             )}
+            {tab === "orders" && (
+              <OrdersSection store={store} setStore={setStore} saveStore={saveStore} />
+            )}
+            {tab === "messages" && (
+              <MessagesSection store={store} setStore={setStore} saveStore={saveStore} />
+            )}
             {tab === "products" && (
               <ProductsSection
                 busy={busy}
@@ -566,12 +580,18 @@ function DashboardSection({
 }) {
   const published = store.products.filter((p) => p.published !== false).length;
   const hidden = store.products.length - published;
+  const openOrders = store.orders.filter(
+    (order) => !["delivered", "cancelled"].includes(order.status),
+  ).length;
+  const newMessages = store.inquiries.filter((item) => item.status === "new").length;
   const lowStock = store.products
     .filter((p) => typeof p.stock === "number" && p.stock <= 3)
     .sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0));
   const featured = store.products.filter((p) => p.featured).length;
 
   const cards: { label: string; value: string | number; tab?: Tab }[] = [
+    { label: "Open orders", value: openOrders, tab: "orders" },
+    { label: "New messages", value: newMessages, tab: "messages" },
     { label: "Products", value: store.products.length, tab: "products" },
     { label: "Visible / Hidden", value: `${published} / ${hidden}`, tab: "products" },
     { label: "Featured", value: featured, tab: "products" },
@@ -579,10 +599,13 @@ function DashboardSection({
     { label: "Categories", value: store.categories.length, tab: "categories" },
     { label: "Journal posts", value: store.articles.length, tab: "journal" },
     { label: "Media assets", value: store.media.length, tab: "media" },
+    { label: "Subscribers", value: store.subscribers.length, tab: "messages" },
   ];
 
   const actions: { label: string; onClick: () => void }[] = [
     { label: "+ Add product", onClick: startNewProduct },
+    { label: "Review orders", onClick: () => goTo("orders") },
+    { label: "Read messages", onClick: () => goTo("messages") },
     { label: "Upload media", onClick: () => goTo("media") },
     { label: "Edit homepage", onClick: () => goTo("pages") },
     { label: "Edit theme", onClick: () => goTo("theme") },
@@ -645,6 +668,278 @@ function DashboardSection({
             ))}
           </div>
         )}
+      </section>
+    </div>
+  );
+}
+
+/* ─────────────────── Operations ────────────────────── */
+
+const ORDER_STATUS_LABELS: Record<StoreOrderStatus, string> = {
+  new: "New",
+  confirmed: "Confirmed",
+  preparing: "Preparing",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+function money(value: number) {
+  return new Intl.NumberFormat("en-AE", {
+    style: "currency",
+    currency: "AED",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function OrdersSection({
+  store,
+  setStore,
+  saveStore,
+}: SectionProps) {
+  const updateOrder = (id: string, patch: Partial<StoreOrder>) => {
+    setStore({
+      ...store,
+      orders: store.orders.map((order) =>
+        order.id === id
+          ? { ...order, ...patch, updatedAt: new Date().toISOString() }
+          : order,
+      ),
+    });
+  };
+
+  return (
+    <section className="admin-card">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-3xl">Orders</h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            Orders submitted from checkout. Customer accounts are still off.
+          </p>
+        </div>
+        <button
+          className="admin-dark"
+          onClick={() => saveStore(store, "Orders saved.")}
+        >
+          Save order changes
+        </button>
+      </div>
+
+      <div className="mt-6 space-y-4">
+        {store.orders.map((order) => (
+          <article key={order.id} className="border border-sand-deep bg-cream p-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="font-serif text-2xl text-ink">{order.orderNumber}</p>
+                <p className="text-sm text-ink-soft">
+                  {new Date(order.createdAt).toLocaleString()} ·{" "}
+                  {order.customer.firstName} {order.customer.lastName}
+                </p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  {order.customer.email} · {order.customer.phone}
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="text-xs uppercase tracking-[0.14em] text-ink-soft">
+                  Status
+                  <select
+                    value={order.status}
+                    onChange={(e) =>
+                      updateOrder(order.id, {
+                        status: e.target.value as StoreOrderStatus,
+                      })
+                    }
+                    className="mt-1 block w-full border border-sand-deep bg-cream-soft px-3 py-2 text-sm normal-case tracking-normal text-ink"
+                  >
+                    {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs uppercase tracking-[0.14em] text-ink-soft">
+                  Payment
+                  <select
+                    value={order.paymentStatus}
+                    onChange={(e) =>
+                      updateOrder(order.id, {
+                        paymentStatus: e.target.value as StoreOrder["paymentStatus"],
+                      })
+                    }
+                    className="mt-1 block w-full border border-sand-deep bg-cream-soft px-3 py-2 text-sm normal-case tracking-normal text-ink"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="payment_link_requested">Payment link requested</option>
+                    <option value="paid">Paid</option>
+                    <option value="failed">Failed</option>
+                    <option value="refunded">Refunded</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+              <div className="divide-y divide-sand-deep/60 border border-sand-deep">
+                {order.items.map((item) => (
+                  <div key={`${order.id}-${item.productId}-${item.size}-${item.color}`} className="flex justify-between gap-3 px-3 py-2 text-sm">
+                    <span>
+                      {item.quantity}x {item.name} · {item.size} · {item.color}
+                    </span>
+                    <span>{money(item.lineTotal)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-sm text-ink-soft">
+                <p>
+                  <strong className="text-ink">Ship to:</strong>{" "}
+                  {order.shipping.address}, {order.shipping.city},{" "}
+                  {order.shipping.country}
+                </p>
+                <p className="mt-1">
+                  <strong className="text-ink">Delivery:</strong>{" "}
+                  {order.deliveryMethod} ·{" "}
+                  <strong className="text-ink">Payment:</strong>{" "}
+                  {order.paymentMethod}
+                </p>
+                {order.note && (
+                  <p className="mt-1">
+                    <strong className="text-ink">Note:</strong> {order.note}
+                  </p>
+                )}
+                <div className="mt-3 border-t border-sand-deep pt-3">
+                  <p>Subtotal: {money(order.subtotal)}</p>
+                  {order.discount > 0 && <p>Discount: -{money(order.discount)}</p>}
+                  {order.deliveryFee > 0 && <p>Delivery: {money(order.deliveryFee)}</p>}
+                  <p className="font-medium text-ink">Total: {money(order.total)}</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
+        {store.orders.length === 0 && (
+          <p className="py-8 text-center text-sm text-ink-soft">
+            No orders yet. New checkout orders will appear here.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MessagesSection({ store, setStore, saveStore }: SectionProps) {
+  const updateInquiry = (id: string, patch: Partial<StoreInquiry>) => {
+    setStore({
+      ...store,
+      inquiries: store.inquiries.map((inquiry) =>
+        inquiry.id === id ? { ...inquiry, ...patch } : inquiry,
+      ),
+    });
+  };
+
+  function downloadSubscribers() {
+    const rows = [
+      "email,source,createdAt",
+      ...store.subscribers.map((subscriber) =>
+        [subscriber.email, subscriber.source, subscriber.createdAt]
+          .map((cell) => `"${cell.replace(/"/g, '""')}"`)
+          .join(","),
+      ),
+    ];
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mazal-subscribers.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="admin-card">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-3xl">Messages</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              Contact form messages saved from the website.
+            </p>
+          </div>
+          <button
+            className="admin-dark"
+            onClick={() => saveStore(store, "Messages saved.")}
+          >
+            Save message changes
+          </button>
+        </div>
+
+        <div className="mt-5 divide-y divide-sand-deep/60 border border-sand-deep">
+          {store.inquiries.map((inquiry) => (
+            <article key={inquiry.id} className="bg-cream p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium text-ink">{inquiry.subject}</p>
+                  <p className="text-sm text-ink-soft">
+                    {inquiry.name} · {inquiry.email} ·{" "}
+                    {new Date(inquiry.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <select
+                  value={inquiry.status}
+                  onChange={(e) =>
+                    updateInquiry(inquiry.id, {
+                      status: e.target.value as StoreInquiry["status"],
+                    })
+                  }
+                  className="border border-sand-deep bg-cream-soft px-3 py-2 text-sm"
+                >
+                  <option value="new">New</option>
+                  <option value="read">Read</option>
+                  <option value="replied">Replied</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              <p className="mt-3 whitespace-pre-wrap text-sm text-ink-soft">
+                {inquiry.message}
+              </p>
+            </article>
+          ))}
+          {store.inquiries.length === 0 && (
+            <p className="bg-cream px-4 py-8 text-center text-sm text-ink-soft">
+              No messages yet.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="admin-card">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-3xl">Subscribers</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              {store.subscribers.length} email subscriber
+              {store.subscribers.length === 1 ? "" : "s"}.
+            </p>
+          </div>
+          <button type="button" className="admin-secondary" onClick={downloadSubscribers}>
+            Download CSV
+          </button>
+        </div>
+        <div className="mt-5 max-h-80 overflow-auto border border-sand-deep">
+          {store.subscribers.map((subscriber: StoreSubscriber) => (
+            <div key={subscriber.id} className="flex flex-wrap justify-between gap-3 border-b border-sand-deep/60 bg-cream px-3 py-2 text-sm">
+              <span>{subscriber.email}</span>
+              <span className="text-ink-soft">
+                {subscriber.source} · {new Date(subscriber.createdAt).toLocaleString()}
+              </span>
+            </div>
+          ))}
+          {store.subscribers.length === 0 && (
+            <p className="bg-cream px-4 py-8 text-center text-sm text-ink-soft">
+              No subscribers yet.
+            </p>
+          )}
+        </div>
       </section>
     </div>
   );

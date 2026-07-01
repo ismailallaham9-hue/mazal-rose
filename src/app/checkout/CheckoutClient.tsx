@@ -8,7 +8,7 @@ import { OrderSummary } from "@/components/OrderSummary";
 import { useCart } from "@/lib/cart-context";
 import { formatAED } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
-import type { SiteSettings } from "@/lib/store";
+import type { SiteSettings, StoreOrder } from "@/lib/store";
 
 type Payment = "cod" | "card" | "tabby";
 
@@ -19,16 +19,59 @@ export function CheckoutClient({
 }) {
   const whatsapp = settings?.whatsapp ?? SITE.whatsapp;
   const googleReviewUrl = settings?.googleReviewUrl ?? SITE.googleReviewUrl;
-  const { items, total, clear } = useCart();
+  const { items, promoCode, clear } = useCart();
   const [payment, setPayment] = useState<Payment>("cod");
-  const [placed, setPlaced] = useState<{ order: string; amount: number } | null>(
-    null,
-  );
+  const [placed, setPlaced] = useState<StoreOrder | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function placeOrder(e: React.FormEvent) {
+  async function placeOrder(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const order = `MZL-${Math.floor(100000 + Math.random() * 900000)}`;
-    setPlaced({ order, amount: total });
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+
+    const form = new FormData(e.currentTarget);
+    const payload = {
+      items: items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        image: item.image,
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      customer: {
+        email: String(form.get("email") ?? ""),
+        phone: String(form.get("phone") ?? ""),
+        firstName: String(form.get("firstName") ?? ""),
+        lastName: String(form.get("lastName") ?? ""),
+      },
+      shipping: {
+        address: String(form.get("address") ?? ""),
+        city: String(form.get("city") ?? ""),
+        country: String(form.get("country") ?? ""),
+      },
+      deliveryMethod: String(form.get("delivery") ?? "standard"),
+      paymentMethod: payment,
+      promoCode,
+      newsletterOptIn: String(form.get("newsletterOptIn") === "on"),
+      note: String(form.get("note") ?? ""),
+    };
+
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSubmitting(false);
+    if (!res.ok) {
+      setError(data.error || "Order could not be placed. Please try again.");
+      return;
+    }
+    setPlaced(data.order as StoreOrder);
     clear();
   }
 
@@ -46,9 +89,9 @@ export function CheckoutClient({
           Thank you — your order is placed.
         </h1>
         <p className="mt-4 max-w-md text-ink-soft">
-          Order <strong className="text-ink">{placed.order}</strong> ·{" "}
-          {formatAED(placed.amount)}. A confirmation has been sent to your email.
-          We&rsquo;ll be in touch as your pieces are prepared.
+          Order <strong className="text-ink">{placed.orderNumber}</strong> ·{" "}
+          {formatAED(placed.total)}. We&rsquo;ll be in touch as your pieces are
+          prepared.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
@@ -59,7 +102,7 @@ export function CheckoutClient({
           </Link>
           <a
             href={whatsappLink(
-              `Hello MAZAL — a question about my order ${placed.order}.`,
+              `Hello MAZAL — a question about my order ${placed.orderNumber}.`,
               whatsapp.number,
             )}
             target="_blank"
@@ -156,8 +199,8 @@ export function CheckoutClient({
             {/* Delivery */}
             <Section title="Delivery method">
               <div className="space-y-3">
-                <Radio name="delivery" defaultChecked label="Standard — 2–4 days" hint="Free" />
-                <Radio name="delivery" label="Express — 1–2 days" hint="AED 30" />
+                <Radio name="delivery" value="standard" defaultChecked label="Standard — 2–4 days" hint="Free" />
+                <Radio name="delivery" value="express" label="Express — 1–2 days" hint="AED 30" />
               </div>
             </Section>
 
@@ -176,7 +219,7 @@ export function CheckoutClient({
                   checked={payment === "card"}
                   onChange={() => setPayment("card")}
                   label="Credit / debit card"
-                  hint="Secure"
+                  hint="Payment link"
                 />
                 <Radio
                   name="payment"
@@ -187,21 +230,40 @@ export function CheckoutClient({
               </div>
               {payment !== "cod" && (
                 <p className="mt-3 rounded bg-sand/60 px-4 py-3 text-xs text-ink-soft">
-                  You&rsquo;ll be securely redirected to our payment provider to
-                  complete payment. We never store your card details.
+                  Your order will be saved now and the team will send a secure
+                  payment link. Card details are never stored on this website.
                 </p>
               )}
+            </Section>
+
+            <Section title="Notes">
+              <textarea
+                name="note"
+                rows={4}
+                placeholder="Anything we should know about delivery, sizing, or gifting?"
+                className="w-full border border-sand-deep bg-cream-soft px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60 focus:border-bronze focus:outline-none"
+              />
+              <label className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
+                <input name="newsletterOptIn" type="checkbox" className="accent-bronze" />
+                Send me private previews and new arrivals.
+              </label>
             </Section>
           </div>
 
           {/* Summary */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <OrderSummary>
+              {error && (
+                <p className="mb-3 bg-[#8a3f2b]/10 px-3 py-2 text-sm text-[#8a3f2b]">
+                  {error}
+                </p>
+              )}
               <button
                 type="submit"
+                disabled={submitting}
                 className="block w-full bg-bronze py-4 text-center text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
               >
-                Place Order
+                {submitting ? "Placing Order..." : "Place Order"}
               </button>
             </OrderSummary>
           </div>
@@ -257,12 +319,14 @@ function Radio({
   label,
   hint,
   checked,
+  value,
   defaultChecked,
   onChange,
 }: {
   name: string;
   label: string;
   hint?: string;
+  value?: string;
   checked?: boolean;
   defaultChecked?: boolean;
   onChange?: () => void;
@@ -273,6 +337,7 @@ function Radio({
         <input
           type="radio"
           name={name}
+          value={value}
           checked={checked}
           defaultChecked={defaultChecked}
           onChange={onChange}

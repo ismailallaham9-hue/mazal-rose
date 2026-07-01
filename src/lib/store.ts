@@ -41,12 +41,87 @@ export type StoreData = {
   theme: SiteTheme;
   categories: StoreCategory[];
   articles: Article[];
+  orders: StoreOrder[];
+  inquiries: StoreInquiry[];
+  subscribers: StoreSubscriber[];
   settings: SiteSettings;
   media: MediaAsset[];
   pages: PageContent;
   seo: SeoSettings;
   seoRecords: Record<string, SeoRecord>;
   updatedAt?: string;
+};
+
+export type StoreOrderStatus =
+  | "new"
+  | "confirmed"
+  | "preparing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
+
+export type StorePaymentMethod = "cod" | "card" | "tabby";
+
+export type StorePaymentStatus =
+  | "pending"
+  | "payment_link_requested"
+  | "paid"
+  | "failed"
+  | "refunded";
+
+export type StoreOrder = {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  updatedAt: string;
+  status: StoreOrderStatus;
+  paymentMethod: StorePaymentMethod;
+  paymentStatus: StorePaymentStatus;
+  deliveryMethod: "standard" | "express";
+  customer: {
+    email: string;
+    phone: string;
+    firstName: string;
+    lastName: string;
+  };
+  shipping: {
+    address: string;
+    city: string;
+    country: string;
+  };
+  items: {
+    productId: string;
+    name: string;
+    image: string;
+    size: string;
+    color: string;
+    quantity: number;
+    price: number;
+    lineTotal: number;
+  }[];
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  total: number;
+  promoCode?: string | null;
+  note?: string;
+};
+
+export type StoreInquiry = {
+  id: string;
+  createdAt: string;
+  status: "new" | "read" | "replied" | "archived";
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+};
+
+export type StoreSubscriber = {
+  id: string;
+  createdAt: string;
+  email: string;
+  source: "footer" | "newsletter" | "checkout" | "manual";
 };
 
 /** Global SEO defaults the admin panel controls. The site URL lives in
@@ -369,6 +444,9 @@ function seedData(): StoreData {
       ...(CATEGORY_SEO_SEED[c.value] ?? {}),
     })),
     articles: ARTICLES.map((a) => ({ ...a, body: a.body.map((b) => ({ ...b })) })),
+    orders: [],
+    inquiries: [],
+    subscribers: [],
     settings: { ...DEFAULT_SETTINGS },
     seo: { ...DEFAULT_SEO },
     seoRecords: {},
@@ -447,6 +525,11 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     theme: { ...seed.theme, ...(raw.theme ?? {}) },
     categories: Array.isArray(raw.categories) ? raw.categories : seed.categories,
     articles: Array.isArray(raw.articles) ? raw.articles : seed.articles,
+    orders: Array.isArray(raw.orders) ? raw.orders : seed.orders,
+    inquiries: Array.isArray(raw.inquiries) ? raw.inquiries : seed.inquiries,
+    subscribers: Array.isArray(raw.subscribers)
+      ? raw.subscribers
+      : seed.subscribers,
     settings,
     seo: { ...seed.seo, ...(raw.seo ?? {}) },
     seoRecords:

@@ -6,11 +6,26 @@ import { SITE } from "@/lib/site";
 export function Newsletter() {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // No backend yet — wire this to your ESP / API route later.
-    if (email.trim()) setDone(true);
+    if (submitting || !email.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    const res = await fetch("/api/newsletter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, source: "newsletter" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSubmitting(false);
+    if (!res.ok) {
+      setError(data.error || "Could not subscribe. Please try again.");
+      return;
+    }
+    setDone(true);
   }
 
   return (
@@ -52,12 +67,14 @@ export function Newsletter() {
           />
           <button
             type="submit"
+            disabled={submitting}
             className="bg-bronze px-8 py-4 text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
           >
-            Subscribe
+            {submitting ? "Saving..." : "Subscribe"}
           </button>
         </form>
       )}
+      {error && <p className="mt-3 text-sm text-[#8a3f2b]">{error}</p>}
     </div>
   );
 }

@@ -73,6 +73,13 @@ export async function POST(req: Request) {
       ? body.categories
       : current.categories,
     articles: Array.isArray(body.articles) ? body.articles : current.articles,
+    orders: Array.isArray(body.orders) ? body.orders : current.orders,
+    inquiries: Array.isArray(body.inquiries)
+      ? body.inquiries
+      : current.inquiries,
+    subscribers: Array.isArray(body.subscribers)
+      ? body.subscribers
+      : current.subscribers,
     media: Array.isArray(body.media) ? body.media : current.media,
   };
 
