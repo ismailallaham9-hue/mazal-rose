@@ -6,11 +6,10 @@ import {
   type Product,
 } from "@/lib/products";
 import {
-  getStoreData,
-  saveStoreData,
   type StoreData,
   type StoreOrder,
   type StorePaymentMethod,
+  updateStoreData,
 } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import { orderEmails, sendEmails } from "@/lib/email";
@@ -26,6 +25,15 @@ type IncomingItem = {
   quantity?: number;
   price?: number;
 };
+
+class CheckoutError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
 
 function clean(value: unknown, fallback = "") {
   return String(value ?? fallback).trim();
@@ -116,81 +124,111 @@ export async function POST(req: Request) {
     );
   }
 
-  const store = await getStoreData();
-  const unavailable = stockError(store.products, items);
-  if (unavailable) {
-    return NextResponse.json({ error: unavailable }, { status: 409 });
+  let saved:
+    | {
+        order: StoreOrder;
+        products: Product[];
+        articles: StoreData["articles"];
+        settings: StoreData["settings"];
+      }
+    | undefined;
+
+  try {
+    saved = await updateStoreData((store) => {
+      const unavailable = stockError(store.products, items);
+      if (unavailable) throw new CheckoutError(unavailable, 409);
+
+      const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+      const promoCode = clean(body.promoCode) || null;
+      const discount = promoCode
+        ? Math.round((subtotal * store.settings.firstOrderDiscount) / 100)
+        : 0;
+      const deliveryMethod =
+        clean(body.deliveryMethod) === "express" ? "express" : "standard";
+      const deliveryFee =
+        deliveryMethod === "express" &&
+        subtotal < store.settings.freeShippingThreshold
+          ? 30
+          : 0;
+      const total = Math.max(0, subtotal - discount + deliveryFee);
+      const paymentMethod = (
+        ["cod", "card", "tabby"].includes(clean(body.paymentMethod))
+          ? clean(body.paymentMethod)
+          : "cod"
+      ) as StorePaymentMethod;
+      const now = new Date().toISOString();
+
+      const order: StoreOrder = {
+        id: crypto.randomUUID(),
+        orderNumber: orderNumber(store.orders),
+        createdAt: now,
+        updatedAt: now,
+        status: "new",
+        paymentMethod,
+        paymentStatus:
+          paymentMethod === "cod" ? "pending" : "payment_link_requested",
+        deliveryMethod,
+        customer: { email, phone, firstName, lastName },
+        shipping: { address, city, country },
+        items,
+        subtotal,
+        discount,
+        deliveryFee,
+        total,
+        promoCode,
+        note: clean(body.note),
+        carrier: "",
+        trackingNumber: "",
+        trackingUrl: "",
+        internalNotes: "",
+      };
+
+      const products = store.products.map((product) =>
+        reduceProductStock(product, items),
+      );
+
+      const subscribers =
+        clean(body.newsletterOptIn) === "true" &&
+        !store.subscribers.some((subscriber) => subscriber.email === email)
+          ? [
+              {
+                id: crypto.randomUUID(),
+                createdAt: now,
+                email,
+                source: "checkout" as const,
+              },
+              ...store.subscribers,
+            ]
+          : store.subscribers;
+
+      return {
+        store: {
+          ...store,
+          products,
+          orders: [order, ...store.orders],
+          subscribers,
+        },
+        result: { order, products, articles: store.articles, settings: store.settings },
+      };
+    });
+  } catch (error) {
+    if (error instanceof CheckoutError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
   }
-  const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
-  const promoCode = clean(body.promoCode) || null;
-  const discount = promoCode
-    ? Math.round((subtotal * store.settings.firstOrderDiscount) / 100)
-    : 0;
-  const deliveryMethod =
-    clean(body.deliveryMethod) === "express" ? "express" : "standard";
-  const deliveryFee =
-    deliveryMethod === "express" && subtotal < store.settings.freeShippingThreshold
-      ? 30
-      : 0;
-  const total = Math.max(0, subtotal - discount + deliveryFee);
-  const paymentMethod = (
-    ["cod", "card", "tabby"].includes(clean(body.paymentMethod))
-      ? clean(body.paymentMethod)
-      : "cod"
-  ) as StorePaymentMethod;
-  const now = new Date().toISOString();
 
-  const order: StoreOrder = {
-    id: crypto.randomUUID(),
-    orderNumber: orderNumber(store.orders),
-    createdAt: now,
-    updatedAt: now,
-    status: "new",
-    paymentMethod,
-    paymentStatus:
-      paymentMethod === "cod" ? "pending" : "payment_link_requested",
-    deliveryMethod,
-    customer: { email, phone, firstName, lastName },
-    shipping: { address, city, country },
-    items,
-    subtotal,
-    discount,
-    deliveryFee,
-    total,
-    promoCode,
-    note: clean(body.note),
-    carrier: "",
-    trackingNumber: "",
-    trackingUrl: "",
-    internalNotes: "",
-  };
+  const emailEvents = await sendEmails(
+    saved.settings,
+    orderEmails(saved.settings, saved.order),
+  );
+  if (emailEvents.length) {
+    await updateStoreData((store) => ({
+      store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
+      result: null,
+    }));
+  }
+  revalidateStorefront({ products: saved.products, articles: saved.articles });
 
-  const products = store.products.map((product) => reduceProductStock(product, items));
-
-  const subscribers =
-    clean(body.newsletterOptIn) === "true" &&
-    !store.subscribers.some((subscriber) => subscriber.email === email)
-      ? [
-          {
-            id: crypto.randomUUID(),
-            createdAt: now,
-            email,
-            source: "checkout" as const,
-          },
-          ...store.subscribers,
-        ]
-      : store.subscribers;
-
-  const emailEvents = await sendEmails(store.settings, orderEmails(store.settings, order));
-
-  await saveStoreData({
-    ...store,
-    products,
-    orders: [order, ...store.orders],
-    subscribers,
-    emailEvents: [...emailEvents, ...store.emailEvents],
-  });
-  revalidateStorefront({ products, articles: store.articles });
-
-  return NextResponse.json({ order });
+  return NextResponse.json({ order: saved.order });
 }

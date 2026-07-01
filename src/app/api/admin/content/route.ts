@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DEFAULT_CONTENT, getStoreData, saveStoreData } from "@/lib/store";
+import { DEFAULT_CONTENT, updateStoreData } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
 
 export const runtime = "nodejs";
@@ -7,7 +7,6 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const input = body as Record<string, unknown>;
-  const store = await getStoreData();
   const announcements = Array.isArray(input.announcements)
     ? input.announcements.map(String).filter(Boolean)
     : String(input.announcements ?? "")
@@ -26,7 +25,10 @@ export async function POST(req: Request) {
       : DEFAULT_CONTENT.announcements,
   };
 
-  await saveStoreData({ ...store, content });
-  revalidateStorefront({ products: store.products, articles: store.articles });
+  const { products, articles } = await updateStoreData((store) => ({
+    store: { ...store, content },
+    result: { products: store.products, articles: store.articles },
+  }));
+  revalidateStorefront({ products, articles });
   return NextResponse.json({ content });
 }

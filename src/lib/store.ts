@@ -26,6 +26,7 @@ import { SITE, whatsappNumber } from "./site";
  */
 let blobMemCache: { data: StoreData; at: number } | null = null;
 const BLOB_MEM_TTL = 60 * 60 * 1000; // 1 hour
+let storeWriteQueue: Promise<void> = Promise.resolve();
 
 export type SiteContent = {
   heroEyebrow: string;
@@ -428,6 +429,9 @@ export const DEFAULT_PAGES: PageContent = {
         links: [
           { label: "My Account", href: "/account" },
           { label: "Returns & Exchanges", href: "/returns" },
+          { label: "Shipping Policy", href: "/shipping" },
+          { label: "Privacy Policy", href: "/privacy" },
+          { label: "Terms & Conditions", href: "/terms" },
           { label: "Wishlist", href: "/wishlist" },
           { label: "FAQ", href: "/contact" },
         ],
@@ -459,6 +463,21 @@ export const DEFAULT_PAGES: PageContent = {
       title: "Returns & Exchanges",
       description:
         "Read MAZAL's returns and exchanges policy, including eligibility, timelines, refunds, exchanges and client care support.",
+    },
+    shipping: {
+      title: "Shipping Policy",
+      description:
+        "Read MAZAL's shipping policy, including UAE delivery, GCC and international shipping timelines, fees, duties and order support.",
+    },
+    privacy: {
+      title: "Privacy Policy",
+      description:
+        "Read how MAZAL collects, uses and protects customer information for orders, client care, marketing and website services.",
+    },
+    terms: {
+      title: "Terms & Conditions",
+      description:
+        "Read MAZAL's website and sale terms, including orders, pricing, payment, delivery, returns, intellectual property and liability.",
     },
     journal: {
       title: "The Journal — Modest Style Notes & Guides",
@@ -605,7 +624,7 @@ function buildSeedSeoRecords(seed: Omit<StoreData, "seoRecords">): Record<string
     }),
   };
 
-  for (const key of ["about", "contact", "returns", "rewards", "journal"] as const) {
+  for (const key of ["about", "contact", "returns", "shipping", "privacy", "terms", "rewards", "journal"] as const) {
     const seo = seed.pages.seo[key];
     const page = key === "about" ? seed.pages.about : key === "contact" ? seed.pages.contact : undefined;
     records[`page:${key}`] = publishedRecord({
@@ -731,6 +750,44 @@ function seedData(): StoreData {
   };
 }
 
+const REQUIRED_SUPPORT_LINKS = [
+  { label: "Returns & Exchanges", href: "/returns" },
+  { label: "Shipping Policy", href: "/shipping" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms & Conditions", href: "/terms" },
+];
+
+function withRequiredFooterLinks(
+  columns: PageContent["footer"]["columns"],
+): PageContent["footer"]["columns"] {
+  const next = columns.map((column) => ({
+    ...column,
+    links: column.links.map((link) =>
+      link.label === "Shipping & Returns" && link.href === "/contact"
+        ? { ...link, label: "Returns & Exchanges", href: "/returns" }
+        : link,
+    ),
+  }));
+  const supportIndex = next.findIndex((column) =>
+    /support|help|customer/i.test(column.title),
+  );
+  if (supportIndex === -1) {
+    return [
+      ...next,
+      { title: "Support", links: REQUIRED_SUPPORT_LINKS },
+    ];
+  }
+  const support = next[supportIndex];
+  const links = [...support.links];
+  for (const required of REQUIRED_SUPPORT_LINKS) {
+    if (!links.some((link) => link.href === required.href)) {
+      links.push(required);
+    }
+  }
+  next[supportIndex] = { ...support, links };
+  return next;
+}
+
 function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
   const seed = seedData();
   if (!raw || typeof raw !== "object") return seed;
@@ -769,15 +826,8 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
       ...seed.pages.footer,
       ...(rawPages.footer ?? {}),
       columns: Array.isArray(rawPages.footer?.columns)
-        ? rawPages.footer.columns.map((column) => ({
-            ...column,
-            links: column.links.map((link) =>
-              link.label === "Shipping & Returns" && link.href === "/contact"
-                ? { ...link, label: "Returns & Exchanges", href: "/returns" }
-                : link,
-            ),
-          }))
-        : seed.pages.footer.columns,
+        ? withRequiredFooterLinks(rawPages.footer.columns)
+        : withRequiredFooterLinks(seed.pages.footer.columns),
     },
     seo: { ...seed.pages.seo, ...(rawPages.seo ?? {}) },
   };
@@ -818,6 +868,10 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
 
 const hasBlob = () => !!process.env.BLOB_READ_WRITE_TOKEN;
 const hasDisk = () => !!RENDER_DATA_DIR;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function localStoreFile() {
   const path = await import("node:path");
@@ -875,13 +929,24 @@ async function writeDiskStore(json: string): Promise<void> {
     const backupDir = path.join(dir, "backups");
     await fs.mkdir(backupDir, { recursive: true });
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const day = stamp.slice(0, 10);
     await fs.writeFile(path.join(backupDir, `store-${stamp}.json`), json, "utf8");
+    await fs.writeFile(path.join(backupDir, "store-latest.json"), json, "utf8");
+    await fs.writeFile(path.join(backupDir, `store-daily-${day}.json`), json, "utf8");
     const backups = (await fs.readdir(backupDir))
       .filter((name) => name.startsWith("store-") && name.endsWith(".json"))
+      .filter((name) => !name.startsWith("store-daily-") && name !== "store-latest.json")
+      .sort()
+      .reverse();
+    const dailyBackups = (await fs.readdir(backupDir))
+      .filter((name) => name.startsWith("store-daily-") && name.endsWith(".json"))
       .sort()
       .reverse();
     await Promise.all(
-      backups.slice(20).map((name) => fs.unlink(path.join(backupDir, name))),
+      [
+        ...backups.slice(100),
+        ...dailyBackups.slice(180),
+      ].map((name) => fs.unlink(path.join(backupDir, name))),
     );
   } catch {
     // Backups should never block the live save path.
@@ -900,6 +965,42 @@ async function writeBlobStore(payload: StoreData, json: string): Promise<void> {
   // Refresh the in-memory cache immediately so admin edits show at once
   // without another Blob read.
   blobMemCache = { data: normalize(payload), at: Date.now() };
+}
+
+async function acquireStoreLock(): Promise<() => Promise<void>> {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const { dir } = await localStoreFile();
+  await fs.mkdir(dir, { recursive: true });
+  const lockDir = path.join(dir, ".store.lock");
+  const started = Date.now();
+  while (true) {
+    try {
+      await fs.mkdir(lockDir);
+      await fs.writeFile(
+        path.join(lockDir, "owner"),
+        `${process.pid} ${new Date().toISOString()}`,
+        "utf8",
+      );
+      return async () => {
+        await fs.rm(lockDir, { recursive: true, force: true });
+      };
+    } catch {
+      try {
+        const stat = await fs.stat(lockDir);
+        if (Date.now() - stat.mtimeMs > 30_000) {
+          await fs.rm(lockDir, { recursive: true, force: true });
+          continue;
+        }
+      } catch {
+        // Another request may have released the lock between mkdir attempts.
+      }
+      if (Date.now() - started > 10_000) {
+        throw new Error("Store is busy. Please try again.");
+      }
+      await sleep(50);
+    }
+  }
 }
 
 /** Read the full store. Never throws — falls back to the seed catalogue. */
@@ -930,6 +1031,26 @@ export async function saveStoreData(data: StoreData): Promise<void> {
     return;
   }
   await writeDiskStore(json);
+}
+
+export async function updateStoreData<T>(
+  updater: (store: StoreData) => Promise<{ store: StoreData; result: T }> | { store: StoreData; result: T },
+): Promise<T> {
+  let output!: T;
+  const run = storeWriteQueue.then(async () => {
+    const release = await acquireStoreLock();
+    try {
+      const current = await getStoreData();
+      const next = await updater(current);
+      await saveStoreData(next.store);
+      output = next.result;
+    } finally {
+      await release();
+    }
+  });
+  storeWriteQueue = run.catch(() => undefined);
+  await run;
+  return output;
 }
 
 /** Convenience: just the catalogue. */

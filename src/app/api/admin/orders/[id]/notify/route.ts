@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { orderStatusEmails, sendEmails } from "@/lib/email";
-import { getStoreData, saveStoreData } from "@/lib/store";
+import { updateStoreData } from "@/lib/store";
 
 export const runtime = "nodejs";
 
@@ -9,32 +9,38 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const store = await getStoreData();
-  const order = store.orders.find((item) => item.id === id);
-  if (!order) {
+  const result = await updateStoreData((store) => {
+    const order = store.orders.find((item) => item.id === id);
+    return { store, result: order ? { order, settings: store.settings } : null };
+  });
+  if (!result) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
   const emailEvents = await sendEmails(
-    store.settings,
-    orderStatusEmails(store.settings, order),
+    result.settings,
+    orderStatusEmails(result.settings, result.order),
   );
   const now = new Date().toISOString();
-  const orders = store.orders.map((item) =>
-    item.id === id
-      ? { ...item, customerNotifiedAt: now, updatedAt: now }
-      : item,
-  );
-
-  await saveStoreData({
-    ...store,
-    orders,
-    emailEvents: [...emailEvents, ...store.emailEvents],
+  const savedOrder = await updateStoreData((store) => {
+    const orders = store.orders.map((item) =>
+      item.id === id
+        ? { ...item, customerNotifiedAt: now, updatedAt: now }
+        : item,
+    );
+    return {
+      store: {
+        ...store,
+        orders,
+        emailEvents: [...emailEvents, ...store.emailEvents],
+      },
+      result: orders.find((item) => item.id === id),
+    };
   });
 
   return NextResponse.json({
     ok: true,
-    order: orders.find((item) => item.id === id),
+    order: savedOrder,
     emailEvents,
   });
 }

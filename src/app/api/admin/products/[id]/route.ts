@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { normalizeProduct } from "@/lib/admin-product";
-import { getStoreData, saveStoreData } from "@/lib/store";
+import { updateStoreData } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
 
 export const runtime = "nodejs";
@@ -25,31 +25,38 @@ export async function PUT(
 ) {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
-  const store = await getStoreData();
-  const existing = store.products.find((p) => p.id === id);
-  if (!existing) {
+  const result = await updateStoreData((store) => {
+    const existing = store.products.find((p) => p.id === id);
+    if (!existing) return { store, result: null };
+
+    const product = normalizeProduct(
+      { ...(body as Record<string, unknown>), id },
+      existing,
+    );
+    product.slug = uniqueSlug(product.slug, store.products, id);
+
+    const nextStore = {
+      ...store,
+      products: store.products.map((p) => (p.id === id ? product : p)),
+    };
+
+    return {
+      store: nextStore,
+      result: {
+        product,
+        products:
+          existing.slug === product.slug
+            ? nextStore.products
+            : [...nextStore.products, { slug: existing.slug }],
+        articles: nextStore.articles,
+      },
+    };
+  });
+  if (!result) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
-
-  const product = normalizeProduct(
-    { ...(body as Record<string, unknown>), id },
-    existing,
-  );
-  product.slug = uniqueSlug(product.slug, store.products, id);
-
-  const nextStore = {
-    ...store,
-    products: store.products.map((p) => (p.id === id ? product : p)),
-  };
-
-  await saveStoreData(nextStore);
-  revalidateStorefront({
-    products:
-      existing.slug === product.slug
-        ? nextStore.products
-        : [...nextStore.products, { slug: existing.slug }],
-    articles: nextStore.articles,
-  });
+  const { product, products, articles } = result;
+  revalidateStorefront({ products, articles });
   return NextResponse.json({ product });
 }
 
@@ -58,21 +65,24 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const store = await getStoreData();
-  const existing = store.products.find((p) => p.id === id);
-  if (!existing) {
+  const result = await updateStoreData((store) => {
+    const existing = store.products.find((p) => p.id === id);
+    if (!existing) return { store, result: null };
+    const nextStore = {
+      ...store,
+      products: store.products.filter((p) => p.id !== id),
+    };
+    return {
+      store: nextStore,
+      result: {
+        products: [...nextStore.products, { slug: existing.slug }],
+        articles: nextStore.articles,
+      },
+    };
+  });
+  if (!result) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
-
-  const nextStore = {
-    ...store,
-    products: store.products.filter((p) => p.id !== id),
-  };
-
-  await saveStoreData(nextStore);
-  revalidateStorefront({
-    products: [...nextStore.products, { slug: existing.slug }],
-    articles: nextStore.articles,
-  });
+  revalidateStorefront(result);
   return NextResponse.json({ ok: true });
 }

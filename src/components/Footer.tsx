@@ -27,6 +27,9 @@ const COLUMNS = [
     links: [
       { label: "My Account", href: "/account" },
       { label: "Returns & Exchanges", href: "/returns" },
+      { label: "Shipping Policy", href: "/shipping" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms & Conditions", href: "/terms" },
       { label: "Wishlist", href: "/wishlist" },
       { label: "FAQ", href: "/contact" },
     ],

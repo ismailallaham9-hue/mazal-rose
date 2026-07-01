@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStoreData, saveStoreData, type StoreData } from "@/lib/store";
+import { updateStoreData, type StoreData } from "@/lib/store";
 import { whatsappNumber } from "@/lib/site";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
 
@@ -58,35 +58,35 @@ function mergePages(
 
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Partial<StoreData>;
-  const current = await getStoreData();
-  const next: StoreData = {
-    ...current,
-    ...body,
-    content: { ...current.content, ...(body.content ?? {}) },
-    theme: { ...current.theme, ...(body.theme ?? {}) },
-    settings: mergeSettings(current.settings, body.settings),
-    seo: { ...current.seo, ...(body.seo ?? {}) },
-    seoRecords: { ...current.seoRecords, ...(body.seoRecords ?? {}) },
-    pages: mergePages(current.pages, body.pages),
-    products: Array.isArray(body.products) ? body.products : current.products,
-    categories: Array.isArray(body.categories)
-      ? body.categories
-      : current.categories,
-    articles: Array.isArray(body.articles) ? body.articles : current.articles,
-    orders: Array.isArray(body.orders) ? body.orders : current.orders,
-    inquiries: Array.isArray(body.inquiries)
-      ? body.inquiries
-      : current.inquiries,
-    subscribers: Array.isArray(body.subscribers)
-      ? body.subscribers
-      : current.subscribers,
-    emailEvents: Array.isArray(body.emailEvents)
-      ? body.emailEvents
-      : current.emailEvents,
-    media: Array.isArray(body.media) ? body.media : current.media,
-  };
-
-  await saveStoreData(next);
+  const next = await updateStoreData((current) => {
+    const next: StoreData = {
+      ...current,
+      ...body,
+      content: { ...current.content, ...(body.content ?? {}) },
+      theme: { ...current.theme, ...(body.theme ?? {}) },
+      settings: mergeSettings(current.settings, body.settings),
+      seo: { ...current.seo, ...(body.seo ?? {}) },
+      seoRecords: { ...current.seoRecords, ...(body.seoRecords ?? {}) },
+      pages: mergePages(current.pages, body.pages),
+      products: Array.isArray(body.products) ? body.products : current.products,
+      categories: Array.isArray(body.categories)
+        ? body.categories
+        : current.categories,
+      articles: Array.isArray(body.articles) ? body.articles : current.articles,
+      orders: Array.isArray(body.orders) ? body.orders : current.orders,
+      inquiries: Array.isArray(body.inquiries)
+        ? body.inquiries
+        : current.inquiries,
+      subscribers: Array.isArray(body.subscribers)
+        ? body.subscribers
+        : current.subscribers,
+      emailEvents: Array.isArray(body.emailEvents)
+        ? body.emailEvents
+        : current.emailEvents,
+      media: Array.isArray(body.media) ? body.media : current.media,
+    };
+    return { store: next, result: next };
+  });
   revalidateStorefront({ products: next.products, articles: next.articles });
   return NextResponse.json({ store: next });
 }

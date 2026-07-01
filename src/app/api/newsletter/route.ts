@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-  getStoreData,
-  saveStoreData,
   type StoreSubscriber,
+  updateStoreData,
 } from "@/lib/store";
 import { sendEmails, subscriberEmails } from "@/lib/email";
 
@@ -27,30 +26,41 @@ export async function POST(req: Request) {
     );
   }
 
-  const store = await getStoreData();
-  const exists = store.subscribers.some(
-    (subscriber) => subscriber.email.toLowerCase() === email,
-  );
-  const subscriber: StoreSubscriber = exists
-    ? store.subscribers.find((item) => item.email.toLowerCase() === email)!
-    : {
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        email,
-        source: source as StoreSubscriber["source"],
-      };
-
-  if (!exists) {
-    const emailEvents = await sendEmails(
-      store.settings,
-      subscriberEmails(store.settings, subscriber),
+  const result = await updateStoreData((store) => {
+    const exists = store.subscribers.some(
+      (subscriber) => subscriber.email.toLowerCase() === email,
     );
-    await saveStoreData({
-      ...store,
-      subscribers: [subscriber, ...store.subscribers],
-      emailEvents: [...emailEvents, ...store.emailEvents],
-    });
+    const subscriber: StoreSubscriber = exists
+      ? store.subscribers.find((item) => item.email.toLowerCase() === email)!
+      : {
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          email,
+          source: source as StoreSubscriber["source"],
+        };
+    return {
+      store: exists
+        ? store
+        : { ...store, subscribers: [subscriber, ...store.subscribers] },
+      result: { subscriber, alreadySubscribed: exists, settings: store.settings },
+    };
+  });
+
+  if (!result.alreadySubscribed) {
+    const emailEvents = await sendEmails(
+      result.settings,
+      subscriberEmails(result.settings, result.subscriber),
+    );
+    if (emailEvents.length) {
+      await updateStoreData((store) => ({
+        store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
+        result: null,
+      }));
+    }
   }
 
-  return NextResponse.json({ subscriber, alreadySubscribed: exists });
+  return NextResponse.json({
+    subscriber: result.subscriber,
+    alreadySubscribed: result.alreadySubscribed,
+  });
 }

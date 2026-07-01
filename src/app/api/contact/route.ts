@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStoreData, saveStoreData, type StoreInquiry } from "@/lib/store";
+import { type StoreInquiry, updateStoreData } from "@/lib/store";
 import { contactEmails, sendEmails } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -22,7 +22,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const store = await getStoreData();
   const inquiry: StoreInquiry = {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
@@ -33,16 +32,18 @@ export async function POST(req: Request) {
     message,
   };
 
-  const emailEvents = await sendEmails(
-    store.settings,
-    contactEmails(store.settings, inquiry),
-  );
+  const settings = await updateStoreData((store) => ({
+    store: { ...store, inquiries: [inquiry, ...store.inquiries] },
+    result: store.settings,
+  }));
 
-  await saveStoreData({
-    ...store,
-    inquiries: [inquiry, ...store.inquiries],
-    emailEvents: [...emailEvents, ...store.emailEvents],
-  });
+  const emailEvents = await sendEmails(settings, contactEmails(settings, inquiry));
+  if (emailEvents.length) {
+    await updateStoreData((store) => ({
+      store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
+      result: null,
+    }));
+  }
 
   return NextResponse.json({ inquiry });
 }
