@@ -6,6 +6,7 @@ import { ContactForm } from "@/components/ContactForm";
 import { Accordion } from "@/components/Accordion";
 import { SITE, whatsappLink } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
+import { getStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -18,7 +19,10 @@ export function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const { settings } = await getStoreData();
+  const whatsapp = settings.whatsapp;
+
   return (
     <>
       <Container className="pt-8">
@@ -53,13 +57,13 @@ export default function ContactPage() {
             </p>
             <div className="mt-4 flex flex-col gap-2">
               {[
-                { label: "General enquiry", msg: SITE.whatsapp.defaultMessage },
-                { label: "Personal styling", msg: SITE.whatsapp.stylingMessage },
-                { label: "Order support", msg: SITE.whatsapp.orderSupportMessage },
+                { label: "General enquiry", msg: whatsapp.defaultMessage },
+                { label: "Personal styling", msg: whatsapp.stylingMessage },
+                { label: "Order support", msg: whatsapp.orderSupportMessage },
               ].map((o) => (
                 <a
                   key={o.label}
-                  href={whatsappLink(o.msg)}
+                  href={whatsappLink(o.msg, whatsapp.number)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between border border-[#25D366] bg-cream-soft px-4 py-3 text-sm text-ink transition-colors hover:bg-[#25D366]/10"

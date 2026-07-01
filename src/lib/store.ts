@@ -16,7 +16,7 @@
 import "server-only";
 import { ARTICLES, type Article } from "./articles";
 import { CATEGORIES, PRODUCTS, type Product } from "./products";
-import { SITE } from "./site";
+import { SITE, whatsappNumber } from "./site";
 
 /**
  * In-process cache for the Blob store. Vercel Blob's `list()` is a metered
@@ -395,6 +395,22 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
   const seed = seedData();
   if (!raw || typeof raw !== "object") return seed;
   const rawPages: Partial<PageContent> = raw.pages ?? {};
+  const rawSettings: Partial<SiteSettings> = raw.settings ?? {};
+  const rawWhatsapp = (rawSettings.whatsapp ?? {}) as Partial<SiteSettings["whatsapp"]>;
+  const normalizedWhatsappNumber = whatsappNumber(rawWhatsapp.number || "");
+  const whatsapp = {
+    ...seed.settings.whatsapp,
+    ...rawWhatsapp,
+    number:
+      !normalizedWhatsappNumber || normalizedWhatsappNumber === "971500000000"
+        ? seed.settings.whatsapp.number
+        : normalizedWhatsappNumber,
+  };
+  const settings = {
+    ...seed.settings,
+    ...rawSettings,
+    whatsapp,
+  };
   const pages = {
     ...seed.pages,
     ...rawPages,
@@ -420,7 +436,7 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     theme: { ...seed.theme, ...(raw.theme ?? {}) },
     categories: Array.isArray(raw.categories) ? raw.categories : seed.categories,
     articles: Array.isArray(raw.articles) ? raw.articles : seed.articles,
-    settings: { ...seed.settings, ...(raw.settings ?? {}) },
+    settings,
     seo: { ...seed.seo, ...(raw.seo ?? {}) },
     seoRecords:
       raw.seoRecords && typeof raw.seoRecords === "object"

@@ -10,6 +10,8 @@ const PUBLIC_PATHS = [
   "/journal",
   "/about",
   "/contact",
+  "/returns",
+  "/account",
   "/wishlist",
   "/cart",
   "/checkout",

@@ -2,18 +2,23 @@
 
 import { useState } from "react";
 import { SITE, whatsappLink } from "@/lib/site";
+import type { SiteSettings } from "@/lib/store";
 
 /**
  * Site-wide floating WhatsApp launcher with quick-reply options
  * (general help, styling consultation, order support).
  */
-export function FloatingWhatsApp() {
+export function FloatingWhatsApp({
+  whatsapp = SITE.whatsapp,
+}: {
+  whatsapp?: SiteSettings["whatsapp"];
+}) {
   const [open, setOpen] = useState(false);
 
   const options = [
-    { label: "General enquiry", msg: SITE.whatsapp.defaultMessage },
-    { label: "Personal styling", msg: SITE.whatsapp.stylingMessage },
-    { label: "Order support", msg: SITE.whatsapp.orderSupportMessage },
+    { label: "General enquiry", msg: whatsapp.defaultMessage },
+    { label: "Personal styling", msg: whatsapp.stylingMessage },
+    { label: "Order support", msg: whatsapp.orderSupportMessage },
   ];
 
   return (
@@ -28,7 +33,7 @@ export function FloatingWhatsApp() {
             {options.map((o) => (
               <a
                 key={o.label}
-                href={whatsappLink(o.msg)}
+                href={whatsappLink(o.msg, whatsapp.number)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-lg px-3 py-2.5 text-sm text-ink transition-colors hover:bg-sand/60"

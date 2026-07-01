@@ -13,7 +13,7 @@ import {
   CATEGORY_LABEL,
 } from "@/lib/products";
 import { SITE } from "@/lib/site";
-import { getProductsFromStore } from "@/lib/store";
+import { getProductsFromStore, getStoreData } from "@/lib/store";
 
 export async function generateStaticParams() {
   const products = await getProductsFromStore();
@@ -98,7 +98,8 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const products = await getProductsFromStore();
+  const store = await getStoreData();
+  const products = store.products;
   const product = findProduct(products, slug);
   if (!product) notFound();
 
@@ -218,7 +219,7 @@ export default async function ProductPage({
       </Container>
 
       <Container className="py-10">
-        <ProductDetailClient product={product} />
+        <ProductDetailClient product={product} whatsapp={store.settings.whatsapp} />
       </Container>
 
       {/* Size guide */}

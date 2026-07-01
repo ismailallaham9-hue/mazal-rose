@@ -4,8 +4,9 @@ import { Accordion } from "@/components/Accordion";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
-import { SITE, whatsappLink } from "@/lib/site";
+import { whatsappLink } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
+import { getStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -47,7 +48,10 @@ const FINAL_SALE = [
   "Accessories or hygiene-sensitive items where the original seal or packaging has been opened",
 ];
 
-export default function ReturnsPage() {
+export default async function ReturnsPage() {
+  const { settings } = await getStoreData();
+  const whatsapp = settings.whatsapp;
+
   return (
     <>
       <Container className="pt-8">
@@ -72,7 +76,7 @@ export default function ReturnsPage() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <a
-              href={whatsappLink(SITE.whatsapp.orderSupportMessage)}
+              href={whatsappLink(whatsapp.orderSupportMessage, whatsapp.number)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-bronze px-6 py-3 font-sans text-xs font-medium uppercase tracking-[0.18em] text-cream-soft shadow-sm transition-all duration-300 hover:bg-bronze-deep hover:shadow-md"
@@ -206,7 +210,7 @@ export default function ReturnsPage() {
           <p>
             Need help before requesting a return? Message us on{" "}
             <Link
-              href={whatsappLink(SITE.whatsapp.orderSupportMessage)}
+              href={whatsappLink(whatsapp.orderSupportMessage, whatsapp.number)}
               className="link-underline text-bronze hover:text-bronze-deep"
             >
               WhatsApp

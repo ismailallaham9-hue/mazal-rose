@@ -18,7 +18,7 @@ export const SITE = {
 
   // ── WhatsApp (TODO: replace with your business number, digits only, intl) ──
   whatsapp: {
-    number: "971500000000", // TODO: e.g. 9715XXXXXXXX
+    number: "971501507711",
     defaultMessage: "Hello MAZAL — I'd like to know more.",
     stylingMessage:
       "Hello MAZAL — I'd love a personal styling consultation.",
@@ -55,7 +55,11 @@ export const SITE = {
 } as const;
 
 /** Build a wa.me deep link with a pre-filled message. */
-export function whatsappLink(message?: string): string {
+export function whatsappNumber(value: string = SITE.whatsapp.number): string {
+  return value.replace(/\D/g, "");
+}
+
+export function whatsappLink(message?: string, number: string = SITE.whatsapp.number): string {
   const text = encodeURIComponent(message ?? SITE.whatsapp.defaultMessage);
-  return `https://wa.me/${SITE.whatsapp.number}?text=${text}`;
+  return `https://wa.me/${whatsappNumber(number)}?text=${text}`;
 }

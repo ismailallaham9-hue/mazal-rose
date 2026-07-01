@@ -133,7 +133,7 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer content={pages.footer} showAccount={settings.showCustomerAccount} />
             <CartDrawer />
-            <FloatingWhatsApp />
+            <FloatingWhatsApp whatsapp={settings.whatsapp} />
           </WishlistProvider>
         </CartProvider>
       </body>

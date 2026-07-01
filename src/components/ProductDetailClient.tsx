@@ -10,6 +10,7 @@ import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import { formatAED } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
+import type { SiteSettings } from "@/lib/store";
 import {
   CATEGORY_LABEL,
   discountPercent,
@@ -19,7 +20,13 @@ import { clsx } from "@/lib/clsx";
 
 const RECENT_KEY = "mazal.recent.v1";
 
-export function ProductDetailClient({ product }: { product: Product }) {
+export function ProductDetailClient({
+  product,
+  whatsapp = SITE.whatsapp,
+}: {
+  product: Product;
+  whatsapp?: SiteSettings["whatsapp"];
+}) {
   const { addItem } = useCart();
   const { has, toggle } = useWishlist();
   const wished = has(product.id);
@@ -233,7 +240,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
         {/* WhatsApp inquiry */}
         <a
-          href={whatsappLink(inquiryMsg)}
+          href={whatsappLink(inquiryMsg, whatsapp.number)}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 flex items-center justify-center gap-2 border border-[#25D366] py-3 text-xs uppercase tracking-[0.18em] text-[#1f8a5b] transition-colors hover:bg-[#25D366]/10"
