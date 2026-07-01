@@ -1,7 +1,7 @@
 import { CheckoutClient } from "./CheckoutClient";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 
 export default async function CheckoutPage() {
-  const { settings } = await getStoreData();
+  const { settings } = await getFreshStoreData();
   return <CheckoutClient settings={settings} />;
 }

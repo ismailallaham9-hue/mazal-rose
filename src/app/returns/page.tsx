@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
 import { whatsappLink } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -49,7 +49,7 @@ const FINAL_SALE = [
 ];
 
 export default async function ReturnsPage() {
-  const { settings } = await getStoreData();
+  const { settings } = await getFreshStoreData();
   const whatsapp = settings.whatsapp;
 
   return (

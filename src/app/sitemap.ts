@@ -1,10 +1,9 @@
 import type { MetadataRoute } from "next";
-import { CATEGORIES } from "@/lib/products";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 import { publishedSeo } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const products = store.products;
   const articles = store.articles;
   const base = (store.settings.url || "https://mazal.ae").replace(/\/$/, "");
@@ -32,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  const categoryRoutes = CATEGORIES.filter((c) => !excluded(`category:${c.value}`)).map((c) => ({
+  const categoryRoutes = store.categories.filter((c) => !c.hidden && !excluded(`category:${c.value}`)).map((c) => ({
     url: `${base}/shop?category=${c.value}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,

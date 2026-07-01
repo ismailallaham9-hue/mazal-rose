@@ -14,6 +14,7 @@
  * operation limits. Blob remains a fallback for older deployments.
  */
 import "server-only";
+import { connection } from "next/server";
 import { ARTICLES, type Article } from "./articles";
 import { CATEGORIES, PRODUCTS, type Product } from "./products";
 import { SITE, whatsappNumber } from "./site";
@@ -909,6 +910,12 @@ export async function getStoreData(): Promise<StoreData> {
   return (await readBlobStore()) ?? (await readDiskStore()) ?? seedData();
 }
 
+/** Read the store for public storefront rendering at request time. */
+export async function getFreshStoreData(): Promise<StoreData> {
+  await connection();
+  return getStoreData();
+}
+
 /** Persist the full store. */
 export async function saveStoreData(data: StoreData): Promise<void> {
   const payload: StoreData = { ...data, updatedAt: new Date().toISOString() };
@@ -930,8 +937,18 @@ export async function getProductsFromStore(): Promise<Product[]> {
   return (await getStoreData()).products;
 }
 
+export async function getFreshProductsFromStore(): Promise<Product[]> {
+  return (await getFreshStoreData()).products;
+}
+
 export async function getArticlesFromStore(): Promise<Article[]> {
   return [...(await getStoreData()).articles].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
+}
+
+export async function getFreshArticlesFromStore(): Promise<Article[]> {
+  return [...(await getFreshStoreData()).articles].sort((a, b) =>
     b.date.localeCompare(a.date),
   );
 }

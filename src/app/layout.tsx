@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import Script from "next/script";
-import { connection } from "next/server";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
@@ -13,7 +12,7 @@ import { AnnouncementMarquee } from "@/components/AnnouncementMarquee";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { VeilIntro } from "@/components/VeilIntro";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 import { jsonLd } from "@/lib/seo";
 
 const cormorant = Cormorant_Garamond({
@@ -31,7 +30,7 @@ const inter = Inter({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { seo, settings, theme } = await getStoreData();
+  const { seo, settings, theme } = await getFreshStoreData();
   const base = settings.url || "https://mazal.ae";
   let metadataBase: URL | undefined;
   try {
@@ -75,8 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  await connection();
-  const { content, pages, theme, settings } = await getStoreData();
+  const { content, pages, theme, settings } = await getFreshStoreData();
   const base = settings.url || "https://mazal.ae";
   const orgJsonLd = {
     "@context": "https://schema.org",

@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { TrustBadges } from "@/components/TrustBadges";
 import { ShopClient } from "@/components/ShopClient";
 import { CATEGORIES, CATEGORY_LABEL, type Category } from "@/lib/products";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 import { SITE } from "@/lib/site";
 import { absoluteUrl, jsonLd, publishedSeo } from "@/lib/seo";
 
@@ -60,7 +60,7 @@ export async function generateMetadata({
   searchParams: Promise<SP>;
 }): Promise<Metadata> {
   const { category, sort } = await searchParams;
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const customCategory = store.categories.find((c) => c.value === category);
   if (customCategory || isCategory(category)) {
     const label =
@@ -145,7 +145,7 @@ export default async function ShopPage({
   searchParams: Promise<SP>;
 }) {
   const sp = await searchParams;
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const category = store.categories.some((c) => c.value === sp.category)
     ? sp.category
     : isCategory(sp.category)

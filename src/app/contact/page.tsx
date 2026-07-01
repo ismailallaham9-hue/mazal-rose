@@ -6,7 +6,7 @@ import { ContactForm } from "@/components/ContactForm";
 import { Accordion } from "@/components/Accordion";
 import { whatsappLink } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -20,7 +20,7 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ContactPage() {
-  const { settings } = await getStoreData();
+  const { settings } = await getFreshStoreData();
   const whatsapp = settings.whatsapp;
   const contact = settings.contact;
 

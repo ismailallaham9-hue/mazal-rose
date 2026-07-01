@@ -5,7 +5,7 @@ import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ProductRail } from "@/components/ProductRail";
 import { SITE } from "@/lib/site";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData, getStoreData } from "@/lib/store";
 import { absoluteUrl, jsonLd as serializeJsonLd, publishedSeo } from "@/lib/seo";
 
 export async function generateStaticParams() {
@@ -19,7 +19,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const { articles } = store;
   const article = articles.find((a) => a.slug === slug);
   if (!article) return { title: "Not found" };
@@ -59,7 +59,7 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { articles, products, settings } = await getStoreData();
+  const { articles, products, settings } = await getFreshStoreData();
   const article = articles.find((a) => a.slug === slug);
   if (!article) notFound();
   const base = (settings.url || SITE.url).replace(/\/$/, "");

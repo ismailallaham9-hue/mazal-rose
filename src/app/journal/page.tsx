@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Reveal } from "@/components/Reveal";
-import { getArticlesFromStore } from "@/lib/store";
+import { getFreshArticlesFromStore } from "@/lib/store";
 import { pageMetadata } from "@/lib/seo";
 
 export function generateMetadata(): Promise<Metadata> {
@@ -19,7 +19,7 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function JournalPage() {
-  const articles = await getArticlesFromStore();
+  const articles = await getFreshArticlesFromStore();
   const [lead, ...rest] = articles;
 
   return (

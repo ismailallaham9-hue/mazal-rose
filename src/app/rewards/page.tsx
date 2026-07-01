@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Reveal } from "@/components/Reveal";
 import { Accordion } from "@/components/Accordion";
 import { pageMetadata } from "@/lib/seo";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -59,7 +59,7 @@ const TIERS = [
 ];
 
 export default async function RewardsPage() {
-  const { settings } = await getStoreData();
+  const { settings } = await getFreshStoreData();
 
   return (
     <>

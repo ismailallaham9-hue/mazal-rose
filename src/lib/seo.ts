@@ -4,7 +4,7 @@
  * canonical site URL come from store.seo and store.settings.url.
  */
 import type { Metadata } from "next";
-import { getStoreData, type SeoFields, type SeoRecord } from "@/lib/store";
+import { getFreshStoreData, type SeoFields, type SeoRecord } from "@/lib/store";
 
 /** Absolute-ize a site-relative path/image against the canonical site URL. */
 function abs(base: string, value?: string): string | undefined {
@@ -55,7 +55,7 @@ export async function pageMetadata(opts: {
   /** key into store.seoRecords for Content Studio overrides (robots, OG, etc.) */
   recordKey?: string;
 }): Promise<Metadata> {
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const base = store.settings.url || "https://mazal.ae";
   const pageSeo = opts.pageKey ? store.pages.seo?.[opts.pageKey] : undefined;
   const rec = publishedSeo(opts.recordKey ? store.seoRecords?.[opts.recordKey] : undefined);

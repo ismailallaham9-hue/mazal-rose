@@ -15,11 +15,11 @@ import { InlineChipHeadline } from "@/components/InlineChipHeadline";
 import { Collection2026 } from "@/components/Collection2026";
 import type { Metadata } from "next";
 import type { Badge, Product } from "@/lib/products";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 import { pageMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { seo } = await getStoreData();
+  const { seo } = await getFreshStoreData();
   return pageMetadata({
     pageKey: "home",
     recordKey: "home",
@@ -47,7 +47,7 @@ export default async function Home() {
     categories,
     pages,
     settings,
-  } = await getStoreData();
+  } = await getFreshStoreData();
   const products = allProducts.filter((p) => p.published !== false);
   const home = pages.home;
   const newArrivals = getNewArrivals(products, 8);

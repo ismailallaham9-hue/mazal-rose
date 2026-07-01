@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { connection } from "next/server";
 import { AccountClient } from "./AccountClient";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "My Account",
@@ -13,8 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountPage() {
-  await connection();
-  const { settings } = await getStoreData();
+  const { settings } = await getFreshStoreData();
 
   if (settings.showCustomerAccount) {
     return <AccountClient />;

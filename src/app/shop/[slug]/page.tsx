@@ -13,7 +13,7 @@ import {
   CATEGORY_LABEL,
 } from "@/lib/products";
 import { SITE } from "@/lib/site";
-import { getProductsFromStore, getStoreData } from "@/lib/store";
+import { getFreshStoreData, getProductsFromStore } from "@/lib/store";
 import { absoluteUrl, jsonLd, publishedSeo } from "@/lib/seo";
 
 export async function generateStaticParams() {
@@ -65,7 +65,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const product = findProduct(store.products, slug);
   if (!product) return { title: "Not found" };
   const rec = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
@@ -111,7 +111,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const products = store.products;
   const settings = store.settings;
   const base = (settings.url || SITE.url).replace(/\/$/, "");

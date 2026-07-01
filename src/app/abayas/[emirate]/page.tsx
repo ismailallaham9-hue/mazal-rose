@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ProductRail } from "@/components/ProductRail";
 import { TrustBadges } from "@/components/TrustBadges";
 import { Button } from "@/components/Button";
-import { getStoreData } from "@/lib/store";
+import { getFreshStoreData } from "@/lib/store";
 import { SITE } from "@/lib/site";
 import { jsonLd, publishedSeo } from "@/lib/seo";
 
@@ -29,7 +29,7 @@ export async function generateMetadata({
   const { emirate } = await params;
   const e = EMIRATES[emirate];
   if (!e) return { title: "Not found" };
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const rec = publishedSeo(store.seoRecords?.[`city:${emirate}`]);
   const title = rec?.seoTitle?.trim() || `Luxury Abayas in ${e.short}`;
   const description =
@@ -59,7 +59,7 @@ export default async function EmiratePage({
   const e = EMIRATES[emirate];
   if (!e) notFound();
 
-  const store = await getStoreData();
+  const store = await getFreshStoreData();
   const abayas = store.products.filter((p) => p.category === "abayas").slice(0, 8);
   const base = (store.settings.url || SITE.url).replace(/\/$/, "");
 
