@@ -18,6 +18,14 @@ services:
       # Store admin content + uploaded media on the mounted disk (below).
       - key: MAZAL_DATA_DIR
         value: /var/data/mazal
+      # Optional email sending. Without RESEND_API_KEY, emails are saved as
+      # queued events in the admin panel instead of being sent.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        value: MAZAL <care@mazal.ae>
+      - key: ADMIN_EMAIL
+        sync: false
     disk:
       name: mazal-data
       mountPath: /var/data

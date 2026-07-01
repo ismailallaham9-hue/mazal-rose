@@ -38,10 +38,16 @@ Environment variables:
 ADMIN_PASSWORD=<choose a strong private password>
 MAZAL_DATA_DIR=/var/data/mazal
 NODE_ENV=production
+RESEND_API_KEY=<optional, for live email sending>
+RESEND_FROM=MAZAL <care@mazal.ae>
+ADMIN_EMAIL=<where new-order/contact alerts should go>
 ```
 
 `BLOB_READ_WRITE_TOKEN` is optional. If you set it, the app will use Vercel Blob
 instead of the Render disk for admin data and uploaded media.
+
+Email notifications use Resend when `RESEND_API_KEY` is set. If it is not set,
+the app still records email events in the admin panel as queued/outbox items.
 
 ## Important
 
