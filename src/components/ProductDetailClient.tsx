@@ -22,11 +22,15 @@ const RECENT_KEY = "mazal.recent.v1";
 
 export function ProductDetailClient({
   product,
-  whatsapp = SITE.whatsapp,
+  settings,
 }: {
   product: Product;
-  whatsapp?: SiteSettings["whatsapp"];
+  settings?: SiteSettings;
 }) {
+  const whatsapp = settings?.whatsapp ?? SITE.whatsapp;
+  const currency = settings?.currency ?? SITE.currency;
+  const freeShippingThreshold =
+    settings?.freeShippingThreshold ?? SITE.freeShippingThreshold;
   const { addItem } = useCart();
   const { has, toggle } = useWishlist();
   const wished = has(product.id);
@@ -253,7 +257,7 @@ export function ProductDetailClient({
 
         {/* Mini trust row */}
         <div className="mt-6 grid grid-cols-3 gap-3 border-y border-sand-deep/50 py-4 text-center text-[0.68rem] text-ink-soft">
-          <span>Free delivery over {SITE.currency} {SITE.freeShippingThreshold}</span>
+          <span>Free delivery over {currency} {freeShippingThreshold}</span>
           <span>14-day easy returns</span>
           <span>Secure checkout</span>
         </div>
@@ -284,7 +288,7 @@ export function ProductDetailClient({
                   <p>
                     Express delivery across the GCC in 2–4 working days, and
                     worldwide in 5–9 days. Complimentary on orders over{" "}
-                    {SITE.currency} {SITE.freeShippingThreshold}. Each piece ships
+                    {currency} {freeShippingThreshold}. Each piece ships
                     in MAZAL signature packaging.
                   </p>
                 ),

@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { SITE } from "@/lib/site";
+import type { SiteSettings } from "@/lib/store";
 
 /**
  * Client-side cart. Persists to localStorage so the bag survives reloads.
@@ -90,6 +91,9 @@ type CartContextValue = {
   discount: number;
   total: number;
   promoCode: string | null;
+  firstOrderCode: string;
+  firstOrderDiscount: number;
+  freeShippingThreshold: number;
   applyPromo: (code: string) => boolean;
   removePromo: () => void;
   isOpen: boolean;
@@ -103,7 +107,16 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+  settings,
+}: {
+  children: React.ReactNode;
+  settings?: Pick<
+    SiteSettings,
+    "firstOrderCode" | "firstOrderDiscount" | "freeShippingThreshold"
+  >;
+}) {
   const [state, dispatch] = useReducer(reducer, { items: [] });
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -147,6 +160,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
+  const firstOrderCode = settings?.firstOrderCode ?? SITE.firstOrderCode;
+  const firstOrderDiscount =
+    settings?.firstOrderDiscount ?? SITE.firstOrderDiscount;
+  const freeShippingThreshold =
+    settings?.freeShippingThreshold ?? SITE.freeShippingThreshold;
 
   const addItem = useCallback((item: AddPayload) => {
     dispatch({ type: "add", payload: item });
@@ -168,12 +186,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const applyPromo = useCallback((code: string) => {
     const normalized = code.trim().toUpperCase();
-    if (normalized === SITE.firstOrderCode.toUpperCase()) {
+    if (normalized === firstOrderCode.toUpperCase()) {
       setPromoCode(normalized);
       return true;
     }
     return false;
-  }, []);
+  }, [firstOrderCode]);
   const removePromo = useCallback(() => setPromoCode(null), []);
 
   const { count, subtotal } = useMemo(() => {
@@ -189,8 +207,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const discount = useMemo(() => {
     if (!promoCode) return 0;
-    return Math.round((subtotal * SITE.firstOrderDiscount) / 100);
-  }, [promoCode, subtotal]);
+    return Math.round((subtotal * firstOrderDiscount) / 100);
+  }, [firstOrderDiscount, promoCode, subtotal]);
 
   const total = Math.max(0, subtotal - discount);
 
@@ -201,6 +219,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     discount,
     total,
     promoCode,
+    firstOrderCode,
+    firstOrderDiscount,
+    freeShippingThreshold,
     applyPromo,
     removePromo,
     isOpen,

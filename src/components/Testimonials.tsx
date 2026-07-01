@@ -2,6 +2,7 @@ import { Container } from "./Container";
 import { Reveal } from "./Reveal";
 import { RatingStars } from "./RatingStars";
 import { SITE } from "@/lib/site";
+import type { SiteSettings } from "@/lib/store";
 
 /**
  * Social proof: Google rating header, verified customer testimonials,
@@ -31,18 +32,29 @@ const TESTIMONIALS = [
   },
 ];
 
-export function Testimonials() {
+export function Testimonials({
+  settings,
+}: {
+  settings?: Pick<
+    SiteSettings,
+    "googleReviewUrl" | "ratingAverage" | "ratingCount"
+  >;
+}) {
+  const ratingAverage = settings?.ratingAverage ?? SITE.ratingAverage;
+  const ratingCount = settings?.ratingCount ?? SITE.ratingCount;
+  const googleReviewUrl = settings?.googleReviewUrl ?? SITE.googleReviewUrl;
+
   return (
     <section className="bg-sand" aria-label="Customer reviews">
       <Container className="py-20 md:py-24">
         <Reveal className="flex flex-col items-center gap-4 text-center">
           <p className="eyebrow">Loved by thousands</p>
           <h2 className="font-serif text-3xl text-ink md:text-5xl">
-            {SITE.ratingAverage} out of 5, from {SITE.ratingCount.toLocaleString()} reviews
+            {ratingAverage} out of 5, from {ratingCount.toLocaleString()} reviews
           </h2>
-          <RatingStars rating={SITE.ratingAverage} size={22} />
+          <RatingStars rating={ratingAverage} size={22} />
           <a
-            href={SITE.googleReviewUrl}
+            href={googleReviewUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-2 inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-bronze hover:text-bronze-deep"

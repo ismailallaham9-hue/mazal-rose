@@ -2,6 +2,7 @@ import Image from "next/image";
 import { RatingStars } from "./RatingStars";
 import { SITE } from "@/lib/site";
 import type { Product } from "@/lib/products";
+import type { SiteSettings } from "@/lib/store";
 
 /**
  * Reviews block: summary, rating distribution, verified sample reviews,
@@ -39,7 +40,13 @@ const PHOTOS = [
   "/images/brand/hero.jpg",
 ];
 
-export function ProductReviews({ product }: { product: Product }) {
+export function ProductReviews({
+  product,
+  googleReviewUrl = SITE.googleReviewUrl,
+}: {
+  product: Product;
+  googleReviewUrl?: SiteSettings["googleReviewUrl"];
+}) {
   const rating = product.rating ?? 4.8;
   const count = product.reviewCount ?? 0;
   const dist = [
@@ -74,7 +81,7 @@ export function ProductReviews({ product }: { product: Product }) {
             ))}
           </div>
           <a
-            href={SITE.googleReviewUrl}
+            href={googleReviewUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 inline-block bg-bronze px-6 py-3 text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"

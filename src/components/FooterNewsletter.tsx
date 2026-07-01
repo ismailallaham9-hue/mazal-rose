@@ -2,16 +2,21 @@
 
 import { useState } from "react";
 import { SITE } from "@/lib/site";
+import type { SiteSettings } from "@/lib/store";
 
 export function FooterNewsletter({
   title = "Join the MAZAL world",
   body = "Private previews, new arrivals, and quiet notes on craft - plus",
+  settings,
 }: {
   title?: string;
   body?: string;
+  settings?: SiteSettings;
 }) {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
+  const firstOrderDiscount = settings?.firstOrderDiscount ?? SITE.firstOrderDiscount;
+  const firstOrderCode = settings?.firstOrderCode ?? SITE.firstOrderCode;
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,9 +27,9 @@ export function FooterNewsletter({
     <div className="max-w-md">
       <h3 className="font-serif text-2xl text-cream-soft">{title}</h3>
       <p className="mt-3 text-sm leading-relaxed text-cream-soft/65">
-        {body} {SITE.firstOrderDiscount}% off your first order with code{" "}
+        {body} {firstOrderDiscount}% off your first order with code{" "}
         <strong className="font-medium text-cream-soft">
-          {SITE.firstOrderCode}
+          {firstOrderCode}
         </strong>
         .
       </p>

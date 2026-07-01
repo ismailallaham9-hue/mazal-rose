@@ -1,6 +1,6 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { DEFAULT_CONTENT, getStoreData, saveStoreData } from "@/lib/store";
+import { revalidateStorefront } from "@/lib/revalidate-storefront";
 
 export const runtime = "nodejs";
 
@@ -27,6 +27,6 @@ export async function POST(req: Request) {
   };
 
   await saveStoreData({ ...store, content });
-  revalidatePath("/");
+  revalidateStorefront({ products: store.products, articles: store.articles });
   return NextResponse.json({ content });
 }

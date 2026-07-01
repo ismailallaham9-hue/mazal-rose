@@ -2,7 +2,6 @@
 
 import { useCart } from "@/lib/cart-context";
 import { formatAED } from "@/lib/format";
-import { SITE } from "@/lib/site";
 import { PromoCode } from "./PromoCode";
 
 /** Order totals with free-shipping progress, used on cart + checkout. */
@@ -13,8 +12,8 @@ export function OrderSummary({
   showPromo?: boolean;
   children?: React.ReactNode;
 }) {
-  const { subtotal, discount, total } = useCart();
-  const threshold = SITE.freeShippingThreshold;
+  const { subtotal, discount, total, freeShippingThreshold } = useCart();
+  const threshold = freeShippingThreshold;
   const remaining = Math.max(0, threshold - total);
   const pct = Math.min(100, (total / threshold) * 100);
   const freeShipping = remaining === 0;

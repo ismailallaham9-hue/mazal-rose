@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Container } from "./Container";
 import { Reveal } from "./Reveal";
 import { SITE } from "@/lib/site";
+import type { SiteSettings } from "@/lib/store";
 
 // Reuse brand campaign imagery as the IG grid. Replace with a real feed later.
 const POSTS = [
@@ -13,25 +14,29 @@ const POSTS = [
   "/images/brand/wordmark.jpg",
 ];
 
-export function InstagramFeed() {
+export function InstagramFeed({
+  social = SITE.social,
+}: {
+  social?: SiteSettings["social"];
+}) {
   return (
     <section className="bg-cream" aria-label="Instagram">
       <Container className="py-16 md:py-20">
         <Reveal className="text-center">
           <p className="eyebrow">Fashion Inspiration</p>
           <h2 className="mt-2 font-serif text-3xl text-ink md:text-4xl">
-            {SITE.social.instagramHandle} on Instagram
+            {social.instagramHandle} on Instagram
           </h2>
           <p className="mt-3 text-ink-soft">
-            Tag {SITE.social.instagramHandle} to be featured · #MAZALmeansStill
+            Tag {social.instagramHandle} to be featured · #MAZALmeansStill
           </p>
         </Reveal>
 
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {POSTS.map((src, i) => (
+          {POSTS.map((src) => (
             <a
               key={src}
-              href={SITE.social.instagram}
+              href={social.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative aspect-square overflow-hidden bg-sand"

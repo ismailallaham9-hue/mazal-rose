@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
-import { SITE } from "@/lib/site";
 
 /** Promo / discount code input, shared by the cart and checkout. */
 export function PromoCode() {
-  const { promoCode, applyPromo, removePromo } = useCart();
+  const {
+    promoCode,
+    applyPromo,
+    removePromo,
+    firstOrderCode,
+    firstOrderDiscount,
+  } = useCart();
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
 
@@ -25,7 +30,7 @@ export function PromoCode() {
       <div className="flex items-center justify-between bg-bronze/10 px-4 py-3 text-sm">
         <span className="text-ink">
           Code <strong className="font-semibold">{promoCode}</strong> applied —{" "}
-          {SITE.firstOrderDiscount}% off
+          {firstOrderDiscount}% off
         </span>
         <button
           type="button"
@@ -47,7 +52,7 @@ export function PromoCode() {
             setValue(e.target.value);
             setError(false);
           }}
-          placeholder={`Promo code (try ${SITE.firstOrderCode})`}
+          placeholder={`Promo code (try ${firstOrderCode})`}
           className="flex-1 border border-sand-deep bg-cream-soft px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60 focus:border-bronze focus:outline-none"
         />
         <button
@@ -59,7 +64,7 @@ export function PromoCode() {
       </div>
       {error && (
         <p className="mt-2 text-xs text-[#8a3f2b]">
-          That code isn&rsquo;t valid. Try {SITE.firstOrderCode}.
+          That code isn&rsquo;t valid. Try {firstOrderCode}.
         </p>
       )}
     </form>

@@ -4,8 +4,8 @@ import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Reveal } from "@/components/Reveal";
 import { Accordion } from "@/components/Accordion";
-import { SITE } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
+import { getStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -58,7 +58,9 @@ const TIERS = [
   },
 ];
 
-export default function RewardsPage() {
+export default async function RewardsPage() {
+  const { settings } = await getStoreData();
+
   return (
     <>
       <Container className="pt-8">
@@ -176,7 +178,7 @@ export default function RewardsPage() {
             Give AED 50, get AED 50
           </h2>
           <p className="mt-5 text-ink-soft">
-            Share your personal link. Your friend gets {SITE.firstOrderDiscount}%
+            Share your personal link. Your friend gets {settings.firstOrderDiscount}%
             off their first order, and you earn AED 50 in points the moment they
             shop. There&rsquo;s no limit to how much you can earn.
           </p>

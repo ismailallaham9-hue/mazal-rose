@@ -41,7 +41,13 @@ function getNewArrivals(products: Product[], limit = 8) {
 }
 
 export default async function Home() {
-  const { products: allProducts, content, categories, pages } = await getStoreData();
+  const {
+    products: allProducts,
+    content,
+    categories,
+    pages,
+    settings,
+  } = await getStoreData();
   const products = allProducts.filter((p) => p.published !== false);
   const home = pages.home;
   const newArrivals = getNewArrivals(products, 8);
@@ -120,7 +126,7 @@ export default async function Home() {
         tone="cream"
       />
 
-      <SeasonalBanner />
+      <SeasonalBanner settings={settings} />
 
       <ProductRail
         eyebrow="Most Wanted"
@@ -184,11 +190,11 @@ export default async function Home() {
         />
       </section>
 
-      <Testimonials />
+      <Testimonials settings={settings} />
 
-      <StoreStats />
+      <StoreStats stats={settings.stats} />
 
-      <InstagramFeed />
+      <InstagramFeed social={settings.social} />
     </>
   );
 }

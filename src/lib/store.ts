@@ -406,10 +406,21 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
         ? seed.settings.whatsapp.number
         : normalizedWhatsappNumber,
   };
+  const social = {
+    ...seed.settings.social,
+    ...(rawSettings.social ?? {}),
+  };
+  const contact = {
+    ...seed.settings.contact,
+    ...(rawSettings.contact ?? {}),
+  };
   const settings = {
     ...seed.settings,
     ...rawSettings,
     whatsapp,
+    social,
+    contact,
+    stats: Array.isArray(rawSettings.stats) ? rawSettings.stats : seed.settings.stats,
   };
   const pages = {
     ...seed.pages,

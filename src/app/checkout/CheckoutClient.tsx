@@ -13,10 +13,12 @@ import type { SiteSettings } from "@/lib/store";
 type Payment = "cod" | "card" | "tabby";
 
 export function CheckoutClient({
-  whatsapp = SITE.whatsapp,
+  settings,
 }: {
-  whatsapp?: SiteSettings["whatsapp"];
+  settings?: SiteSettings;
 }) {
+  const whatsapp = settings?.whatsapp ?? SITE.whatsapp;
+  const googleReviewUrl = settings?.googleReviewUrl ?? SITE.googleReviewUrl;
   const { items, total, clear } = useCart();
   const [payment, setPayment] = useState<Payment>("cod");
   const [placed, setPlaced] = useState<{ order: string; amount: number } | null>(
@@ -70,7 +72,7 @@ export function CheckoutClient({
         <div className="mt-10 border-t border-sand-deep/50 pt-8">
           <p className="text-sm text-ink-soft">Loved your experience?</p>
           <a
-            href={SITE.googleReviewUrl}
+            href={googleReviewUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-2 inline-block text-xs uppercase tracking-[0.2em] text-bronze hover:text-bronze-deep"

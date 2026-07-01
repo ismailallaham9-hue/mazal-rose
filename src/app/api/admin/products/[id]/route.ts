@@ -1,7 +1,7 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { normalizeProduct } from "@/lib/admin-product";
 import { getStoreData, saveStoreData } from "@/lib/store";
+import { revalidateStorefront } from "@/lib/revalidate-storefront";
 
 export const runtime = "nodejs";
 
@@ -17,13 +17,6 @@ function uniqueSlug(
     i += 1;
   }
   return next;
-}
-
-function refreshPublicPages(oldSlug?: string, newSlug?: string) {
-  revalidatePath("/");
-  revalidatePath("/shop");
-  if (oldSlug) revalidatePath(`/shop/${oldSlug}`);
-  if (newSlug && newSlug !== oldSlug) revalidatePath(`/shop/${newSlug}`);
 }
 
 export async function PUT(
@@ -44,11 +37,19 @@ export async function PUT(
   );
   product.slug = uniqueSlug(product.slug, store.products, id);
 
-  await saveStoreData({
+  const nextStore = {
     ...store,
     products: store.products.map((p) => (p.id === id ? product : p)),
+  };
+
+  await saveStoreData(nextStore);
+  revalidateStorefront({
+    products:
+      existing.slug === product.slug
+        ? nextStore.products
+        : [...nextStore.products, { slug: existing.slug }],
+    articles: nextStore.articles,
   });
-  refreshPublicPages(existing.slug, product.slug);
   return NextResponse.json({ product });
 }
 
@@ -63,10 +64,15 @@ export async function DELETE(
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  await saveStoreData({
+  const nextStore = {
     ...store,
     products: store.products.filter((p) => p.id !== id),
+  };
+
+  await saveStoreData(nextStore);
+  revalidateStorefront({
+    products: [...nextStore.products, { slug: existing.slug }],
+    articles: nextStore.articles,
   });
-  refreshPublicPages(existing.slug);
   return NextResponse.json({ ok: true });
 }

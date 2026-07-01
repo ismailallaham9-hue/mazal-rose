@@ -1,27 +1,59 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getStoreData, saveStoreData, type StoreData } from "@/lib/store";
+import { whatsappNumber } from "@/lib/site";
+import { revalidateStorefront } from "@/lib/revalidate-storefront";
 
 export const runtime = "nodejs";
 
-const PUBLIC_PATHS = [
-  "/",
-  "/shop",
-  "/journal",
-  "/about",
-  "/contact",
-  "/returns",
-  "/account",
-  "/wishlist",
-  "/cart",
-  "/checkout",
-  "/rewards",
-  "/sitemap.xml",
-  "/robots.txt",
-];
+function mergeSettings(
+  current: StoreData["settings"],
+  incoming: Partial<StoreData["settings"]> = {},
+): StoreData["settings"] {
+  const nextWhatsapp = {
+    ...current.whatsapp,
+    ...(incoming.whatsapp ?? {}),
+  };
+  const cleanWhatsappNumber = whatsappNumber(nextWhatsapp.number);
 
-function refreshAll() {
-  for (const path of PUBLIC_PATHS) revalidatePath(path);
+  return {
+    ...current,
+    ...incoming,
+    whatsapp: {
+      ...nextWhatsapp,
+      number: cleanWhatsappNumber || current.whatsapp.number,
+    },
+    social: {
+      ...current.social,
+      ...(incoming.social ?? {}),
+    },
+    contact: {
+      ...current.contact,
+      ...(incoming.contact ?? {}),
+    },
+    stats: Array.isArray(incoming.stats) ? incoming.stats : current.stats,
+  };
+}
+
+function mergePages(
+  current: StoreData["pages"],
+  incoming: Partial<StoreData["pages"]> = {},
+): StoreData["pages"] {
+  return {
+    ...current,
+    ...incoming,
+    home: { ...current.home, ...(incoming.home ?? {}) },
+    about: { ...current.about, ...(incoming.about ?? {}) },
+    contact: { ...current.contact, ...(incoming.contact ?? {}) },
+    shop: { ...current.shop, ...(incoming.shop ?? {}) },
+    seo: { ...current.seo, ...(incoming.seo ?? {}) },
+    footer: {
+      ...current.footer,
+      ...(incoming.footer ?? {}),
+      columns: Array.isArray(incoming.footer?.columns)
+        ? incoming.footer.columns
+        : current.footer.columns,
+    },
+  };
 }
 
 export async function POST(req: Request) {
@@ -32,10 +64,10 @@ export async function POST(req: Request) {
     ...body,
     content: { ...current.content, ...(body.content ?? {}) },
     theme: { ...current.theme, ...(body.theme ?? {}) },
-    settings: { ...current.settings, ...(body.settings ?? {}) },
+    settings: mergeSettings(current.settings, body.settings),
     seo: { ...current.seo, ...(body.seo ?? {}) },
     seoRecords: { ...current.seoRecords, ...(body.seoRecords ?? {}) },
-    pages: { ...current.pages, ...(body.pages ?? {}) },
+    pages: mergePages(current.pages, body.pages),
     products: Array.isArray(body.products) ? body.products : current.products,
     categories: Array.isArray(body.categories)
       ? body.categories
@@ -45,8 +77,6 @@ export async function POST(req: Request) {
   };
 
   await saveStoreData(next);
-  refreshAll();
-  for (const product of next.products) revalidatePath(`/shop/${product.slug}`);
-  for (const article of next.articles) revalidatePath(`/journal/${article.slug}`);
+  revalidateStorefront({ products: next.products, articles: next.articles });
   return NextResponse.json({ store: next });
 }

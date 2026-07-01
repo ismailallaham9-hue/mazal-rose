@@ -4,7 +4,7 @@ import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ContactForm } from "@/components/ContactForm";
 import { Accordion } from "@/components/Accordion";
-import { SITE, whatsappLink } from "@/lib/site";
+import { whatsappLink } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 import { getStoreData } from "@/lib/store";
 
@@ -22,6 +22,7 @@ export function generateMetadata(): Promise<Metadata> {
 export default async function ContactPage() {
   const { settings } = await getStoreData();
   const whatsapp = settings.whatsapp;
+  const contact = settings.contact;
 
   return (
     <>
@@ -44,10 +45,10 @@ export default async function ContactPage() {
         {/* Info + WhatsApp */}
         <div className="space-y-8">
           <div className="space-y-4">
-            <InfoRow label="Email" value={SITE.contact.email} />
-            <InfoRow label="Phone" value={SITE.contact.phone} />
-            <InfoRow label="Atelier" value={SITE.contact.addressLine} />
-            <InfoRow label="Hours" value={SITE.contact.hours} />
+            <InfoRow label="Email" value={contact.email} />
+            <InfoRow label="Phone" value={contact.phone} />
+            <InfoRow label="Atelier" value={contact.addressLine} />
+            <InfoRow label="Hours" value={contact.hours} />
           </div>
 
           <div className="bg-[#1f8a5b]/8 border border-[#1f8a5b]/30 p-6">
@@ -99,8 +100,8 @@ export default async function ContactPage() {
               content: (
                 <p>
                   Express delivery across the GCC takes 2–4 working days, and
-                  worldwide 5–9 days. Complimentary over {SITE.currency}{" "}
-                  {SITE.freeShippingThreshold}.
+                  worldwide 5–9 days. Complimentary over {settings.currency}{" "}
+                  {settings.freeShippingThreshold}.
                 </p>
               ),
             },

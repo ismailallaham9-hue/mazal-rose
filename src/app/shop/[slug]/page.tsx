@@ -100,6 +100,8 @@ export default async function ProductPage({
   const { slug } = await params;
   const store = await getStoreData();
   const products = store.products;
+  const settings = store.settings;
+  const base = (settings.url || SITE.url).replace(/\/$/, "");
   const product = findProduct(products, slug);
   if (!product) notFound();
 
@@ -113,18 +115,18 @@ export default async function ProductPage({
     "@type": "Product",
     name: product.name,
     description: product.description,
-    image: [product.image ?? `${SITE.url}/images/brand/hero.jpg`],
+    image: [product.image ?? `${base}/images/brand/hero.jpg`],
     category: CATEGORY_LABEL[product.category],
-    brand: { "@type": "Brand", name: SITE.name },
+    brand: { "@type": "Brand", name: settings.name },
     offers: {
       "@type": "Offer",
-      priceCurrency: SITE.currency,
+      priceCurrency: settings.currency,
       price: product.price,
       availability:
         (product.stock ?? 1) > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-      url: `${SITE.url}/shop/${product.slug}`,
+      url: `${base}/shop/${product.slug}`,
     },
     ...(product.rating
       ? {
@@ -172,19 +174,19 @@ export default async function ProductPage({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: SITE.url },
-      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE.url}/shop` },
+      { "@type": "ListItem", position: 1, name: "Home", item: base },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${base}/shop` },
       {
         "@type": "ListItem",
         position: 3,
         name: CATEGORY_LABEL[product.category],
-        item: `${SITE.url}/shop?category=${product.category}`,
+        item: `${base}/shop?category=${product.category}`,
       },
       {
         "@type": "ListItem",
         position: 4,
         name: product.name,
-        item: `${SITE.url}/shop/${product.slug}`,
+        item: `${base}/shop/${product.slug}`,
       },
     ],
   };
@@ -219,7 +221,7 @@ export default async function ProductPage({
       </Container>
 
       <Container className="py-10">
-        <ProductDetailClient product={product} whatsapp={store.settings.whatsapp} />
+        <ProductDetailClient product={product} settings={store.settings} />
       </Container>
 
       {/* Size guide */}
@@ -290,7 +292,10 @@ export default async function ProductPage({
 
       {/* Reviews */}
       <Container className="py-16">
-        <ProductReviews product={product} />
+        <ProductReviews
+          product={product}
+          googleReviewUrl={settings.googleReviewUrl}
+        />
       </Container>
 
       {/* Recently viewed */}

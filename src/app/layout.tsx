@@ -124,14 +124,18 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
-        <CartProvider>
+        <CartProvider settings={settings}>
           <WishlistProvider>
             <SmoothScroll />
             <VeilIntro />
             <AnnouncementMarquee messages={content.announcements} />
             <Header showAccount={settings.showCustomerAccount} />
             <main className="flex-1">{children}</main>
-            <Footer content={pages.footer} showAccount={settings.showCustomerAccount} />
+            <Footer
+              content={pages.footer}
+              showAccount={settings.showCustomerAccount}
+              settings={settings}
+            />
             <CartDrawer />
             <FloatingWhatsApp whatsapp={settings.whatsapp} />
           </WishlistProvider>

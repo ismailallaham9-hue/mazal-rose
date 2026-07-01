@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { useCart } from "@/lib/cart-context";
 import { formatAED } from "@/lib/format";
 import { clsx } from "@/lib/clsx";
-import { SITE } from "@/lib/site";
 
 export function CartDrawer() {
   const {
@@ -15,6 +14,7 @@ export function CartDrawer() {
     items,
     subtotal,
     count,
+    freeShippingThreshold,
     setQuantity,
     removeItem,
   } = useCart();
@@ -136,7 +136,7 @@ export function CartDrawer() {
             <footer className="border-t border-sand-deep/50 px-6 py-6">
               {/* Free-shipping progress (AOV driver) */}
               {(() => {
-                const threshold = SITE.freeShippingThreshold;
+                const threshold = freeShippingThreshold;
                 const remaining = Math.max(0, threshold - subtotal);
                 const pct = Math.min(100, (subtotal / threshold) * 100);
                 return (
