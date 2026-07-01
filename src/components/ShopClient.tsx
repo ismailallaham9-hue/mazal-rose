@@ -105,6 +105,17 @@ export function ShopClient({
     });
   }
 
+  function selectSort(nextSort: SortKey) {
+    setSort(nextSort);
+    setOnSaleOnly(false);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextSort === "featured") params.delete("sort");
+    else params.set("sort", nextSort);
+    router.replace(`/shop${params.toString() ? `?${params}` : ""}`, {
+      scroll: false,
+    });
+  }
+
   const activeCount =
     (category !== "all" ? 1 : 0) +
     sizes.length +
@@ -243,7 +254,7 @@ export function ShopClient({
               <span className="hidden sm:inline">Sort</span>
               <select
                 value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
+                onChange={(e) => selectSort(e.target.value as SortKey)}
                 className="border border-sand-deep bg-cream-soft px-3 py-2 text-xs text-ink focus:border-bronze focus:outline-none"
               >
                 {SORTS.map((s) => (

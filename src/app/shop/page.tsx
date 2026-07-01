@@ -59,7 +59,7 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<SP>;
 }): Promise<Metadata> {
-  const { category } = await searchParams;
+  const { category, sort } = await searchParams;
   const store = await getStoreData();
   const customCategory = store.categories.find((c) => c.value === category);
   if (customCategory || isCategory(category)) {
@@ -111,6 +111,17 @@ export async function generateMetadata({
       },
     };
   }
+  if (category === undefined && sort === "new") {
+    const title = "New In | MAZAL";
+    const description =
+      "Discover the newest MAZAL arrivals - luxury abayas, kaftans, modest dresses and accessories crafted for quiet Gulf elegance.";
+    return {
+      title,
+      description,
+      alternates: { canonical: "/shop?sort=new" },
+      openGraph: { title, description, url: "/shop?sort=new", type: "website" },
+    };
+  }
   const rec = publishedSeo(store.seoRecords?.shop);
   const title = rec?.seoTitle?.trim() || store.pages.seo.shop?.title || "Shop All - The Collection";
   const description =
@@ -144,13 +155,18 @@ export default async function ShopPage({
   const storeCategory = store.categories.find((c) => c.value === category);
   const seedCategory = isCategory(category) ? category : undefined;
 
-  const heading = category
+  const isNewIn = !category && initialSort === "new";
+  const heading = isNewIn
+    ? "New In"
+    : category
     ? (storeCategory?.label ??
       (seedCategory
         ? COPY[seedCategory]?.title ?? CATEGORY_LABEL[seedCategory]
         : category))
     : store.pages.shop.title;
-  const blurb = category
+  const blurb = isNewIn
+    ? "The latest MAZAL arrivals, gathered in one place - refined abayas, kaftans, dresses and accessories crafted with quiet intention."
+    : category
     ? (storeCategory?.blurb ??
       (seedCategory
         ? COPY[seedCategory]?.blurb ??
@@ -225,6 +241,7 @@ export default async function ShopPage({
       <Container className="pb-20">
         <Suspense fallback={<p className="text-ink-soft">Loading...</p>}>
           <ShopClient
+            key={`${category ?? "all"}-${initialSort}-${sp.sort ?? ""}`}
             products={visibleProducts}
             categories={store.categories}
             initialCategory={category}
