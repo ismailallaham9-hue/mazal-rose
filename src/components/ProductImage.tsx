@@ -10,20 +10,25 @@ import { clsx } from "@/lib/clsx";
  */
 export function ProductImage({
   product,
+  imageSrc,
+  alt,
   sizes = "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw",
   className,
   priority = false,
 }: {
   product: Product;
+  imageSrc?: string;
+  alt?: string;
   sizes?: string;
   className?: string;
   priority?: boolean;
 }) {
-  if (product.image) {
+  const src = imageSrc ?? product.image;
+  if (src) {
     return (
       <Image
-        src={product.image}
-        alt={product.name}
+        src={src}
+        alt={alt ?? product.name}
         fill
         sizes={sizes}
         priority={priority}

@@ -15,6 +15,7 @@ import {
   BADGE_OPTIONS,
   CATEGORY_OPTIONS,
   PALETTE,
+  parseColorInput,
   slugify,
 } from "@/lib/admin-product";
 import type { Article, ArticleBlock } from "@/lib/articles";
@@ -128,6 +129,14 @@ function productToDraft(product: Product): ProductDraft {
     : product.image
       ? [product.image]
       : [];
+  const paletteNames = new Set(PALETTE.map((color) => color.name));
+  const paletteColors = product.colors
+    .filter((color) => paletteNames.has(color.name))
+    .map((color) => color.name);
+  const customColors = product.colors
+    .filter((color) => !paletteNames.has(color.name))
+    .map((color) => `${color.name}, ${color.hex}`)
+    .join("\n");
   return {
     id: product.id,
     slug: product.slug,
@@ -137,8 +146,8 @@ function productToDraft(product: Product): ProductDraft {
     category: product.category,
     description: product.description,
     sizes: product.sizes.join(", "),
-    colors: product.colors.map((c) => c.name),
-    customColors: "",
+    colors: paletteColors,
+    customColors,
     material: product.material ?? "",
     care: (product.care ?? []).join("\n"),
     stock: String(product.stock ?? 10),
@@ -161,10 +170,7 @@ function productPayload(draft: ProductDraft) {
   const paletteColors = PALETTE.filter((c) => draft.colors.includes(c.name));
   const customColors = draft.customColors
     .split("\n")
-    .map((line) => {
-      const [name, hex] = line.split(",").map((part) => part?.trim());
-      return name && hex ? { name, hex } : null;
-    })
+    .map(parseColorInput)
     .filter((c): c is { name: string; hex: string } => Boolean(c));
   const images = Array.from(
     new Set([draft.image, ...draft.images].map((u) => u.trim()).filter(Boolean)),
@@ -1257,7 +1263,12 @@ function ProductsSection(props: {
             <TextArea label="Description" value={props.draft.description} onChange={(v) => update("description", v)} />
           </div>
           <TextArea label="Care instructions (one per line)" value={props.draft.care} onChange={(v) => update("care", v)} />
-          <TextArea label="Custom colors (one per line: Name, #hex)" value={props.draft.customColors} onChange={(v) => update("customColors", v)} />
+          <div>
+            <TextArea label="Custom colors (one per line: Blue or Blue, #0000ff)" value={props.draft.customColors} onChange={(v) => update("customColors", v)} />
+            <p className="mt-1 text-xs text-ink-soft">
+              You can type a color name, a hex code, or both. Examples: Blue, #0000ff, Navy #000080.
+            </p>
+          </div>
           <CheckGroup label="Badges" values={BADGE_OPTIONS} selected={props.draft.badges} onChange={(v) => update("badges", v)} />
           <ColorGroup selected={props.draft.colors} onChange={(v) => update("colors", v)} />
           <label className="flex items-center gap-2 text-sm">

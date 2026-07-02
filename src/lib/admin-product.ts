@@ -12,6 +12,86 @@ export const PALETTE: ColorOption[] = [
   { name: "Sage", hex: "#A9AE97" },
 ];
 
+const NAMED_COLORS: Record<string, string> = {
+  black: "#000000",
+  white: "#ffffff",
+  ivory: "#fffff0",
+  cream: "#fdf7f3",
+  beige: "#f5f5dc",
+  sand: "#e7d9c4",
+  champagne: "#f1e6d4",
+  brown: "#8b4513",
+  espresso: "#3a322b",
+  bronze: "#b0835c",
+  gold: "#d4af37",
+  silver: "#c0c0c0",
+  grey: "#808080",
+  gray: "#808080",
+  charcoal: "#36454f",
+  navy: "#000080",
+  blue: "#0000ff",
+  "sky blue": "#87ceeb",
+  "light blue": "#add8e6",
+  teal: "#008080",
+  turquoise: "#40e0d0",
+  green: "#008000",
+  sage: "#a9ae97",
+  olive: "#808000",
+  red: "#ff0000",
+  burgundy: "#800020",
+  maroon: "#800000",
+  pink: "#ffc0cb",
+  rose: "#c9a39b",
+  purple: "#800080",
+  lavender: "#e6e6fa",
+  orange: "#ffa500",
+  yellow: "#ffff00",
+};
+
+function titleCase(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+export function normalizeColorHex(value: string): string | null {
+  const clean = value.trim();
+  const hex = clean.match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i)?.[1];
+  if (hex) {
+    const full =
+      hex.length === 3
+        ? hex
+            .split("")
+            .map((char) => char + char)
+            .join("")
+        : hex;
+    return `#${full.toLowerCase()}`;
+  }
+  return NAMED_COLORS[clean.toLowerCase()] ?? null;
+}
+
+export function parseColorInput(value: string): ColorOption | null {
+  const line = value.trim();
+  if (!line) return null;
+  const hexMatch = line.match(/#?[0-9a-f]{3}(?:[0-9a-f]{3})?/i);
+  const hex = hexMatch ? normalizeColorHex(hexMatch[0]) : null;
+  const namePart = hexMatch
+    ? line.slice(0, hexMatch.index).trim().replace(/[,=:/-]+$/g, "").trim()
+    : line.trim().replace(/[,=:/-]+$/g, "").trim();
+  const namedHex = normalizeColorHex(namePart);
+  const resolvedHex = hex ?? namedHex;
+  if (!resolvedHex) return null;
+  const knownName =
+    Object.entries(NAMED_COLORS).find(([, value]) => value === resolvedHex)?.[0] ??
+    "";
+  const name = namePart && !normalizeColorHex(namePart)
+    ? titleCase(namePart)
+    : titleCase(knownName || "Custom");
+  return { name, hex: resolvedHex };
+}
+
 export const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
   { value: "abayas", label: "Abayas" },
   { value: "kaftans", label: "Kaftans" },
@@ -57,7 +137,13 @@ export function normalizeProduct(
   const colorsIn = Array.isArray(input.colors) ? input.colors : existing?.colors;
   const colors: ColorOption[] =
     Array.isArray(colorsIn) && colorsIn.length
-      ? (colorsIn as ColorOption[]).filter((c) => c && c.name && c.hex)
+      ? (colorsIn as ColorOption[])
+          .map((c) => {
+            if (!c?.name && !c?.hex) return null;
+            const parsed = parseColorInput(`${c.name ?? ""} ${c.hex ?? ""}`);
+            return parsed ?? null;
+          })
+          .filter((c): c is ColorOption => Boolean(c))
       : [PALETTE[0]];
   const has = (key: string) => Object.prototype.hasOwnProperty.call(input, key);
   const compareAtPrice =

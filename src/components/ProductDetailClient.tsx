@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ProductImage } from "./ProductImage";
 import { ProductBadge, Pill } from "./Badge";
@@ -36,11 +37,15 @@ export function ProductDetailClient({
   const { addItem } = useCart();
   const { has, toggle } = useWishlist();
   const wished = has(product.id);
+  const galleryImages = Array.from(
+    new Set([product.image, ...(product.images ?? [])].filter(Boolean) as string[]),
+  );
 
   const [color, setColor] = useState(product.colors[0]);
   const [size, setSize] = useState<string | null>(
     product.sizes.length === 1 ? product.sizes[0] : null,
   );
+  const [selectedImage, setSelectedImage] = useState(galleryImages[0] ?? "");
   const [qty, setQty] = useState(1);
   const [sizeError, setSizeError] = useState(false);
 
@@ -93,16 +98,54 @@ export function ProductDetailClient({
       {/* Gallery */}
       <div className="relative">
         <div className="relative aspect-[4/5] overflow-hidden bg-sand ring-1 ring-sand-deep/40">
-          <ProductImage
-            product={product}
-            sizes="(min-width:1024px) 50vw, 100vw"
-            priority
-          />
+          {selectedImage ? (
+            <Image
+              src={selectedImage}
+              alt={product.name}
+              fill
+              sizes="(min-width:1024px) 50vw, 100vw"
+              priority
+              className="object-cover"
+            />
+          ) : (
+            <ProductImage
+              product={product}
+              sizes="(min-width:1024px) 50vw, 100vw"
+              priority
+            />
+          )}
           <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">
             {off && <Pill className="bg-[#8a3f2b] text-cream-soft">-{off}%</Pill>}
             {product.badges?.map((b) => <ProductBadge key={b} badge={b} />)}
           </div>
         </div>
+        {galleryImages.length > 1 && (
+          <div className="mt-4 grid grid-cols-5 gap-3 sm:grid-cols-6">
+            {galleryImages.map((src, index) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setSelectedImage(src)}
+                aria-label={`View product image ${index + 1}`}
+                aria-pressed={selectedImage === src}
+                className={clsx(
+                  "relative aspect-[4/5] overflow-hidden bg-sand ring-1 transition",
+                  selectedImage === src
+                    ? "ring-2 ring-bronze ring-offset-2 ring-offset-cream"
+                    : "ring-sand-deep/60 hover:ring-bronze",
+                )}
+              >
+                <Image
+                  src={src}
+                  alt=""
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Buy box */}

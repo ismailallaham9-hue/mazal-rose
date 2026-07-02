@@ -15,6 +15,7 @@ import { ProductBadge, Pill } from "./Badge";
 import { RatingStars } from "./RatingStars";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
+import { clsx } from "@/lib/clsx";
 
 export function ProductCard({
   product,
@@ -30,6 +31,11 @@ export function ProductCard({
   const stock = totalStock(product);
   const lowStock = stock > 0 && stock <= 5;
   const outOfStock = stock <= 0;
+  const galleryImages = Array.from(
+    new Set([product.image, ...(product.images ?? [])].filter(Boolean) as string[]),
+  );
+  const primaryImage = galleryImages[0];
+  const secondaryImage = galleryImages[1];
 
   function quickAdd(e: React.MouseEvent) {
     e.preventDefault();
@@ -50,7 +56,21 @@ export function ProductCard({
       <Tilt3D className="relative aspect-[3/4] overflow-hidden bg-sand">
         <Link href={`/shop/${product.slug}`} aria-label={product.name}>
           <div className="relative h-full w-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105">
-            <ProductImage product={product} priority={priority} />
+            <ProductImage
+              product={product}
+              imageSrc={primaryImage}
+              priority={priority}
+              className={secondaryImage ? "transition-opacity duration-500 group-hover:opacity-0" : undefined}
+            />
+            {secondaryImage && (
+              <ProductImage
+                product={product}
+                imageSrc={secondaryImage}
+                alt={`${product.name} alternate view`}
+                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                className="opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+              />
+            )}
           </div>
         </Link>
 
@@ -79,6 +99,22 @@ export function ProductCard({
         {lowStock && (
           <div className="pointer-events-none absolute bottom-2 left-2">
             <Pill className="bg-ink/80 text-cream-soft">Only {stock} left</Pill>
+          </div>
+        )}
+        {galleryImages.length > 1 && (
+          <div
+            className="pointer-events-none absolute bottom-2 right-2 flex gap-1 rounded-full bg-cream-soft/85 px-2 py-1 backdrop-blur"
+            aria-hidden
+          >
+            {galleryImages.slice(0, 4).map((src, index) => (
+              <span
+                key={src}
+                className={clsx(
+                  "h-1.5 w-1.5 rounded-full",
+                  index === 0 ? "bg-bronze" : "bg-ink/25",
+                )}
+              />
+            ))}
           </div>
         )}
         <button
