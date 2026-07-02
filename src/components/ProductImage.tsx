@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { Product } from "@/lib/products";
-import { CATEGORY_LABEL } from "@/lib/products";
+import { categoryLabel } from "@/lib/products";
 import { clsx } from "@/lib/clsx";
 
 /**
@@ -55,7 +55,7 @@ export function ProductImage({
       )}
     >
       <span className="eyebrow !text-bronze/70">
-        {CATEGORY_LABEL[product.category]}
+        {categoryLabel(product.category)}
       </span>
       <span className="mt-2 font-serif text-2xl leading-tight text-ink/80">
         {product.name}

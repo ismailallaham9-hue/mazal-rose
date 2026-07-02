@@ -10,7 +10,7 @@ import { ProductRail } from "@/components/ProductRail";
 import {
   type Category,
   type Product,
-  CATEGORY_LABEL,
+  categoryLabel,
 } from "@/lib/products";
 import { SITE } from "@/lib/site";
 import { getFreshStoreData, getProductsFromStore } from "@/lib/store";
@@ -116,10 +116,11 @@ export async function generateMetadata({
   const product = findProduct(store.products, slug);
   if (!product) return { title: "Not found" };
   const rec = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
+  const label = categoryLabel(product.category, store.categories);
   const title =
     rec?.seoTitle?.trim() ||
     product.seoTitle?.trim() ||
-    `${product.name} — ${CATEGORY_LABEL[product.category]}`;
+    `${product.name} — ${label}`;
   const description =
     rec?.metaDescription?.trim() ||
     product.seoDescription?.trim() ||
@@ -166,6 +167,9 @@ export default async function ProductPage({
   if (!product) notFound();
   const sizeGuide = sizeGuideForProduct(product);
   const seo = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
+  const productCategoryLabel = categoryLabel(product.category, store.categories);
+  const reviewCount = Math.max(0, Number(product.reviewCount) || 0);
+  const ratingValue = Number(product.rating);
 
   const completeLook = completeTheLook(products, product, 3);
   const fbtExtras = completeLook.slice(0, 2);
@@ -178,7 +182,7 @@ export default async function ProductPage({
     name: product.name,
     description: seo?.longDescription || seo?.shortDescription || product.longDescription || product.description,
     image: [absoluteUrl(base, seo?.ogImage || product.image) ?? `${base}/images/brand/hero.jpg`],
-    category: CATEGORY_LABEL[product.category],
+    category: productCategoryLabel,
     brand: { "@type": "Brand", name: settings.name },
     offers: {
       "@type": "Offer",
@@ -190,12 +194,15 @@ export default async function ProductPage({
           : "https://schema.org/OutOfStock",
       url: `${base}/shop/${product.slug}`,
     },
-    ...(product.rating
+    ...(Number.isFinite(ratingValue) && ratingValue > 0 && reviewCount > 0
       ? {
           aggregateRating: {
             "@type": "AggregateRating",
-            ratingValue: product.rating,
-            reviewCount: product.reviewCount ?? 0,
+            ratingValue,
+            reviewCount,
+            ratingCount: reviewCount,
+            bestRating: 5,
+            worstRating: 1,
           },
         }
       : {}),
@@ -241,7 +248,7 @@ export default async function ProductPage({
       {
         "@type": "ListItem",
         position: 3,
-        name: CATEGORY_LABEL[product.category],
+        name: productCategoryLabel,
         item: `${base}/shop?category=${product.category}`,
       },
       {
@@ -274,7 +281,7 @@ export default async function ProductPage({
             { label: "Home", href: "/" },
             { label: "Shop", href: "/shop" },
             {
-              label: CATEGORY_LABEL[product.category],
+              label: productCategoryLabel,
               href: `/shop?category=${product.category}`,
             },
             { label: product.name },

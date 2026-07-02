@@ -13,7 +13,7 @@ import { formatAED } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
 import type { SiteSettings } from "@/lib/store";
 import {
-  CATEGORY_LABEL,
+  categoryLabel,
   discountPercent,
   totalStock,
   type Product,
@@ -151,7 +151,7 @@ export function ProductDetailClient({
       {/* Buy box */}
       <div className="lg:py-2">
         <p className="eyebrow !text-bronze/70">
-          {CATEGORY_LABEL[product.category]}
+          {categoryLabel(product.category)}
         </p>
         <h1 className="mt-2 font-serif text-4xl leading-tight text-ink md:text-5xl">
           {product.name}

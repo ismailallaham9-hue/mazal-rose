@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Product } from "@/lib/products";
 import {
-  CATEGORY_LABEL,
+  categoryLabel,
   discountPercent,
   firstAvailableVariant,
   totalStock,
@@ -130,7 +130,7 @@ export function ProductCard({
       <Link href={`/shop/${product.slug}`} className="mt-4 block">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="eyebrow !text-bronze/70">{CATEGORY_LABEL[product.category]}</p>
+            <p className="eyebrow !text-bronze/70">{categoryLabel(product.category)}</p>
             <h3 className="mt-1 font-serif text-xl leading-snug text-ink transition-colors group-hover:text-bronze">
               {product.name}
             </h3>

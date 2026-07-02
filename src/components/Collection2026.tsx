@@ -4,7 +4,7 @@ import { Reveal } from "./Reveal";
 import { PillButton } from "./PillButton";
 import { ProductImage } from "./ProductImage";
 import { formatAED } from "@/lib/format";
-import { CATEGORY_LABEL, type Product } from "@/lib/products";
+import { categoryLabel, type Product } from "@/lib/products";
 
 /** Small circular accent arrow badge used on the editorial cards. */
 function ArrowBadge({ light = false }: { light?: boolean }) {
@@ -59,7 +59,7 @@ function EditorialCard({ product }: { product: Product }) {
             {product.name}
           </h3>
           <p className="mt-1 text-xs uppercase tracking-[0.18em] text-cream-soft/75">
-            {CATEGORY_LABEL[product.category]} · {formatAED(product.price)}
+            {categoryLabel(product.category)} · {formatAED(product.price)}
           </p>
         </div>
         <span className="shrink-0">

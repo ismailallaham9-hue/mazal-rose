@@ -132,6 +132,22 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   shoes: "Shoes",
 };
 
+export function categoryLabel(
+  category: string,
+  categories?: readonly { value: string; label: string }[],
+): string {
+  return (
+    categories?.find((item) => item.value === category)?.label ||
+    CATEGORY_LABEL[category as Category] ||
+    category
+      .split(/[-_\s]+/)
+      .filter(Boolean)
+      .map((part) => part[0]?.toUpperCase() + part.slice(1).toLowerCase())
+      .join(" ") ||
+    "Collection"
+  );
+}
+
 const SAND: ColorOption = { name: "Sand", hex: "#E7D9C4" };
 const CHAMPAGNE: ColorOption = { name: "Champagne", hex: "#F1E6D4" };
 const BRONZE: ColorOption = { name: "Bronze", hex: "#B0835C" };
