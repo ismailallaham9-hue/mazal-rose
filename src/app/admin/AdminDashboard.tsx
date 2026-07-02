@@ -1270,7 +1270,12 @@ function ProductsSection(props: {
             </p>
           </div>
           <CheckGroup label="Badges" values={BADGE_OPTIONS} selected={props.draft.badges} onChange={(v) => update("badges", v)} />
-          <ColorGroup selected={props.draft.colors} onChange={(v) => update("colors", v)} />
+          <ColorGroup
+            selected={props.draft.colors}
+            customColors={props.draft.customColors}
+            onChange={(v) => update("colors", v)}
+            onCustomColorsChange={(v) => update("customColors", v)}
+          />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" className="accent-bronze" checked={props.draft.featured} onChange={(e) => update("featured", e.target.checked)} />
             Featured on homepage
@@ -2223,7 +2228,29 @@ function CheckGroup({ label, values, selected, onChange }: { label: string; valu
   );
 }
 
-function ColorGroup({ selected, onChange }: { selected: string[]; onChange: (values: string[]) => void }) {
+function ColorGroup({
+  selected,
+  customColors,
+  onChange,
+  onCustomColorsChange,
+}: {
+  selected: string[];
+  customColors: string;
+  onChange: (values: string[]) => void;
+  onCustomColorsChange: (value: string) => void;
+}) {
+  const customLines = customColors.split("\n");
+  const custom = customLines
+    .map((line, index) => ({ line, index, color: parseColorInput(line) }))
+    .filter((item): item is { line: string; index: number; color: NonNullable<ReturnType<typeof parseColorInput>> } =>
+      Boolean(item.color),
+    );
+  const removeCustom = (index: number) => {
+    onCustomColorsChange(
+      customLines.filter((_, lineIndex) => lineIndex !== index).join("\n"),
+    );
+  };
+
   return (
     <fieldset>
       <legend className="text-xs uppercase tracking-[0.16em] text-ink-soft">Palette colors</legend>
@@ -2236,6 +2263,28 @@ function ColorGroup({ selected, onChange }: { selected: string[]; onChange: (val
           </label>
         ))}
       </div>
+      {custom.length > 0 && (
+        <div className="mt-3">
+          <p className="text-[0.68rem] uppercase tracking-[0.16em] text-ink-soft">
+            Custom colors
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {custom.map(({ color, index }) => (
+              <label key={`${color.name}-${color.hex}-${index}`} className="flex items-center gap-2 border border-bronze/60 bg-cream-soft px-3 py-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked
+                  onChange={(e) => {
+                    if (!e.target.checked) removeCustom(index);
+                  }}
+                />
+                <span className="h-4 w-4 rounded-full border border-ink/20" style={{ backgroundColor: color.hex }} />
+                {color.name}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
     </fieldset>
   );
 }
