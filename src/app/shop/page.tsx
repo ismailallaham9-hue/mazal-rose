@@ -230,15 +230,17 @@ export default async function ShopPage({
         />
       </Container>
 
-      <Container className="py-10 text-center">
-        <p className="eyebrow">MAZAL means Still</p>
-        <h1 className="mt-3 font-serif text-4xl text-ink md:text-6xl">
-          {heading}
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-ink-soft">{blurb}</p>
-      </Container>
+      {!category && (
+        <Container className="py-10 text-center">
+          <p className="eyebrow">MAZAL means Still</p>
+          <h1 className="mt-3 font-serif text-4xl text-ink md:text-6xl">
+            {heading}
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-ink-soft">{blurb}</p>
+        </Container>
+      )}
 
-      <Container className="pb-20">
+      <Container className={category ? "py-10" : "pb-20"}>
         <Suspense fallback={<p className="text-ink-soft">Loading...</p>}>
           <ShopClient
             key={`${category ?? "all"}-${initialSort}-${sp.sort ?? ""}`}
@@ -249,6 +251,18 @@ export default async function ShopPage({
           />
         </Suspense>
       </Container>
+
+      {category && (
+        <Container className="pb-20 pt-4 text-center">
+          <p className="eyebrow">MAZAL means Still</p>
+          <h1 className="mt-3 font-serif text-4xl text-ink md:text-6xl">
+            {heading}
+          </h1>
+          <p className="mx-auto mt-4 max-w-4xl text-lg leading-relaxed text-ink-soft">
+            {blurb}
+          </p>
+        </Container>
+      )}
 
       <TrustBadges />
     </>
