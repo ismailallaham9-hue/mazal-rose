@@ -7,14 +7,22 @@ const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const VIDEO_TYPES = ["video/mp4", "video/webm"];
 const ALLOWED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES];
 
-// Generous cap (videos): raised so larger media is allowed. Images are
-// compressed below, so their final stored size is tiny regardless.
-const MAX_BYTES = 200 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const MAX_IMAGE_PIXELS = 40_000_000;
 // Longest edge for stored photos — plenty for full-bleed display; Next/Image
 // resizes further per device on top of this.
 const MAX_DIMENSION = 2000;
 
 export async function POST(req: Request) {
+  const contentLength = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_VIDEO_BYTES + 1024 * 1024) {
+    return NextResponse.json(
+      { error: "File must be smaller than 50 MB" },
+      { status: 413 },
+    );
+  }
+
   const form = await req.formData();
   const file = form.get("file");
   if (!(file instanceof File)) {
@@ -26,10 +34,15 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  if (file.size > MAX_BYTES) {
+  const maxBytes = IMAGE_TYPES.includes(file.type) ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
+  if (file.size > maxBytes) {
     return NextResponse.json(
-      { error: "File must be smaller than 200 MB" },
-      { status: 400 },
+      {
+        error: IMAGE_TYPES.includes(file.type)
+          ? "Image must be smaller than 20 MB"
+          : "Video must be smaller than 50 MB",
+      },
+      { status: 413 },
     );
   }
 
@@ -42,7 +55,9 @@ export async function POST(req: Request) {
   if (IMAGE_TYPES.includes(file.type)) {
     try {
       const sharp = (await import("sharp")).default;
-      bytes = await sharp(bytes)
+      sharp.cache(false);
+      sharp.concurrency(1);
+      bytes = await sharp(bytes, { limitInputPixels: MAX_IMAGE_PIXELS })
         .rotate() // honour EXIF orientation
         .resize({
           width: MAX_DIMENSION,

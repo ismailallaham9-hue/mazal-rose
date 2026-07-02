@@ -1113,7 +1113,7 @@ export async function uploadImage(
   return `/uploads/${safe}`;
 }
 
-export async function readUploadedFile(filename: string) {
+export async function getUploadedFileInfo(filename: string) {
   const safe = filename.replace(/[/\\]/g, "");
   const fs = await import("node:fs/promises");
   const path = await import("node:path");
@@ -1128,10 +1128,19 @@ export async function readUploadedFile(filename: string) {
   ];
   for (const file of candidates) {
     try {
-      return await fs.readFile(file);
+      const stat = await fs.stat(file);
+      if (stat.isFile()) {
+        return { file, size: stat.size };
+      }
     } catch {
       /* try next */
     }
   }
   return null;
+}
+
+export async function readUploadedFile(filename: string) {
+  const fs = await import("node:fs/promises");
+  const info = await getUploadedFileInfo(filename);
+  return info ? fs.readFile(info.file) : null;
 }
