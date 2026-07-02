@@ -233,6 +233,9 @@ export function ContentStudio({
         if (live.fabric) p.material = live.fabric;
         if (live.careInstructions) p.care = live.careInstructions.split("\n").map((x) => x.trim()).filter(Boolean);
         if (live.fitNotes) p.fitNotes = live.fitNotes;
+        if (Object.prototype.hasOwnProperty.call(live, "sizeGuide")) {
+          p.sizeGuide = live.sizeGuide?.trim() || undefined;
+        }
         if (live.deliveryInformation) p.deliveryInfo = live.deliveryInformation;
         if (live.returnExchangeInformation) p.returnInfo = live.returnExchangeInformation;
         if (live.stylingNotes) p.stylingNotes = live.stylingNotes;
@@ -402,6 +405,7 @@ export function ContentStudio({
                   <Field label="Color options" value={draft.colorOptions ?? product.colors.map((c) => c.name).join(", ")} onChange={(v) => setRec({ colorOptions: v })} />
                   <Field label="Size options" value={draft.sizeOptions ?? product.sizes.join(", ")} onChange={(v) => setRec({ sizeOptions: v })} />
                   <Area label="Fit notes" value={draft.fitNotes ?? product.fitNotes ?? ""} onChange={(v) => setRec({ fitNotes: v })} />
+                  <Area label="Size guide table (one row per line: Size | Bust | Waist | Length)" value={draft.sizeGuide ?? product.sizeGuide ?? ""} onChange={(v) => setRec({ sizeGuide: v })} />
                   <Area label="Care instructions" value={draft.careInstructions ?? (product.care ?? []).join("\n")} onChange={(v) => setRec({ careInstructions: v })} />
                   <Area label="Delivery information" value={draft.deliveryInformation ?? product.deliveryInfo ?? ""} onChange={(v) => setRec({ deliveryInformation: v })} />
                   <Area label="Return/exchange information" value={draft.returnExchangeInformation ?? product.returnInfo ?? ""} onChange={(v) => setRec({ returnExchangeInformation: v })} />

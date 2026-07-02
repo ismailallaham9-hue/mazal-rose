@@ -1273,6 +1273,9 @@ function ProductsSection(props: {
             <SizeGroup value={props.draft.sizes} onChange={(v) => update("sizes", v)} />
           </div>
           <div className="md:col-span-2">
+            <h3 className="mb-3 border-t border-sand-deep pt-5 text-xs uppercase tracking-[0.16em] text-ink-soft">
+              Product Fit &amp; Size Guide
+            </h3>
             <TextArea
               label="Fit / size guide note"
               value={props.draft.fitNotes}

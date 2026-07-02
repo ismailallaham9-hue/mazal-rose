@@ -190,6 +190,7 @@ export type SeoContentFields = {
   colorOptions?: string;
   sizeOptions?: string;
   fitNotes?: string;
+  sizeGuide?: string;
   careInstructions?: string;
   deliveryInformation?: string;
   returnExchangeInformation?: string;
@@ -549,6 +550,7 @@ function recordForProduct(product: Product): SeoRecord {
     colorOptions: product.colors.map((c) => c.name).join(", "),
     sizeOptions: product.sizes.join(", "),
     fitNotes: product.fitNotes || "Designed for an elegant, modest drape. Choose your usual size for a relaxed MAZAL fit.",
+    sizeGuide: product.sizeGuide,
     careInstructions: product.care?.join("\n"),
     deliveryInformation: product.deliveryInfo || "UAE and GCC delivery is available, with complimentary delivery over AED 500.",
     returnExchangeInformation: product.returnInfo || "Eligible unworn pieces can be returned or exchanged according to the MAZAL Returns & Exchanges policy.",
