@@ -114,6 +114,26 @@ export const BADGE_OPTIONS: Badge[] = [
   "sale",
 ];
 
+export const SIZE_OPTIONS = [
+  "XXS",
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "XXL",
+  "One Size",
+  "S/M",
+  "L/XL",
+  "36",
+  "37",
+  "38",
+  "39",
+  "40",
+  "41",
+  "42",
+];
+
 export function slugify(s: string): string {
   return (s || "")
     .toLowerCase()
@@ -121,6 +141,22 @@ export function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
+}
+
+export function parseSizeInput(value: unknown): string[] {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(/[\n,]+/)
+      : [];
+  const seen = new Set<string>();
+  return raw
+    .map((item) => String(item).trim().replace(/\s+/g, " "))
+    .filter((item) => {
+      if (!item || seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
 }
 
 /** Build a clean Product from loosely-typed admin form input. */
@@ -146,6 +182,8 @@ export function normalizeProduct(
           .filter((c): c is ColorOption => Boolean(c))
       : [PALETTE[0]];
   const has = (key: string) => Object.prototype.hasOwnProperty.call(input, key);
+  const parsedSizes = parseSizeInput(input.sizes);
+  const sizes = parsedSizes.length ? parsedSizes : existing?.sizes ?? ["One Size"];
   const compareAtPrice =
     has("compareAtPrice") && input.compareAtPrice !== undefined
       ? input.compareAtPrice
@@ -167,14 +205,20 @@ export function normalizeProduct(
           .map((line) => line.trim())
           .filter(Boolean)
       : existing?.care;
-  const variantStock =
-    input.variantStock && typeof input.variantStock === "object"
+  const sizeSet = new Set(sizes);
+  const colorSet = new Set(colors.map((color) => color.name));
+  const variantStock = has("variantStock")
+    ? input.variantStock && typeof input.variantStock === "object"
       ? Object.fromEntries(
           Object.entries(input.variantStock as Record<string, unknown>)
-            .map(([key, value]) => [key, Math.max(0, Math.floor(num(value)))])
-            .filter(([key]) => Boolean(key)),
+            .map(([key, value]) => [key, Math.max(0, Math.floor(num(value)))] as const)
+            .filter(([key]) => {
+              const [size, color] = key.split("::");
+              return Boolean(key) && sizeSet.has(size) && colorSet.has(color);
+            }),
         )
-      : existing?.variantStock;
+      : undefined
+    : existing?.variantStock;
 
   return {
     id: String(input.id ?? existing?.id ?? `p-${Date.now().toString(36)}`),
@@ -186,10 +230,7 @@ export function normalizeProduct(
       input.category ?? existing?.category ?? "abayas",
     ) as Category),
     description: String(input.description ?? existing?.description ?? "").trim(),
-    sizes:
-      Array.isArray(input.sizes) && input.sizes.length
-        ? (input.sizes as unknown[]).map(String)
-        : existing?.sizes ?? ["One Size"],
+    sizes,
     colors,
     material,
     care,

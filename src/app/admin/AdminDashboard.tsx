@@ -15,7 +15,9 @@ import {
   BADGE_OPTIONS,
   CATEGORY_OPTIONS,
   PALETTE,
+  SIZE_OPTIONS,
   parseColorInput,
+  parseSizeInput,
   slugify,
 } from "@/lib/admin-product";
 import type { Article, ArticleBlock } from "@/lib/articles";
@@ -145,7 +147,7 @@ function productToDraft(product: Product): ProductDraft {
     compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",
     category: product.category,
     description: product.description,
-    sizes: product.sizes.join(", "),
+    sizes: parseSizeInput(product.sizes).join(", "),
     colors: paletteColors,
     customColors,
     material: product.material ?? "",
@@ -168,6 +170,7 @@ function productToDraft(product: Product): ProductDraft {
 
 function productPayload(draft: ProductDraft) {
   const paletteColors = PALETTE.filter((c) => draft.colors.includes(c.name));
+  const sizes = parseSizeInput(draft.sizes);
   const customColors = draft.customColors
     .split("\n")
     .map(parseColorInput)
@@ -200,12 +203,12 @@ function productPayload(draft: ProductDraft) {
       : undefined,
     category: draft.category as Category,
     description: draft.description,
-    sizes: draft.sizes.split(",").map((s) => s.trim()).filter(Boolean),
+    sizes: sizes.length ? sizes : ["One Size"],
     colors: [...paletteColors, ...customColors],
     material: draft.material,
     care: draft.care.split("\n").map((s) => s.trim()).filter(Boolean),
     stock: Number(draft.stock),
-    variantStock: Object.keys(variantStock).length ? variantStock : undefined,
+    variantStock: Object.keys(variantStock).length ? variantStock : null,
     badges: draft.badges,
     image: images[0],
     images,
@@ -1257,7 +1260,9 @@ function ProductsSection(props: {
               Example: S / Noir = 3. If empty, the product uses the total Stock field.
             </p>
           </div>
-          <TextField label="Sizes (comma-separated)" value={props.draft.sizes} onChange={(v) => update("sizes", v)} />
+          <div className="md:col-span-2">
+            <SizeGroup value={props.draft.sizes} onChange={(v) => update("sizes", v)} />
+          </div>
           <TextField label="Material" value={props.draft.material} onChange={(v) => update("material", v)} />
           <div className="md:col-span-2">
             <TextArea label="Description" value={props.draft.description} onChange={(v) => update("description", v)} />
@@ -2224,6 +2229,59 @@ function CheckGroup({ label, values, selected, onChange }: { label: string; valu
           </label>
         ))}
       </div>
+    </fieldset>
+  );
+}
+
+function SizeGroup({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const selected = parseSizeInput(value);
+  const selectedSet = new Set(selected);
+  const customSizes = selected.filter((size) => !SIZE_OPTIONS.includes(size));
+  const format = (sizes: string[]) => onChange(parseSizeInput(sizes).join(", "));
+  const togglePreset = (size: string, checked: boolean) => {
+    format(checked ? [...selected, size] : selected.filter((item) => item !== size));
+  };
+  const updateCustomSizes = (text: string) => {
+    const presets = SIZE_OPTIONS.filter((size) => selectedSet.has(size));
+    format([...presets, ...parseSizeInput(text)]);
+  };
+
+  return (
+    <fieldset>
+      <legend className="text-xs uppercase tracking-[0.16em] text-ink-soft">Size codes</legend>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {SIZE_OPTIONS.map((size) => (
+          <label key={size} className="flex items-center gap-2 border border-sand-deep px-3 py-2 text-sm">
+            <input
+              type="checkbox"
+              checked={selectedSet.has(size)}
+              onChange={(event) => togglePreset(size, event.target.checked)}
+            />
+            {size}
+          </label>
+        ))}
+      </div>
+      <label className="mt-4 block">
+        <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">
+          Custom size codes
+        </span>
+        <textarea
+          value={customSizes.join("\n")}
+          rows={3}
+          onChange={(event) => updateCustomSizes(event.target.value)}
+          placeholder={"52\n54\nEU 38"}
+          className="mt-2 w-full resize-y border border-sand-deep bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-bronze"
+        />
+      </label>
+      <p className="mt-1 text-xs text-ink-soft">
+        These exact size codes appear on the product page. If you use variant stock, use the same spelling there.
+      </p>
     </fieldset>
   );
 }
