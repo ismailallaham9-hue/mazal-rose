@@ -170,6 +170,9 @@ export function normalizeProduct(
     const n = Number(v);
     return Number.isFinite(n) ? n : d;
   };
+  const has = (key: string) => Object.prototype.hasOwnProperty.call(input, key);
+  const optionalText = (key: string, fallback: string | undefined) =>
+    has(key) ? String(input[key] ?? "").trim() || undefined : fallback;
   const colorsIn = Array.isArray(input.colors) ? input.colors : existing?.colors;
   const colors: ColorOption[] =
     Array.isArray(colorsIn) && colorsIn.length
@@ -181,7 +184,6 @@ export function normalizeProduct(
           })
           .filter((c): c is ColorOption => Boolean(c))
       : [PALETTE[0]];
-  const has = (key: string) => Object.prototype.hasOwnProperty.call(input, key);
   const parsedSizes = parseSizeInput(input.sizes);
   const sizes = parsedSizes.length ? parsedSizes : existing?.sizes ?? ["One Size"];
   const compareAtPrice =
@@ -236,6 +238,15 @@ export function normalizeProduct(
     care,
     rating: existing?.rating ?? 5,
     reviewCount: existing?.reviewCount ?? 0,
+    fitNotes: optionalText("fitNotes", existing?.fitNotes),
+    sizeGuide: optionalText("sizeGuide", existing?.sizeGuide),
+    longDescription: optionalText("longDescription", existing?.longDescription),
+    specifications: optionalText("specifications", existing?.specifications),
+    deliveryInfo: optionalText("deliveryInfo", existing?.deliveryInfo),
+    returnInfo: optionalText("returnInfo", existing?.returnInfo),
+    stylingNotes: optionalText("stylingNotes", existing?.stylingNotes),
+    occasionUseCase: optionalText("occasionUseCase", existing?.occasionUseCase),
+    imageAltText: optionalText("imageAltText", existing?.imageAltText),
     stock: input.stock !== undefined ? num(input.stock, 10) : existing?.stock ?? 10,
     variantStock,
     badges: Array.isArray(input.badges)

@@ -59,6 +59,53 @@ function completeTheLook(products: Product[], product: Product, limit = 3) {
   return picks.slice(0, limit);
 }
 
+const DEFAULT_SIZE_GUIDE = {
+  note:
+    "Measurements in centimetres. Garments are designed for a relaxed, fluid drape — if between sizes, size down for a closer fit.",
+  headers: ["Size", "Bust", "Waist", "Length"],
+  rows: [
+    ["XS", "82–86", "62–66", "138"],
+    ["S", "86–90", "66–70", "140"],
+    ["M", "90–96", "70–76", "142"],
+    ["L", "96–102", "76–82", "144"],
+    ["XL", "102–110", "82–90", "146"],
+  ],
+};
+
+function sizeGuideForProduct(product: Product) {
+  const rows = (product.sizeGuide ?? "")
+    .split("\n")
+    .map((line) =>
+      line
+        .split(line.includes("|") ? "|" : ",")
+        .map((cell) => cell.trim())
+        .filter(Boolean),
+    )
+    .filter((row) => row.length > 0);
+  if (!rows.length) {
+    return {
+      note: product.fitNotes?.trim() || DEFAULT_SIZE_GUIDE.note,
+      headers: DEFAULT_SIZE_GUIDE.headers,
+      rows: DEFAULT_SIZE_GUIDE.rows,
+    };
+  }
+
+  const firstRow = rows[0];
+  const firstRowIsHeader = firstRow.some((cell) => /size/i.test(cell));
+  const bodyRows = firstRowIsHeader ? rows.slice(1) : rows;
+  const columnCount = Math.max(...bodyRows.map((row) => row.length), firstRow.length);
+  const defaultHeaders = DEFAULT_SIZE_GUIDE.headers.slice(0, columnCount);
+  const headers = firstRowIsHeader
+    ? firstRow
+    : Array.from({ length: columnCount }, (_, index) => defaultHeaders[index] ?? `Column ${index + 1}`);
+
+  return {
+    note: product.fitNotes?.trim() || DEFAULT_SIZE_GUIDE.note,
+    headers,
+    rows: bodyRows,
+  };
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -117,6 +164,7 @@ export default async function ProductPage({
   const base = (settings.url || SITE.url).replace(/\/$/, "");
   const product = findProduct(products, slug);
   if (!product) notFound();
+  const sizeGuide = sizeGuideForProduct(product);
   const seo = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
 
   const completeLook = completeTheLook(products, product, 3);
@@ -244,31 +292,25 @@ export default async function ProductPage({
           <p className="eyebrow">Fit</p>
           <h2 className="mt-2 font-serif text-3xl text-ink">Size guide</h2>
           <p className="mt-2 text-sm text-ink-soft">
-            Measurements in centimetres. Garments are designed for a relaxed,
-            fluid drape — if between sizes, size down for a closer fit.
+            {sizeGuide.note}
           </p>
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[420px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-sand-deep text-left text-xs uppercase tracking-[0.12em] text-ink-soft">
-                  <th className="py-3 pr-4 font-medium">Size</th>
-                  <th className="py-3 pr-4 font-medium">Bust</th>
-                  <th className="py-3 pr-4 font-medium">Waist</th>
-                  <th className="py-3 pr-4 font-medium">Length</th>
+                  {sizeGuide.headers.map((header) => (
+                    <th key={header} className="py-3 pr-4 font-medium">
+                      {header}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="text-ink">
-                {[
-                  ["XS", "82–86", "62–66", "138"],
-                  ["S", "86–90", "66–70", "140"],
-                  ["M", "90–96", "70–76", "142"],
-                  ["L", "96–102", "76–82", "144"],
-                  ["XL", "102–110", "82–90", "146"],
-                ].map((row) => (
-                  <tr key={row[0]} className="border-b border-sand-deep/40">
-                    {row.map((cell, i) => (
+                {sizeGuide.rows.map((row, rowIndex) => (
+                  <tr key={`${row[0] ?? "row"}-${rowIndex}`} className="border-b border-sand-deep/40">
+                    {sizeGuide.headers.map((_, i) => (
                       <td key={i} className="py-3 pr-4">
-                        {cell}
+                        {row[i] ?? ""}
                       </td>
                     ))}
                   </tr>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -71,6 +72,8 @@ type ProductDraft = {
   category: string;
   description: string;
   sizes: string;
+  fitNotes: string;
+  sizeGuide: string;
   colors: string[];
   customColors: string;
   material: string;
@@ -94,6 +97,8 @@ const emptyProduct: ProductDraft = {
   category: "abayas",
   description: "",
   sizes: "One Size",
+  fitNotes: "",
+  sizeGuide: "",
   colors: ["Sand"],
   customColors: "",
   material: "",
@@ -148,6 +153,8 @@ function productToDraft(product: Product): ProductDraft {
     category: product.category,
     description: product.description,
     sizes: parseSizeInput(product.sizes).join(", "),
+    fitNotes: product.fitNotes ?? "",
+    sizeGuide: product.sizeGuide ?? "",
     colors: paletteColors,
     customColors,
     material: product.material ?? "",
@@ -204,6 +211,8 @@ function productPayload(draft: ProductDraft) {
     category: draft.category as Category,
     description: draft.description,
     sizes: sizes.length ? sizes : ["One Size"],
+    fitNotes: draft.fitNotes.trim() || undefined,
+    sizeGuide: draft.sizeGuide.trim() || undefined,
     colors: [...paletteColors, ...customColors],
     material: draft.material,
     care: draft.care.split("\n").map((s) => s.trim()).filter(Boolean),
@@ -1263,6 +1272,26 @@ function ProductsSection(props: {
           <div className="md:col-span-2">
             <SizeGroup value={props.draft.sizes} onChange={(v) => update("sizes", v)} />
           </div>
+          <div className="md:col-span-2">
+            <TextArea
+              label="Fit / size guide note"
+              value={props.draft.fitNotes}
+              onChange={(v) => update("fitNotes", v)}
+            />
+            <p className="mt-1 text-xs text-ink-soft">
+              This text appears above the size guide on this product page.
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <TextArea
+              label="Size guide table (one row per line: Size | Bust | Waist | Length)"
+              value={props.draft.sizeGuide}
+              onChange={(v) => update("sizeGuide", v)}
+            />
+            <p className="mt-1 text-xs text-ink-soft">
+              Example: 52 | 110 | 90 | 146. Add a header row if you want different columns.
+            </p>
+          </div>
           <TextField label="Material" value={props.draft.material} onChange={(v) => update("material", v)} />
           <div className="md:col-span-2">
             <TextArea label="Description" value={props.draft.description} onChange={(v) => update("description", v)} />
@@ -2243,11 +2272,26 @@ function SizeGroup({
   const selected = parseSizeInput(value);
   const selectedSet = new Set(selected);
   const customSizes = selected.filter((size) => !SIZE_OPTIONS.includes(size));
-  const format = (sizes: string[]) => onChange(parseSizeInput(sizes).join(", "));
+  const normalizedCustomText = customSizes.join("\n");
+  const lastEmittedValue = useRef(value);
+  const [customText, setCustomText] = useState(normalizedCustomText);
+  useEffect(() => {
+    if (value !== lastEmittedValue.current) {
+      setCustomText(normalizedCustomText);
+      lastEmittedValue.current = value;
+    }
+  }, [normalizedCustomText, value]);
+
+  const format = (sizes: string[]) => {
+    const next = parseSizeInput(sizes).join(", ");
+    lastEmittedValue.current = next;
+    onChange(next);
+  };
   const togglePreset = (size: string, checked: boolean) => {
     format(checked ? [...selected, size] : selected.filter((item) => item !== size));
   };
   const updateCustomSizes = (text: string) => {
+    setCustomText(text);
     const presets = SIZE_OPTIONS.filter((size) => selectedSet.has(size));
     format([...presets, ...parseSizeInput(text)]);
   };
@@ -2272,7 +2316,7 @@ function SizeGroup({
           Custom size codes
         </span>
         <textarea
-          value={customSizes.join("\n")}
+          value={customText}
           rows={3}
           onChange={(event) => updateCustomSizes(event.target.value)}
           placeholder={"52\n54\nEU 38"}

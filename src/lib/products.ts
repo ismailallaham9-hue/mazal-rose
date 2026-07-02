@@ -40,6 +40,7 @@ export interface Product {
   longDescription?: string;
   specifications?: string;
   fitNotes?: string;
+  sizeGuide?: string;
   deliveryInfo?: string;
   returnInfo?: string;
   stylingNotes?: string;
