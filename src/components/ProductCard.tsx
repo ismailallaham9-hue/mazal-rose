@@ -31,6 +31,7 @@ export function ProductCard({
   const stock = totalStock(product);
   const lowStock = stock > 0 && stock <= 5;
   const outOfStock = stock <= 0;
+  const hasReviews = (product.reviewCount ?? 0) > 0;
   const galleryImages = Array.from(
     new Set([product.image, ...(product.images ?? [])].filter(Boolean) as string[]),
   );
@@ -145,7 +146,7 @@ export function ProductCard({
           </div>
         </div>
 
-        {typeof product.rating === "number" && (
+        {typeof product.rating === "number" && hasReviews && (
           <RatingStars rating={product.rating} count={product.reviewCount} className="mt-2" />
         )}
 
