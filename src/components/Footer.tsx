@@ -3,7 +3,7 @@ import { Container } from "./Container";
 import { FooterNewsletter } from "./FooterNewsletter";
 import type { SiteSettings } from "@/lib/store";
 
-const LUXURY_ABAYA_LINK = { label: "Luxury Abaya", href: "/shop?category=luxury-abaya" };
+const LUXURY_ABAYA_LINK = { label: "Luxury Abaya", href: "/luxury-abaya" };
 
 const COLUMNS = [
   {
