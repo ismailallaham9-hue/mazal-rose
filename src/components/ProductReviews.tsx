@@ -2,6 +2,15 @@ import { SITE } from "@/lib/site";
 import type { Product } from "@/lib/products";
 import type { SiteSettings } from "@/lib/store";
 
+function hasRealGoogleReviewUrl(url?: string) {
+  return Boolean(
+    url &&
+      /^https?:\/\//.test(url) &&
+      !url.includes("YOUR_PLACE_ID") &&
+      !url.includes("PLACE_ID"),
+  );
+}
+
 export function ProductReviews({
   product,
   googleReviewUrl = SITE.googleReviewUrl,
@@ -9,7 +18,12 @@ export function ProductReviews({
   product: Product;
   googleReviewUrl?: SiteSettings["googleReviewUrl"];
 }) {
-  void product;
+  const reviewSubject = `Review for ${product.name}`;
+  const reviewMessage = `I would like to leave a review for ${product.name}.`;
+  const fallbackReviewUrl =
+    `/contact?subject=${encodeURIComponent(reviewSubject)}&message=${encodeURIComponent(reviewMessage)}#review-form`;
+  const useExternalReviewUrl = hasRealGoogleReviewUrl(googleReviewUrl);
+  const reviewUrl = useExternalReviewUrl ? googleReviewUrl : fallbackReviewUrl;
 
   return (
     <section id="reviews" aria-label="Customer reviews" className="scroll-mt-28">
@@ -21,9 +35,9 @@ export function ProductReviews({
             Be the first to share your experience with this piece.
           </p>
           <a
-            href={googleReviewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={reviewUrl}
+            target={useExternalReviewUrl ? "_blank" : undefined}
+            rel={useExternalReviewUrl ? "noopener noreferrer" : undefined}
             className="mt-6 inline-block bg-bronze px-6 py-3 text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
           >
             Write a review
