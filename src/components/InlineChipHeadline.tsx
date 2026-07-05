@@ -37,7 +37,7 @@ export function InlineChipHeadline() {
         <Reveal delay={120}>
           <p className="mx-auto mt-8 max-w-xl text-center text-ink-soft">
             Fashion is a quiet language. Discover our {" "}
-            <Link href="/shop?category=luxury-abaya" className="link-underline text-bronze hover:text-bronze-deep">
+            <Link href="/luxury-abaya" className="link-underline text-bronze hover:text-bronze-deep">
               Luxury Abaya
             </Link>{" "}
             edit, shaped for calm, care, and the story we tell before we speak.
