@@ -3,6 +3,8 @@ import { Container } from "./Container";
 import { FooterNewsletter } from "./FooterNewsletter";
 import type { SiteSettings } from "@/lib/store";
 
+const LUXURY_ABAYA_LINK = { label: "Luxury Abaya", href: "/shop?category=luxury-abaya" };
+
 const COLUMNS = [
   {
     title: "Company",
@@ -51,12 +53,17 @@ export function Footer({
   settings?: SiteSettings;
 }) {
   const sourceColumns = content?.columns?.length ? content.columns : COLUMNS;
-  const columns = showAccount
+  const accountFilteredColumns = showAccount
     ? sourceColumns
     : sourceColumns.map((column) => ({
         ...column,
         links: column.links.filter((link) => link.href !== "/account"),
       }));
+  const columns = accountFilteredColumns.map((column) =>
+    column.title === "Navigation" && !column.links.some((link) => link.href === LUXURY_ABAYA_LINK.href)
+      ? { ...column, links: [LUXURY_ABAYA_LINK, ...column.links] }
+      : column,
+  );
   return (
     <footer className="mt-24 overflow-hidden bg-ink text-cream-soft">
       <Container className="pt-16 md:pt-20">
