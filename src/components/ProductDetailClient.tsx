@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ProductImage } from "./ProductImage";
 import { ProductBadge, Pill } from "./Badge";
-import { RatingStars } from "./RatingStars";
 import { Accordion } from "./Accordion";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
