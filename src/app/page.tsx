@@ -7,7 +7,6 @@ import { CategoryGrid } from "@/components/CategoryGrid";
 import { ProductRail } from "@/components/ProductRail";
 import { SeasonalBanner } from "@/components/SeasonalBanner";
 import { Testimonials } from "@/components/Testimonials";
-import { StoreStats } from "@/components/StoreStats";
 import { InstagramFeed } from "@/components/InstagramFeed";
 import { HeroVideo } from "@/components/HeroVideo";
 import { EditorialHero } from "@/components/EditorialHero";
@@ -191,8 +190,6 @@ export default async function Home() {
       </section>
 
       <Testimonials settings={settings} />
-
-      <StoreStats stats={settings.stats} />
 
       <InstagramFeed social={settings.social} />
     </>
