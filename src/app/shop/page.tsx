@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -145,6 +146,11 @@ export default async function ShopPage({
   searchParams: Promise<SP>;
 }) {
   const sp = await searchParams;
+
+  if (sp.category === "luxury-abaya") {
+    redirect("/luxury-abaya");
+  }
+
   const store = await getFreshStoreData();
   const category = store.categories.some((c) => c.value === sp.category)
     ? sp.category
