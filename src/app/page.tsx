@@ -6,7 +6,6 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { CategoryGrid } from "@/components/CategoryGrid";
 import { ProductRail } from "@/components/ProductRail";
 import { SeasonalBanner } from "@/components/SeasonalBanner";
-import { Testimonials } from "@/components/Testimonials";
 import { InstagramFeed } from "@/components/InstagramFeed";
 import { HeroVideo } from "@/components/HeroVideo";
 import { EditorialHero } from "@/components/EditorialHero";
@@ -188,8 +187,6 @@ export default async function Home() {
           className="object-cover"
         />
       </section>
-
-      <Testimonials settings={settings} />
 
       <InstagramFeed social={settings.social} />
     </>
