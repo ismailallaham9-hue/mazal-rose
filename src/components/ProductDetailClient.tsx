@@ -54,7 +54,6 @@ export function ProductDetailClient({
   const lowStock = availableStock > 0 && availableStock <= 6;
   const outOfStock = availableStock <= 0;
   const selectedOutOfStock = selectedStock <= 0;
-  const hasReviews = (product.reviewCount ?? 0) > 0;
 
   // Track recently viewed.
   useEffect(() => {
@@ -156,12 +155,6 @@ export function ProductDetailClient({
         <h1 className="mt-2 font-serif text-4xl leading-tight text-ink md:text-5xl">
           {product.name}
         </h1>
-
-        {typeof product.rating === "number" && (
-          <a href="#reviews" className="mt-3 inline-flex">
-            <RatingStars rating={product.rating} count={product.reviewCount} size={16} />
-          </a>
-        )}
 
         <div className="mt-5 flex items-end gap-3">
           <span className="font-serif text-3xl text-ink">
