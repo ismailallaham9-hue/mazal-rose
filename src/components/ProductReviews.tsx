@@ -9,21 +9,16 @@ export function ProductReviews({
   product: Product;
   googleReviewUrl?: SiteSettings["googleReviewUrl"];
 }) {
-  const reviewCount = Math.max(0, Number(product.reviewCount) || 0);
-  const hasReviews = reviewCount > 0;
+  void product;
 
   return (
     <section id="reviews" aria-label="Customer reviews" className="scroll-mt-28">
       <div className="grid gap-8 md:grid-cols-[300px_1fr]">
         <div>
           <p className="eyebrow">Reviews</p>
-          <h2 className="mt-3 font-serif text-4xl text-ink">
-            {hasReviews ? "Customer reviews" : "No reviews yet"}
-          </h2>
+          <h2 className="mt-3 font-serif text-4xl text-ink">No reviews yet</h2>
           <p className="mt-3 text-sm text-ink-soft">
-            {hasReviews
-              ? `Based on ${reviewCount} verified review${reviewCount === 1 ? "" : "s"}.`
-              : "Be the first to share your experience with this piece."}
+            Be the first to share your experience with this piece.
           </p>
           <a
             href={googleReviewUrl}
