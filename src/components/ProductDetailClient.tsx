@@ -55,6 +55,7 @@ export function ProductDetailClient({
   const lowStock = availableStock > 0 && availableStock <= 6;
   const outOfStock = availableStock <= 0;
   const selectedOutOfStock = selectedStock <= 0;
+  const hasReviews = (product.reviewCount ?? 0) > 0;
 
   // Track recently viewed.
   useEffect(() => {
