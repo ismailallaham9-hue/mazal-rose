@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ProductRail } from "@/components/ProductRail";
+import { RichText } from "@/components/RichText";
 import { SITE } from "@/lib/site";
 import { getFreshStoreData, getStoreData } from "@/lib/store";
 import { absoluteUrl, jsonLd as serializeJsonLd, publishedSeo } from "@/lib/seo";
@@ -143,11 +144,11 @@ export default async function ArticlePage({
             {article.body.map((block, i) =>
               block.type === "h2" ? (
                 <h2 key={i} className="mt-10 font-serif text-3xl text-ink">
-                  {block.text}
+                  <RichText text={block.text} />
                 </h2>
               ) : (
                 <p key={i} className="mt-5 text-lg leading-relaxed text-ink-soft">
-                  {block.text}
+                  <RichText text={block.text} />
                 </p>
               ),
             )}
