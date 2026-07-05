@@ -39,20 +39,20 @@ function isLuxuryAbayaProduct(product: { category?: unknown; name?: unknown; slu
 
 const FAQS = [
   {
-    q: "What makes a MAZAL abaya a luxury abaya?",
-    a: "MAZAL luxury abayas are designed around refined fabrics, graceful modest cuts, careful finishing and timeless silhouettes made for repeat wear.",
+    q: "Where can I buy luxury abayas online in the UAE?",
+    a: "You can shop MAZAL luxury abayas online in the UAE, with refined modest designs for Dubai, Abu Dhabi and the wider GCC.",
   },
   {
-    q: "Do you deliver luxury abayas in the UAE?",
-    a: "Yes. MAZAL offers UAE delivery, with complimentary delivery on eligible orders over AED 500.",
+    q: "What is the best fabric for a luxury abaya?",
+    a: "The best luxury abaya fabrics are refined, opaque and fluid, such as premium crepe, satin-touch fabrics, linen blends and soft embellished textiles.",
   },
   {
-    q: "Can I wear a luxury abaya for Eid, weddings or evening events?",
-    a: "Yes. Our luxury abayas include soft everyday pieces and elevated occasion styles suitable for Eid, weddings, majlis gatherings and evening events.",
+    q: "Are MAZAL luxury abayas suitable for weddings and Eid?",
+    a: "Yes. MAZAL luxury abayas include beaded, crystal, velvet, linen and occasion-ready designs suitable for Eid, weddings, evening events and majlis gatherings.",
   },
   {
-    q: "How do I choose the right luxury abaya size?",
-    a: "Each product page includes size options and fit information. For a relaxed modest drape, choose your usual size or contact MAZAL for styling help.",
+    q: "Do you deliver luxury abayas in Dubai and Abu Dhabi?",
+    a: "Yes. MAZAL delivers luxury abayas across the UAE, including Dubai and Abu Dhabi, with complimentary delivery on eligible orders over AED 500.",
   },
 ];
 
@@ -113,9 +113,10 @@ export default async function LuxuryAbayaPage() {
               Designer Luxury Abayas Online
             </h1>
             <p className="mt-4 text-ink-soft">
-              Browse luxury abayas online from MAZAL, including soft everyday
-              layers, evening abayas and occasion-ready modest pieces. Every
-              product links to detailed sizing, materials and delivery notes.
+              Shop MAZAL luxury abayas in the UAE, including beaded, linen,
+              velvet, crystal and occasion-ready designs. Each abaya is crafted
+              for elegant modest wear, with refined fabrics and limited-piece
+              availability.
             </p>
           </div>
 
