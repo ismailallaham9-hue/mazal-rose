@@ -27,7 +27,7 @@ export function EditorialHero() {
                 className="object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/45 to-transparent p-6">
-                <PillButton href="/shop?category=luxury-abaya" tone="cream">
+                <PillButton href="/luxury-abaya" tone="cream">
                   Luxury Abaya
                 </PillButton>
               </div>
@@ -81,7 +81,7 @@ export function EditorialHero() {
                 </p>
               </div>
               <div className="mt-7">
-                <PillButton href="/shop?category=luxury-abaya" tone="cream">
+                <PillButton href="/luxury-abaya" tone="cream">
                   Explore Luxury Abaya
                 </PillButton>
               </div>
