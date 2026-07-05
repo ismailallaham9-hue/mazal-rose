@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function ContactForm() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [prefill, setPrefill] = useState({ subject: "", message: "" });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setPrefill({
+      subject: params.get("subject") ?? "",
+      message: params.get("message") ?? "",
+    });
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,16 +58,18 @@ export function ContactForm() {
         <Field label="Name" name="name" />
         <Field label="Email" name="email" type="email" />
       </div>
-      <Field label="Subject" name="subject" />
+      <Field label="Subject" name="subject" defaultValue={prefill.subject} />
       <div>
         <label htmlFor="message" className="mb-1.5 block text-xs uppercase tracking-[0.14em] text-ink">
           Message
         </label>
         <textarea
+          key={prefill.message}
           id="message"
           name="message"
           required
           rows={5}
+          defaultValue={prefill.message}
           className="w-full border border-sand-deep bg-cream-soft px-4 py-3 text-sm text-ink focus:border-bronze focus:outline-none"
         />
       </div>
@@ -78,10 +89,12 @@ function Field({
   label,
   name,
   type = "text",
+  defaultValue = "",
 }: {
   label: string;
   name: string;
   type?: string;
+  defaultValue?: string;
 }) {
   return (
     <div>
@@ -89,10 +102,12 @@ function Field({
         {label}
       </label>
       <input
+        key={defaultValue}
         id={name}
         name={name}
         type={type}
         required
+        defaultValue={defaultValue}
         className="w-full border border-sand-deep bg-cream-soft px-4 py-3 text-sm text-ink focus:border-bronze focus:outline-none"
       />
     </div>
