@@ -144,10 +144,6 @@ export function ProductCard({
           </div>
         </div>
 
-        {typeof product.rating === "number" && (
-          <RatingStars rating={product.rating} count={product.reviewCount} className="mt-2" />
-        )}
-
         <div className="mt-3 flex items-center gap-1.5">
           {product.colors.map((c) => (
             <span
