@@ -8,6 +8,13 @@ const DEFAULT_MESSAGES: string[] = [
   "Worldwide shipping to 60+ countries",
 ];
 
+function normalizeMessage(message: string) {
+  return message.replace(
+    /Complimentary express delivery over AED 50000/g,
+    `Complimentary express delivery over ${SITE.currency} ${SITE.freeShippingThreshold}`,
+  );
+}
+
 function Sequence({
   messages,
   ariaHidden = false,
@@ -43,7 +50,7 @@ export function AnnouncementMarquee({
 }: {
   messages?: string[];
 }) {
-  const safeMessages = messages.length ? messages : DEFAULT_MESSAGES;
+  const safeMessages = (messages.length ? messages : DEFAULT_MESSAGES).map(normalizeMessage);
 
   return (
     <div
