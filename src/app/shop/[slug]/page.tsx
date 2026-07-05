@@ -168,8 +168,6 @@ export default async function ProductPage({
   const sizeGuide = sizeGuideForProduct(product);
   const seo = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
   const productCategoryLabel = categoryLabel(product.category, store.categories);
-  const reviewCount = Math.max(0, Number(product.reviewCount) || 0);
-  const ratingValue = Number(product.rating);
 
   const completeLook = completeTheLook(products, product, 3);
   const fbtExtras = completeLook.slice(0, 2);
@@ -194,18 +192,6 @@ export default async function ProductPage({
           : "https://schema.org/OutOfStock",
       url: `${base}/shop/${product.slug}`,
     },
-    ...(Number.isFinite(ratingValue) && ratingValue > 0 && reviewCount > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue,
-            reviewCount,
-            ratingCount: reviewCount,
-            bestRating: 5,
-            worstRating: 1,
-          },
-        }
-      : {}),
   };
 
   const faqJsonLd = {
