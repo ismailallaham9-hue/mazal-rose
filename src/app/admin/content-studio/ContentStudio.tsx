@@ -74,6 +74,26 @@ function joinFaqs(faqs?: { q: string; a: string }[]) {
   return (faqs ?? []).map((faq) => `${faq.q}\n${faq.a}`).join("\n\n");
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function insertKeywordLink(value: string, keyword: string, href: string) {
+  const cleanKeyword = keyword.trim();
+  const cleanHref = href.trim();
+  if (!cleanKeyword || !cleanHref) return value;
+
+  const link = `[${cleanKeyword}](${cleanHref})`;
+  if (value.includes(link)) return value;
+
+  const keywordPattern = new RegExp(escapeRegExp(cleanKeyword), "i");
+  if (keywordPattern.test(value)) {
+    return value.replace(keywordPattern, link);
+  }
+
+  return value.trim() ? `${value.trim()}\n\n${link}` : link;
+}
+
 export function ContentStudio({
   initialStore,
   storageReady,
@@ -384,7 +404,7 @@ export function ContentStudio({
               {entity.type === "category" && category && (
                 <>
                   <Field label="Category name (H1)" value={draft.h1 ?? category.label} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
-                  <Area label="Intro / SEO body" value={draft.intro ?? draft.body ?? category.blurb} onChange={(v) => setRec({ intro: v, body: v })} />
+                  <LinkedArea label="Intro / SEO body" value={draft.intro ?? draft.body ?? category.blurb} onChange={(v) => setRec({ intro: v, body: v })} />
                 </>
               )}
               {entity.type === "city" && (
@@ -399,7 +419,7 @@ export function ContentStudio({
                 <>
                   <Field label="Product name" value={draft.productName ?? product.name} onChange={(v) => setRec({ productName: v, h1: v, pageTitle: v })} />
                   <Area label="Short product description" value={draft.shortDescription ?? product.description} onChange={(v) => setRec({ shortDescription: v })} />
-                  <Area label="Long product body description" value={draft.longDescription ?? product.longDescription ?? product.description} onChange={(v) => setRec({ longDescription: v, body: v })} />
+                  <LinkedArea label="Long product body description" value={draft.longDescription ?? product.longDescription ?? product.description} onChange={(v) => setRec({ longDescription: v, body: v })} />
                   <Area label="Product specifications" value={draft.specifications ?? product.specifications ?? ""} onChange={(v) => setRec({ specifications: v })} />
                   <Field label="Fabric / material" value={draft.fabric ?? product.material ?? ""} onChange={(v) => setRec({ fabric: v })} />
                   <Field label="Color options" value={draft.colorOptions ?? product.colors.map((c) => c.name).join(", ")} onChange={(v) => setRec({ colorOptions: v })} />
@@ -419,7 +439,7 @@ export function ContentStudio({
                 <>
                   <Field label="Title (H1)" value={draft.h1 ?? article.title} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
                   <Area label="Excerpt" value={draft.intro ?? article.excerpt} onChange={(v) => setRec({ intro: v })} />
-                  <Area label="Body" value={draft.body ?? article.body.map((b) => (b.type === "h2" ? `## ${b.text}` : b.text)).join("\n\n")} onChange={(v) => setRec({ body: v })} />
+                  <LinkedArea label="Body" value={draft.body ?? article.body.map((b) => (b.type === "h2" ? `## ${b.text}` : b.text)).join("\n\n")} onChange={(v) => setRec({ body: v })} />
                 </>
               )}
             </div>
@@ -544,6 +564,41 @@ function Area({ label, value, onChange }: { label: string; value: string; onChan
       <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">{label}</span>
       <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)} className="mt-1.5 w-full resize-y border border-sand-deep bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-bronze" />
     </label>
+  );
+}
+
+function LinkedArea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [keyword, setKeyword] = useState("");
+  const [href, setHref] = useState("");
+
+  return (
+    <div>
+      <Area label={label} value={value} onChange={onChange} />
+      <div className="mt-2 grid gap-2 rounded border border-sand-deep bg-cream-soft p-3 md:grid-cols-[1fr_1fr_auto]">
+        <input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="Keyword to link, e.g. Luxury Abaya"
+          className="border border-sand-deep bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-bronze"
+        />
+        <input
+          value={href}
+          onChange={(e) => setHref(e.target.value)}
+          placeholder="Link, e.g. /luxury-abaya"
+          className="border border-sand-deep bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-bronze"
+        />
+        <button
+          type="button"
+          className="admin-secondary justify-center"
+          onClick={() => onChange(insertKeywordLink(value, keyword, href))}
+        >
+          Insert link
+        </button>
+      </div>
+      <p className="mt-1 text-xs text-ink-soft">
+        This inserts links as [keyword](/page-url). Internal links such as /luxury-abaya are best for SEO.
+      </p>
+    </div>
   );
 }
 
