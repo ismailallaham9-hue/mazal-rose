@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   },
 };
 
-
 function isLuxuryAbayaProduct(product: { category?: unknown; name?: unknown; slug?: unknown }) {
   const category = String(product.category ?? "").toLowerCase();
   const name = String(product.name ?? "").toLowerCase();
@@ -106,13 +105,35 @@ export default async function LuxuryAbayaPage() {
         <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Luxury Abaya" }]} />
       </Container>
 
+      <section id="shop-luxury-abaya" className="bg-cream-soft">
+        <Container className="py-16 md:py-20">
+          <div className="max-w-3xl">
+            <p className="eyebrow">Shop the edit</p>
+            <h1 className="mt-3 font-serif text-4xl text-ink md:text-5xl">
+              Designer Luxury Abayas Online
+            </h1>
+            <p className="mt-4 text-ink-soft">
+              Browse luxury abayas online from MAZAL, including soft everyday
+              layers, evening abayas and occasion-ready modest pieces. Every
+              product links to detailed sizing, materials and delivery notes.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </Container>
+      </section>
+
       <section className="bg-cream">
         <Container className="grid gap-10 py-14 md:grid-cols-[1.1fr_0.9fr] md:items-end md:py-20">
           <div>
             <p className="eyebrow">MAZAL Luxury Abaya</p>
-            <h1 className="mt-4 font-serif text-5xl leading-tight text-ink md:text-7xl">
+            <h2 className="mt-4 font-serif text-5xl leading-tight text-ink md:text-7xl">
               Luxury Abaya
-            </h1>
+            </h2>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">
               Discover MAZAL luxury abayas crafted for modern modest dressing in
               the UAE. Each piece brings together refined fabrics, graceful
@@ -142,28 +163,6 @@ export default async function LuxuryAbayaPage() {
               <li>Elegant neutral tones designed for a timeless wardrobe.</li>
               <li>UAE delivery and complimentary delivery over AED 500.</li>
             </ul>
-          </div>
-        </Container>
-      </section>
-
-      <section id="shop-luxury-abaya" className="bg-cream-soft">
-        <Container className="py-16 md:py-20">
-          <div className="max-w-3xl">
-            <p className="eyebrow">Shop the edit</p>
-            <h2 className="mt-3 font-serif text-4xl text-ink md:text-5xl">
-              Designer Luxury Abayas Online
-            </h2>
-            <p className="mt-4 text-ink-soft">
-              Browse luxury abayas online from MAZAL, including soft everyday
-              layers, evening abayas and occasion-ready modest pieces. Every
-              product links to detailed sizing, materials and delivery notes.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
           </div>
         </Container>
       </section>
