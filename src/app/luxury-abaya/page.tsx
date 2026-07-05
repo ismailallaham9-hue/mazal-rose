@@ -24,6 +24,20 @@ export const metadata: Metadata = {
   },
 };
 
+
+function isLuxuryAbayaProduct(product: { category?: unknown; name?: unknown; slug?: unknown }) {
+  const category = String(product.category ?? "").toLowerCase();
+  const name = String(product.name ?? "").toLowerCase();
+  const slug = String(product.slug ?? "").toLowerCase();
+
+  return (
+    category === "abayas" ||
+    category.includes("abaya") ||
+    name.includes("abaya") ||
+    slug.includes("abaya")
+  );
+}
+
 const FAQS = [
   {
     q: "What makes a MAZAL abaya a luxury abaya?",
@@ -47,7 +61,7 @@ export default async function LuxuryAbayaPage() {
   const store = await getFreshStoreData();
   const base = (store.settings.url || SITE.url).replace(/\/$/, "");
   const products = store.products.filter(
-    (product) => product.published !== false && product.category === "abayas",
+    (product) => product.published !== false && isLuxuryAbayaProduct(product),
   );
 
   const breadcrumbJsonLd = {
