@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ProductImage } from "./ProductImage";
 import { ProductBadge, Pill } from "./Badge";
 import { Accordion } from "./Accordion";
+import { RichText } from "./RichText";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import { formatAED } from "@/lib/format";
@@ -175,7 +176,18 @@ export function ProductDetailClient({
           Or 4 interest-free payments. Taxes included.
         </p>
 
-        <p className="mt-6 text-ink-soft">{product.description}</p>
+        <p className="mt-6 text-ink-soft">
+          <RichText text={product.description} />
+        </p>
+        {product.longDescription && product.longDescription !== product.description && (
+          <div className="mt-4 space-y-3 text-ink-soft">
+            {product.longDescription.split(/\n{2,}/).map((paragraph) => (
+              <p key={paragraph}>
+                <RichText text={paragraph} />
+              </p>
+            ))}
+          </div>
+        )}
 
         {/* Colour */}
         <div className="mt-8">
