@@ -12,7 +12,6 @@ import { formatAED } from "@/lib/format";
 import { ProductImage } from "./ProductImage";
 import { Tilt3D } from "./Tilt3D";
 import { ProductBadge, Pill } from "./Badge";
-import { RatingStars } from "./RatingStars";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import { clsx } from "@/lib/clsx";
@@ -31,7 +30,6 @@ export function ProductCard({
   const stock = totalStock(product);
   const lowStock = stock > 0 && stock <= 5;
   const outOfStock = stock <= 0;
-  const hasReviews = (product.reviewCount ?? 0) > 0;
   const galleryImages = Array.from(
     new Set([product.image, ...(product.images ?? [])].filter(Boolean) as string[]),
   );
@@ -146,7 +144,7 @@ export function ProductCard({
           </div>
         </div>
 
-        {typeof product.rating === "number" && hasReviews && (
+        {typeof product.rating === "number" && (
           <RatingStars rating={product.rating} count={product.reviewCount} className="mt-2" />
         )}
 
