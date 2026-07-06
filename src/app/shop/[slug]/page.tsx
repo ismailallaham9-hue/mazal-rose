@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -23,6 +24,19 @@ export async function generateStaticParams() {
 
 function findProduct(products: Product[], slug: string) {
   return products.find((p) => p.slug === slug);
+}
+
+function isAbayaProduct(product: Product) {
+  const category = String(product.category ?? "").toLowerCase();
+  const name = String(product.name ?? "").toLowerCase();
+  const slug = String(product.slug ?? "").toLowerCase();
+
+  return (
+    category === "abayas" ||
+    category.includes("abaya") ||
+    name.includes("abaya") ||
+    slug.includes("abaya")
+  );
 }
 
 function relatedProducts(products: Product[], product: Product, limit = 4) {
@@ -168,6 +182,9 @@ export default async function ProductPage({
   const sizeGuide = sizeGuideForProduct(product);
   const seo = publishedSeo(store.seoRecords?.[`product:${product.slug}`]);
   const productCategoryLabel = categoryLabel(product.category, store.categories);
+  const categoryHref = isAbayaProduct(product)
+    ? "/luxury-abaya"
+    : `/shop?category=${product.category}`;
 
   const completeLook = completeTheLook(products, product, 3);
   const fbtExtras = completeLook.slice(0, 2);
@@ -235,7 +252,7 @@ export default async function ProductPage({
         "@type": "ListItem",
         position: 3,
         name: productCategoryLabel,
-        item: `${base}/shop?category=${product.category}`,
+        item: `${base}${categoryHref}`,
       },
       {
         "@type": "ListItem",
@@ -268,7 +285,7 @@ export default async function ProductPage({
             { label: "Shop", href: "/shop" },
             {
               label: productCategoryLabel,
-              href: `/shop?category=${product.category}`,
+              href: categoryHref,
             },
             { label: product.name },
           ]}
@@ -278,6 +295,27 @@ export default async function ProductPage({
       <Container className="py-10">
         <ProductDetailClient product={product} settings={store.settings} />
       </Container>
+
+      {categoryHref === "/luxury-abaya" ? (
+        <Container className="pb-8">
+          <section className="bg-cream-soft p-6 text-center ring-1 ring-sand-deep/40">
+            <p className="eyebrow">Luxury Abaya Collection</p>
+            <h2 className="mt-2 font-serif text-3xl text-ink">
+              Explore more luxury abayas
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
+              Discover beaded, linen, velvet, crystal and occasion-ready
+              abayas in the full MAZAL luxury abaya edit.
+            </p>
+            <Link
+              href="/luxury-abaya"
+              className="mt-5 inline-flex bg-bronze px-6 py-3 text-xs uppercase tracking-[0.18em] text-cream-soft transition-colors hover:bg-bronze-deep"
+            >
+              Shop Luxury Abaya
+            </Link>
+          </section>
+        </Container>
+      ) : null}
 
       {/* Size guide */}
       <Container className="py-6">
