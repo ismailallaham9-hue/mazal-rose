@@ -4,6 +4,10 @@ import { Reveal } from "./Reveal";
 import { SITE } from "@/lib/site";
 import type { SiteSettings } from "@/lib/store";
 
+const INSTAGRAM_PROFILE_URL =
+  "https://www.instagram.com/mazal_ae?igsh=c3pueTFrd3pxM3du";
+const INSTAGRAM_HANDLE = "@mazal_ae";
+
 const POSTS = [
   {
     src: "/images/brand/hero.jpg",
@@ -42,6 +46,13 @@ export function InstagramFeed({
 }: {
   social?: SiteSettings["social"];
 }) {
+  const instagramProfile = social.instagram.includes("mazal_ae")
+    ? social.instagram
+    : INSTAGRAM_PROFILE_URL;
+  const instagramHandle = social.instagramHandle.includes("mazal_ae")
+    ? social.instagramHandle
+    : INSTAGRAM_HANDLE;
+
   return (
     <section className="bg-cream" aria-label="Instagram">
       <Container className="py-16 md:py-20">
@@ -49,16 +60,16 @@ export function InstagramFeed({
           <p className="eyebrow">Fashion Inspiration</p>
           <h2 className="mt-2 font-serif text-3xl text-ink md:text-4xl">
             <a
-              href={social.instagram}
+              href={instagramProfile}
               target="_blank"
               rel="noopener noreferrer"
               className="transition-colors hover:text-bronze"
             >
-              {social.instagramHandle} on Instagram
+              {instagramHandle} on Instagram
             </a>
           </h2>
           <p className="mt-3 text-ink-soft">
-            Tag {social.instagramHandle} to be featured · #MAZALmeansStill
+            Tag {instagramHandle} to be featured · #MAZALmeansStill
           </p>
         </Reveal>
 
