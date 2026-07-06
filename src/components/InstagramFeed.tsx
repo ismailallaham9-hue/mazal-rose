@@ -4,14 +4,37 @@ import { Reveal } from "./Reveal";
 import { SITE } from "@/lib/site";
 import type { SiteSettings } from "@/lib/store";
 
-// Reuse brand campaign imagery as the IG grid. Replace with a real feed later.
 const POSTS = [
-  "/images/brand/hero.jpg",
-  "/images/brand/collection-feature.jpg",
-  "/images/brand/lookbook-1.jpg",
-  "/images/brand/about-1.jpg",
-  "/images/brand/statement.jpg",
-  "/images/brand/wordmark.jpg",
+  {
+    src: "/images/brand/hero.jpg",
+    href: "https://www.instagram.com/p/DZr8uViDUnb/",
+    alt: "MAZAL luxury abaya campaign post on Instagram",
+  },
+  {
+    src: "/images/brand/collection-feature.jpg",
+    href: "https://www.instagram.com/p/DZsCIEtjQlD/",
+    alt: "MAZAL timeless abaya styling post on Instagram",
+  },
+  {
+    src: "/images/brand/lookbook-1.jpg",
+    href: "https://www.instagram.com/p/DZuV3KsNIWD/",
+    alt: "MAZAL luxury fashion post on Instagram",
+  },
+  {
+    src: "/images/brand/about-1.jpg",
+    href: "https://www.instagram.com/p/DZ5HdDQDeMu/",
+    alt: "MAZAL luxury abayas in the UAE Instagram post",
+  },
+  {
+    src: "/images/brand/statement.jpg",
+    href: "https://www.instagram.com/p/DZ5LLEPjXjg/",
+    alt: "MAZAL abaya detail Instagram post",
+  },
+  {
+    src: "/images/brand/wordmark.jpg",
+    href: "https://www.instagram.com/p/DZmoQBvMJtx/",
+    alt: "MAZAL abaya elegance Instagram post",
+  },
 ];
 
 export function InstagramFeed({
@@ -25,7 +48,14 @@ export function InstagramFeed({
         <Reveal className="text-center">
           <p className="eyebrow">Fashion Inspiration</p>
           <h2 className="mt-2 font-serif text-3xl text-ink md:text-4xl">
-            {social.instagramHandle} on Instagram
+            <a
+              href={social.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-bronze"
+            >
+              {social.instagramHandle} on Instagram
+            </a>
           </h2>
           <p className="mt-3 text-ink-soft">
             Tag {social.instagramHandle} to be featured · #MAZALmeansStill
@@ -33,18 +63,18 @@ export function InstagramFeed({
         </Reveal>
 
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {POSTS.map((src) => (
+          {POSTS.map((post) => (
             <a
-              key={src}
-              href={social.instagram}
+              key={post.href}
+              href={post.href}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative aspect-square overflow-hidden bg-sand"
-              aria-label="View on Instagram"
+              aria-label="View MAZAL post on Instagram"
             >
               <Image
-                src={src}
-                alt="MAZAL on Instagram"
+                src={post.src}
+                alt={post.alt}
                 fill
                 sizes="(min-width:1024px) 16vw, (min-width:640px) 33vw, 50vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
