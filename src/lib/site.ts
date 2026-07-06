@@ -32,8 +32,8 @@ export const SITE = {
 
   // ── Socials (TODO: replace handles/links) ──
   social: {
-    instagram: "https://instagram.com/mazal", // TODO
-    instagramHandle: "@mazal",
+    instagram: "https://www.instagram.com/mazal_ae",
+    instagramHandle: "@mazal_ae",
     tiktok: "https://tiktok.com/@mazal", // TODO
     pinterest: "https://pinterest.com/mazal", // TODO
   },
