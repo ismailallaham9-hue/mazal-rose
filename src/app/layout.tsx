@@ -50,7 +50,14 @@ export async function generateMetadata(): Promise<Metadata> {
       template,
     },
     description: seo.defaultDescription,
-    icons: { icon: theme.logo || "/images/brand/logo.png" },
+    icons: {
+      icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: theme.logo || "/images/brand/logo.png" },
+      ],
+      shortcut: "/favicon.svg",
+      apple: theme.logo || "/images/brand/logo.png",
+    },
     robots: seo.indexable
       ? { index: true, follow: true }
       : { index: false, follow: false },
