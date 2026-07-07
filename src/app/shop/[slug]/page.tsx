@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ProductDetailClient } from "@/components/ProductDetailClient";
+import { ProductRating } from "@/components/ProductRating";
 import { ProductReviews } from "@/components/ProductReviews";
 import { FrequentlyBoughtTogether } from "@/components/FrequentlyBoughtTogether";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
@@ -14,7 +15,11 @@ import {
   categoryLabel,
 } from "@/lib/products";
 import { SITE } from "@/lib/site";
-import { getFreshStoreData, getProductsFromStore } from "@/lib/store";
+import {
+  getFreshStoreData,
+  getProductsFromStore,
+  ratingSummaryForProduct,
+} from "@/lib/store";
 import { absoluteUrl, jsonLd, publishedSeo } from "@/lib/seo";
 
 export async function generateStaticParams() {
@@ -185,6 +190,7 @@ export default async function ProductPage({
   const categoryHref = isAbayaProduct(product)
     ? "/luxury-abaya"
     : `/shop?category=${product.category}`;
+  const ratingSummary = ratingSummaryForProduct(store, product);
 
   const completeLook = completeTheLook(products, product, 3);
   const fbtExtras = completeLook.slice(0, 2);
@@ -199,6 +205,17 @@ export default async function ProductPage({
     image: [absoluteUrl(base, seo?.ogImage || product.image) ?? `${base}/images/brand/hero.jpg`],
     category: productCategoryLabel,
     brand: { "@type": "Brand", name: settings.name },
+    ...(ratingSummary
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: ratingSummary.ratingValue,
+            ratingCount: ratingSummary.ratingCount,
+            bestRating: ratingSummary.bestRating,
+            worstRating: ratingSummary.worstRating,
+          },
+        }
+      : {}),
     offers: {
       "@type": "Offer",
       priceCurrency: settings.currency,
@@ -294,6 +311,14 @@ export default async function ProductPage({
 
       <Container className="py-10">
         <ProductDetailClient product={product} settings={store.settings} />
+      </Container>
+
+      <Container className="pb-8">
+        <ProductRating
+          productId={product.id}
+          productSlug={product.slug}
+          initialSummary={ratingSummary}
+        />
       </Container>
 
       {categoryHref === "/luxury-abaya" ? (
