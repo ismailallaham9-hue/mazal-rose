@@ -43,6 +43,7 @@ export type StoreData = {
   theme: SiteTheme;
   categories: StoreCategory[];
   articles: Article[];
+  ratings: StoreRating[];
   orders: StoreOrder[];
   inquiries: StoreInquiry[];
   subscribers: StoreSubscriber[];
@@ -53,6 +54,25 @@ export type StoreData = {
   seo: SeoSettings;
   seoRecords: Record<string, SeoRecord>;
   updatedAt?: string;
+};
+
+export type StoreRatingTargetType = "product";
+
+export type StoreRating = {
+  id: string;
+  targetType: StoreRatingTargetType;
+  targetId: string;
+  targetSlug: string;
+  rating: number;
+  createdAt: string;
+  fingerprint: string;
+};
+
+export type RatingSummary = {
+  ratingValue: number;
+  ratingCount: number;
+  bestRating: 5;
+  worstRating: 1;
 };
 
 export type StoreOrderStatus =
@@ -723,6 +743,7 @@ function seedData(): StoreData {
       ...(CATEGORY_SEO_SEED[c.value] ?? {}),
     })),
     articles: ARTICLES.map((a) => ({ ...a, body: a.body.map((b) => ({ ...b })) })),
+    ratings: [],
     orders: [],
     inquiries: [],
     subscribers: [],
@@ -790,6 +811,24 @@ function withRequiredFooterLinks(
   return next;
 }
 
+function isValidRating(value: unknown): value is StoreRating {
+  if (!value || typeof value !== "object") return false;
+  const rating = value as Partial<StoreRating>;
+  const stars = rating.rating;
+  return (
+    rating.targetType === "product" &&
+    typeof rating.id === "string" &&
+    typeof rating.targetId === "string" &&
+    typeof rating.targetSlug === "string" &&
+    typeof rating.fingerprint === "string" &&
+    typeof rating.createdAt === "string" &&
+    typeof stars === "number" &&
+    Number.isInteger(stars) &&
+    stars >= 1 &&
+    stars <= 5
+  );
+}
+
 function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
   const seed = seedData();
   if (!raw || typeof raw !== "object") return seed;
@@ -839,6 +878,9 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     theme: { ...seed.theme, ...(raw.theme ?? {}) },
     categories: Array.isArray(raw.categories) ? raw.categories : seed.categories,
     articles: Array.isArray(raw.articles) ? raw.articles : seed.articles,
+    ratings: Array.isArray(raw.ratings)
+      ? raw.ratings.filter(isValidRating)
+      : seed.ratings,
     orders: Array.isArray(raw.orders) ? raw.orders : seed.orders,
     inquiries: Array.isArray(raw.inquiries) ? raw.inquiries : seed.inquiries,
     subscribers: Array.isArray(raw.subscribers)
@@ -1074,6 +1116,34 @@ export async function getFreshArticlesFromStore(): Promise<Article[]> {
   return [...(await getFreshStoreData()).articles].sort((a, b) =>
     b.date.localeCompare(a.date),
   );
+}
+
+export function ratingSummaryForProduct(
+  store: Pick<StoreData, "ratings">,
+  product: Pick<Product, "id" | "slug">,
+): RatingSummary | null {
+  return ratingSummaryForProductId(store, product.id, product.slug);
+}
+
+export function ratingSummaryForProductId(
+  store: Pick<StoreData, "ratings">,
+  productId: string,
+  productSlug?: string,
+): RatingSummary | null {
+  const ratings = store.ratings.filter(
+    (rating) =>
+      rating.targetType === "product" &&
+      rating.targetId === productId &&
+      (!productSlug || rating.targetSlug === productSlug),
+  );
+  if (!ratings.length) return null;
+  const total = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+  return {
+    ratingValue: Math.round((total / ratings.length) * 10) / 10,
+    ratingCount: ratings.length,
+    bestRating: 5,
+    worstRating: 1,
+  };
 }
 
 /** Whether persistent storage is configured (controls the admin banner). */
