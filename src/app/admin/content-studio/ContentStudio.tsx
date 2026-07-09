@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { ArticleBlock } from "@/lib/articles";
 import type { SeoFields, SeoRecord, StoreData } from "@/lib/store";
 import {
   scoreSeo,
@@ -92,6 +93,30 @@ function insertKeywordLink(value: string, keyword: string, href: string) {
   }
 
   return value.trim() ? `${value.trim()}\n\n${link}` : link;
+}
+
+function articleBlocksToText(blocks: ArticleBlock[]) {
+  return blocks
+    .map((block) => {
+      if (block.type === "h1") return `# ${block.text}`;
+      if (block.type === "h2") return `## ${block.text}`;
+      if (block.type === "h3") return `### ${block.text}`;
+      return block.text;
+    })
+    .join("\n\n");
+}
+
+function textToArticleBlocks(value: string): ArticleBlock[] {
+  return value
+    .split(/\n\n+/)
+    .map((part): ArticleBlock => {
+      const text = part.trim();
+      if (text.startsWith("### ")) return { type: "h3", text: text.slice(4).trim() };
+      if (text.startsWith("## ")) return { type: "h2", text: text.slice(3).trim() };
+      if (text.startsWith("# ")) return { type: "h1", text: text.slice(2).trim() };
+      return { type: "p", text };
+    })
+    .filter((block) => block.text);
 }
 
 export function ContentStudio({
@@ -266,7 +291,7 @@ export function ContentStudio({
       }
     } else if (entity.type === "article") {
       const a = next.articles.find((x) => x.slug === entity.ref);
-      if (a) { if (live.h1 || live.pageTitle) a.title = live.h1 || live.pageTitle || a.title; if (live.intro) a.excerpt = live.intro; if (live.body) a.body = live.body.split(/\n\n+/).map((part) => part.startsWith("## ") ? { type: "h2" as const, text: part.slice(3).trim() } : { type: "p" as const, text: part.trim() }).filter((b) => b.text); if (t) a.seoTitle = t; if (d) a.seoDescription = d; }
+      if (a) { if (live.h1 || live.pageTitle) a.title = live.h1 || live.pageTitle || a.title; if (live.intro) a.excerpt = live.intro; if (live.body) a.body = textToArticleBlocks(live.body); if (t) a.seoTitle = t; if (d) a.seoDescription = d; }
     } else if (entity.type === "global") {
       if (t) next.seo.defaultTitle = t;
       if (d) next.seo.defaultDescription = d;
@@ -439,7 +464,7 @@ export function ContentStudio({
                 <>
                   <Field label="Title (H1)" value={draft.h1 ?? article.title} onChange={(v) => setRec({ h1: v, pageTitle: v })} />
                   <Area label="Excerpt" value={draft.intro ?? article.excerpt} onChange={(v) => setRec({ intro: v })} />
-                  <LinkedArea label="Body" value={draft.body ?? article.body.map((b) => (b.type === "h2" ? `## ${b.text}` : b.text)).join("\n\n")} onChange={(v) => setRec({ body: v })} />
+                  <LinkedArea label="Body" value={draft.body ?? articleBlocksToText(article.body)} onChange={(v) => setRec({ body: v })} />
                 </>
               )}
             </div>
@@ -570,10 +595,68 @@ function Area({ label, value, onChange }: { label: string; value: string; onChan
 function LinkedArea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const [keyword, setKeyword] = useState("");
   const [href, setHref] = useState("");
+  const areaRef = useRef<HTMLTextAreaElement>(null);
+
+  function replaceSelection(nextText: string) {
+    const area = areaRef.current;
+    if (!area) {
+      onChange(value ? `${value}\n\n${nextText}` : nextText);
+      return;
+    }
+    const start = area.selectionStart;
+    const end = area.selectionEnd;
+    const next = `${value.slice(0, start)}${nextText}${value.slice(end)}`;
+    onChange(next);
+    requestAnimationFrame(() => {
+      area.focus();
+      area.setSelectionRange(start, start + nextText.length);
+    });
+  }
+
+  function selectedText(fallback: string) {
+    const area = areaRef.current;
+    if (!area) return fallback;
+    return value.slice(area.selectionStart, area.selectionEnd) || fallback;
+  }
+
+  function applyHeading(level: 1 | 2 | 3) {
+    const hashes = "#".repeat(level);
+    const text = selectedText(`Heading ${level}`);
+    const clean = text
+      .split("\n")
+      .map((line) => line.replace(/^#{1,3}\s+/, "").trim())
+      .filter(Boolean)
+      .join(" ");
+    replaceSelection(`${hashes} ${clean || `Heading ${level}`}`);
+  }
+
+  function wrapSelection(tag: "big" | "small" | "serif" | "sans" | "bronze", fallback: string) {
+    const text = selectedText(fallback).trim() || fallback;
+    replaceSelection(`[${tag}]${text}[/${tag}]`);
+  }
 
   return (
     <div>
-      <Area label={label} value={value} onChange={onChange} />
+      <label className="block">
+        <span className="text-xs uppercase tracking-[0.16em] text-ink-soft">{label}</span>
+        <div className="mt-1.5 flex flex-wrap gap-2 border border-sand-deep bg-cream-soft p-2">
+          <button type="button" className="admin-secondary !px-3 !py-2" onClick={() => applyHeading(1)}>H1</button>
+          <button type="button" className="admin-secondary !px-3 !py-2" onClick={() => applyHeading(2)}>H2</button>
+          <button type="button" className="admin-secondary !px-3 !py-2" onClick={() => applyHeading(3)}>H3</button>
+          <button type="button" className="admin-secondary !px-3 !py-2" onClick={() => wrapSelection("big", "Large text")}>Big</button>
+          <button type="button" className="admin-secondary !px-3 !py-2" onClick={() => wrapSelection("small", "Small text")}>Small</button>
+          <button type="button" className="admin-secondary !px-3 !py-2 font-serif" onClick={() => wrapSelection("serif", "Serif text")}>Serif</button>
+          <button type="button" className="admin-secondary !px-3 !py-2 font-sans" onClick={() => wrapSelection("sans", "Sans text")}>Sans</button>
+          <button type="button" className="admin-secondary !px-3 !py-2 text-bronze" onClick={() => wrapSelection("bronze", "Bronze text")}>Bronze</button>
+        </div>
+        <textarea
+          ref={areaRef}
+          rows={8}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full resize-y border-x border-b border-sand-deep bg-cream px-3 py-2 text-sm text-ink outline-none focus:border-bronze"
+        />
+      </label>
       <div className="mt-2 grid gap-2 rounded border border-sand-deep bg-cream-soft p-3 md:grid-cols-[1fr_1fr_auto]">
         <input
           value={keyword}
@@ -596,7 +679,7 @@ function LinkedArea({ label, value, onChange }: { label: string; value: string; 
         </button>
       </div>
       <p className="mt-1 text-xs text-ink-soft">
-        This inserts links as [keyword](/page-url). Internal links such as /luxury-abaya are best for SEO.
+        Toolbar format: # H1, ## H2, ### H3, [big]text[/big], [serif]text[/serif], and [keyword](/page-url). Internal links such as /luxury-abaya are best for SEO.
       </p>
     </div>
   );
