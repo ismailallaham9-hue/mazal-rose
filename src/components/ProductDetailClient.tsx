@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ProductImage } from "./ProductImage";
 import { ProductBadge, Pill } from "./Badge";
 import { Accordion } from "./Accordion";
-import { RichText } from "./RichText";
+import { RichBody, RichText } from "./RichText";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import { formatAED } from "@/lib/format";
@@ -180,13 +180,7 @@ export function ProductDetailClient({
           <RichText text={product.description} />
         </p>
         {product.longDescription && product.longDescription !== product.description && (
-          <div className="mt-4 space-y-3 text-ink-soft">
-            {product.longDescription.split(/\n{2,}/).map((paragraph) => (
-              <p key={paragraph}>
-                <RichText text={paragraph} />
-              </p>
-            ))}
-          </div>
+          <RichBody text={product.longDescription} className="mt-4" />
         )}
 
         {/* Colour */}
