@@ -141,17 +141,34 @@ export default async function ArticlePage({
 
         <Container className="py-14">
           <div className="mx-auto max-w-2xl">
-            {article.body.map((block, i) =>
-              block.type === "h2" ? (
-                <h2 key={i} className="mt-10 font-serif text-3xl text-ink">
-                  <RichText text={block.text} />
-                </h2>
-              ) : (
+            {article.body.map((block, i) => {
+              if (block.type === "h1") {
+                return (
+                  <h1 key={i} className="mt-10 font-serif text-4xl leading-tight text-ink md:text-5xl">
+                    <RichText text={block.text} />
+                  </h1>
+                );
+              }
+              if (block.type === "h2") {
+                return (
+                  <h2 key={i} className="mt-10 font-serif text-3xl text-ink">
+                    <RichText text={block.text} />
+                  </h2>
+                );
+              }
+              if (block.type === "h3") {
+                return (
+                  <h3 key={i} className="mt-8 font-serif text-2xl text-ink">
+                    <RichText text={block.text} />
+                  </h3>
+                );
+              }
+              return (
                 <p key={i} className="mt-5 text-lg leading-relaxed text-ink-soft">
                   <RichText text={block.text} />
                 </p>
-              ),
-            )}
+              );
+            })}
           </div>
         </Container>
       </article>
