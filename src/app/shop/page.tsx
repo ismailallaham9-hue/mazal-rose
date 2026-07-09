@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { RichText } from "@/components/RichText";
+import { RichBody } from "@/components/RichText";
 import { TrustBadges } from "@/components/TrustBadges";
 import { ShopClient } from "@/components/ShopClient";
 import { CATEGORIES, CATEGORY_LABEL, type Category } from "@/lib/products";
@@ -243,9 +243,7 @@ export default async function ShopPage({
           <h1 className="mt-3 font-serif text-4xl text-ink md:text-6xl">
             {heading}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-ink-soft">
-            <RichText text={blurb} />
-          </p>
+          <RichBody text={blurb} className="mx-auto mt-4 max-w-2xl" />
         </Container>
       )}
 
@@ -267,9 +265,7 @@ export default async function ShopPage({
           <h1 className="mt-3 font-serif text-4xl text-ink md:text-6xl">
             {heading}
           </h1>
-          <p className="mx-auto mt-4 max-w-4xl text-lg leading-relaxed text-ink-soft">
-            <RichText text={blurb} />
-          </p>
+          <RichBody text={blurb} className="mx-auto mt-4 max-w-4xl" />
         </Container>
       )}
 
