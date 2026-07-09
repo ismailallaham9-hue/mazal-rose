@@ -2048,13 +2048,17 @@ function JournalSection({ store, setStore, saveStore, uploadAndGetUrl }: Section
             <div className="mt-3">
               <TextArea label="Excerpt" value={article.excerpt} onChange={(v) => update(i, { ...article, excerpt: v })} />
               <TextArea
-                label="Body (use ## for headings, separate paragraphs with blank lines)"
-                value={article.body.map((b) => b.type === "h2" ? `## ${b.text}` : b.text).join("\n\n")}
+                label="Body (use #, ##, or ### for headings; separate paragraphs with blank lines)"
+                value={article.body.map((b) => b.type === "h1" ? `# ${b.text}` : b.type === "h2" ? `## ${b.text}` : b.type === "h3" ? `### ${b.text}` : b.text).join("\n\n")}
                 onChange={(v) => update(i, {
                   ...article,
-                  body: v.split(/\n\n+/).map((part): ArticleBlock =>
-                    part.startsWith("## ") ? { type: "h2", text: part.slice(3).trim() } : { type: "p", text: part.trim() }
-                  ).filter((b) => b.text),
+                  body: v.split(/\n\n+/).map((part): ArticleBlock => {
+                    const text = part.trim();
+                    if (text.startsWith("### ")) return { type: "h3", text: text.slice(4).trim() };
+                    if (text.startsWith("## ")) return { type: "h2", text: text.slice(3).trim() };
+                    if (text.startsWith("# ")) return { type: "h1", text: text.slice(2).trim() };
+                    return { type: "p", text };
+                  }).filter((b) => b.text),
                 })}
               />
             </div>
