@@ -29,6 +29,22 @@ const nextConfig: NextConfig = {
       rule("/checkout", PRIVATE),
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/contact",
+        has: [{ type: "query", key: "subject" }],
+        destination: "/contact#review-form",
+        permanent: true,
+      },
+      {
+        source: "/contact",
+        has: [{ type: "query", key: "message" }],
+        destination: "/contact#review-form",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
