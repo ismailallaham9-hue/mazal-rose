@@ -24,6 +24,7 @@ export async function middleware(req: NextRequest) {
     cleanContactUrl.hash = "review-form";
     return NextResponse.redirect(cleanContactUrl, 308);
   }
+  if (pathname === "/contact") return NextResponse.next();
 
   const isLoginPage = pathname === "/admin/login";
   const isLoginApi = pathname === "/api/admin/login";
