@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Container } from "@/components/Container";
 import { Button } from "@/components/Button";
 import { Reveal } from "@/components/Reveal";
@@ -77,6 +78,43 @@ export default async function Home() {
       <Collection2026 products={bestSellers.length ? bestSellers : newArrivals} />
 
       <TrustBadges />
+
+      <section className="bg-cream">
+        <Container className="grid gap-8 py-16 md:grid-cols-[0.8fr_1.2fr] md:py-20 lg:gap-16">
+          <div>
+            <p className="eyebrow">MAZAL in the UAE</p>
+            <h2 className="mt-3 font-serif text-4xl leading-tight text-ink md:text-5xl">
+              Luxury abayas and modest fashion for modern Gulf dressing
+            </h2>
+          </div>
+          <div className="space-y-4 text-ink-soft">
+            <p>
+              MAZAL creates refined modestwear for women who want elegance that
+              feels calm, wearable and considered. The collection brings
+              together luxury abayas, kaftans, modest dresses and accessories
+              with premium fabrics, graceful movement and limited-piece
+              availability.
+            </p>
+            <p>
+              Shop the{" "}
+              <Link href="/luxury-abaya" className="link-underline text-bronze hover:text-bronze-deep">
+                luxury abaya collection
+              </Link>{" "}
+              for beaded, linen, velvet, crystal and occasion-ready styles, or
+              explore the full{" "}
+              <Link href="/shop" className="link-underline text-bronze hover:text-bronze-deep">
+                MAZAL shop
+              </Link>{" "}
+              for elevated everyday pieces, Eid dressing and evening looks.
+            </p>
+            <p>
+              Every order is supported by client care for sizing, styling,
+              delivery and after-purchase questions, with service for customers
+              in Dubai, Abu Dhabi, the wider UAE and the GCC.
+            </p>
+          </div>
+        </Container>
+      </section>
 
       <ProductRail
         eyebrow="Just In"
