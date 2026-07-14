@@ -34,7 +34,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  const categoryRoutes = store.categories.filter((c) => !c.hidden && !excluded(`category:${c.value}`)).map((c) => ({
+  const luxuryAbayaCategory = store.categories.find((c) => c.value === "luxury-abaya");
+  const luxuryAbayaRoutes =
+    (!luxuryAbayaCategory || !luxuryAbayaCategory.hidden) && !excluded("category:luxury-abaya")
+      ? [
+          {
+            url: `${base}/luxury-abaya`,
+            lastModified: new Date(),
+            changeFrequency: "weekly" as const,
+            priority: 0.7,
+          },
+        ]
+      : [];
+
+  const categoryRoutes = store.categories.filter((c) => c.value !== "luxury-abaya" && !c.hidden && !excluded(`category:${c.value}`)).map((c) => ({
     url: `${base}/shop?category=${c.value}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
@@ -70,6 +83,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes,
+    ...luxuryAbayaRoutes,
     ...categoryRoutes,
     ...emirateRoutes,
     ...productRoutes,
