@@ -88,6 +88,51 @@ export default async function ContactPage() {
         </div>
       </Container>
 
+      <Container className="pb-16">
+        <section className="border-y border-sand-deep/60 py-10">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
+            <div>
+              <p className="eyebrow">How we help</p>
+              <h2 className="mt-3 font-serif text-3xl text-ink md:text-4xl">
+                Client care for orders, sizing, styling and reviews
+              </h2>
+              <p className="mt-4 text-ink-soft">
+                MAZAL support is here for shoppers across the UAE and GCC who
+                need clear help before or after placing an order. Use this page
+                for product questions, delivery updates, return requests,
+                styling advice, or to share feedback about a piece you received.
+              </p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-3">
+              <article>
+                <h3 className="font-serif text-xl text-ink">Order support</h3>
+                <p className="mt-2 text-sm leading-6 text-ink-soft">
+                  Ask about payment, order confirmation, shipping status,
+                  delivery timing, or what to do if your parcel needs special
+                  handling in Dubai, Abu Dhabi, or another GCC destination.
+                </p>
+              </article>
+              <article>
+                <h3 className="font-serif text-xl text-ink">Styling help</h3>
+                <p className="mt-2 text-sm leading-6 text-ink-soft">
+                  Tell us the occasion, preferred colour, fit and modestwear
+                  style, and our team can recommend luxury abayas, kaftans, or
+                  accessories that suit your plans.
+                </p>
+              </article>
+              <article>
+                <h3 className="font-serif text-xl text-ink">Real feedback</h3>
+                <p className="mt-2 text-sm leading-6 text-ink-soft">
+                  Product reviews are collected from real customers only. Share
+                  notes about fabric, sizing, comfort, delivery and presentation
+                  so future shoppers can make a better choice.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+      </Container>
+
       {/* FAQ */}
       <Container className="pb-24">
         <h2 className="mb-6 font-serif text-3xl text-ink">Frequently asked</h2>
