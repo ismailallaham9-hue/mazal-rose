@@ -18,10 +18,7 @@ export function ProductReviews({
   product: Product;
   googleReviewUrl?: SiteSettings["googleReviewUrl"];
 }) {
-  const reviewSubject = `Review for ${product.name}`;
-  const reviewMessage = `I would like to leave a review for ${product.name}.`;
-  const fallbackReviewUrl =
-    `/contact?subject=${encodeURIComponent(reviewSubject)}&message=${encodeURIComponent(reviewMessage)}#review-form`;
+  const fallbackReviewUrl = "/contact#review-form";
   const useExternalReviewUrl = hasRealGoogleReviewUrl(googleReviewUrl);
   const reviewUrl = useExternalReviewUrl ? googleReviewUrl : fallbackReviewUrl;
 
@@ -38,6 +35,7 @@ export function ProductReviews({
             href={reviewUrl}
             target={useExternalReviewUrl ? "_blank" : undefined}
             rel={useExternalReviewUrl ? "noopener noreferrer" : undefined}
+            aria-label={`Write a review for ${product.name}`}
             className="mt-6 inline-block bg-bronze px-6 py-3 text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
           >
             Write a review
@@ -51,6 +49,16 @@ export function ProductReviews({
           <p className="mt-3 max-w-xl text-sm text-ink-soft">
             Until then, MAZAL does not display sample ratings, sample review text,
             or customer photos.
+          </p>
+          <p className="mt-3 max-w-xl text-sm text-ink-soft">
+            When a customer leaves a real review, this area will show practical
+            details such as fabric feel, fit, delivery experience, styling notes,
+            and the occasion the piece was worn for.
+          </p>
+          <p className="mt-3 max-w-xl text-sm text-ink-soft">
+            We keep product feedback tied to genuine submissions only, so every
+            visible rating and comment on MAZAL can be trusted by shoppers
+            comparing luxury abayas, kaftans, and modest occasionwear.
           </p>
         </div>
       </div>
