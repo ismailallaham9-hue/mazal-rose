@@ -140,8 +140,10 @@ export function ContentStudio({
       { key: "page:rewards", label: "Rewards", group: "Pages", type: "page", ref: "rewards", path: "/rewards" },
       { key: "journal", label: "Journal", group: "Pages", type: "page", ref: "journal", path: "/journal" },
     ];
-    for (const c of store.categories)
-      list.push({ key: `category:${c.value}`, label: c.label, group: "Categories", type: "category", ref: c.value, path: `/shop?category=${c.value}` });
+    for (const c of store.categories) {
+      const path = c.value === "luxury-abaya" ? "/luxury-abaya" : `/shop?category=${c.value}`;
+      list.push({ key: `category:${c.value}`, label: c.label, group: "Categories", type: "category", ref: c.value, path });
+    }
     for (const city of CITIES)
       list.push({ key: `city:${city.slug}`, label: city.name, group: "City pages", type: "city", ref: city.slug, path: `/abayas/${city.slug}` });
     for (const p of store.products)
