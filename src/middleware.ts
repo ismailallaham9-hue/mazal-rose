@@ -13,6 +13,18 @@ export async function middleware(req: NextRequest) {
     return res;
   };
 
+  if (
+    pathname === "/contact" &&
+    (req.nextUrl.searchParams.has("subject") ||
+      req.nextUrl.searchParams.has("message"))
+  ) {
+    const cleanContactUrl = req.nextUrl.clone();
+    cleanContactUrl.pathname = "/contact";
+    cleanContactUrl.search = "";
+    cleanContactUrl.hash = "review-form";
+    return NextResponse.redirect(cleanContactUrl, 308);
+  }
+
   const isLoginPage = pathname === "/admin/login";
   const isLoginApi = pathname === "/api/admin/login";
   if (isLoginPage || isLoginApi) return noindex(NextResponse.next());
@@ -30,5 +42,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/contact", "/admin/:path*", "/api/admin/:path*"],
 };
