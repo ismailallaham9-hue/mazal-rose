@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { permanentRedirect } from "next/navigation";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ContactForm } from "@/components/ContactForm";
@@ -20,7 +21,19 @@ export function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function ContactPage() {
+type ContactPageProps = {
+  searchParams?: Promise<{
+    subject?: string | string[];
+    message?: string | string[];
+  }>;
+};
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const params = (await searchParams) ?? {};
+  if (params.subject || params.message) {
+    permanentRedirect("/contact#review-form");
+  }
+
   const { settings } = await getFreshStoreData();
   const whatsapp = settings.whatsapp;
   const contact = settings.contact;
