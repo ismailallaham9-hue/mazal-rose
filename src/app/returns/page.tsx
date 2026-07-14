@@ -4,6 +4,7 @@ import { Accordion } from "@/components/Accordion";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { whatsappLink } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 import { getFreshStoreData } from "@/lib/store";
@@ -75,14 +76,12 @@ export default async function ReturnsPage() {
             you with a return or exchange request clearly and calmly.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a
+            <WhatsAppButton
               href={whatsappLink(whatsapp.orderSupportMessage, whatsapp.number)}
-              target="_blank"
-              rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-bronze px-6 py-3 font-sans text-xs font-medium uppercase tracking-[0.18em] text-cream-soft shadow-sm transition-all duration-300 hover:bg-bronze-deep hover:shadow-md"
             >
               Start on WhatsApp
-            </a>
+            </WhatsAppButton>
             <Button href="/contact" variant="outline">
               Contact Client Care
             </Button>
@@ -209,12 +208,12 @@ export default async function ReturnsPage() {
         <div className="mt-12 border-t border-sand-deep/60 pt-8 text-sm text-ink-soft">
           <p>
             Need help before requesting a return? Message us on{" "}
-            <Link
+            <WhatsAppButton
               href={whatsappLink(whatsapp.orderSupportMessage, whatsapp.number)}
               className="link-underline text-bronze hover:text-bronze-deep"
             >
               WhatsApp
-            </Link>{" "}
+            </WhatsAppButton>{" "}
             or visit{" "}
             <Link href="/contact" className="link-underline text-bronze hover:text-bronze-deep">
               Client Care
