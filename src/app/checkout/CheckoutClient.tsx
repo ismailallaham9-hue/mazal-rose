@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { OrderSummary } from "@/components/OrderSummary";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useCart } from "@/lib/cart-context";
 import { formatAED } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
@@ -100,17 +101,15 @@ export function CheckoutClient({
           >
             Continue Shopping
           </Link>
-          <a
+          <WhatsAppButton
             href={whatsappLink(
               `Hello MAZAL — a question about my order ${placed.orderNumber}.`,
               whatsapp.number,
             )}
-            target="_blank"
-            rel="noopener noreferrer"
             className="border border-[#25D366] px-8 py-3 text-xs uppercase tracking-[0.18em] text-[#1f8a5b] transition-colors hover:bg-[#25D366]/10"
           >
             Order support on WhatsApp
-          </a>
+          </WhatsAppButton>
         </div>
         <div className="mt-10 border-t border-sand-deep/50 pt-8">
           <p className="text-sm text-ink-soft">Loved your experience?</p>
