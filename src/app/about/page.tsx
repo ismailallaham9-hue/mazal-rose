@@ -96,6 +96,49 @@ export default function AboutPage() {
         </Container>
       </section>
 
+      <section className="bg-cream">
+        <Container className="grid gap-10 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+          <div>
+            <p className="eyebrow">What We Create</p>
+            <h2 className="mt-3 font-serif text-4xl text-ink md:text-5xl">
+              Modest fashion with quiet detail and real wearability
+            </h2>
+            <p className="mt-5 text-ink-soft">
+              MAZAL focuses on refined modest dressing for women who want pieces
+              that feel polished without feeling loud. Our collections include
+              luxury abayas, elegant kaftans, occasion-ready modest dresses and
+              finishing accessories designed for the rhythm of Gulf life.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-3">
+            <article>
+              <h3 className="font-serif text-2xl text-ink">Luxury abayas</h3>
+              <p className="mt-3 text-sm leading-6 text-ink-soft">
+                Open and closed abaya silhouettes are shaped for graceful
+                movement, comfortable coverage and versatile styling from
+                everyday wear to Eid, weddings and evening gatherings.
+              </p>
+            </article>
+            <article>
+              <h3 className="font-serif text-2xl text-ink">Considered fabric</h3>
+              <p className="mt-3 text-sm leading-6 text-ink-soft">
+                We choose premium crepe, satin-touch, linen blend, velvet and
+                embellished textiles for their drape, opacity, softness and
+                ability to hold a refined shape throughout the day.
+              </p>
+            </article>
+            <article>
+              <h3 className="font-serif text-2xl text-ink">UAE service</h3>
+              <p className="mt-3 text-sm leading-6 text-ink-soft">
+                Our team supports shoppers with sizing, styling, delivery and
+                care questions, with service built around customers in Dubai,
+                Abu Dhabi and across the wider GCC.
+              </p>
+            </article>
+          </div>
+        </Container>
+      </section>
+
       {/* Image break */}
       <section className="relative h-[50vh] min-h-[340px] w-full overflow-hidden">
         <Image
