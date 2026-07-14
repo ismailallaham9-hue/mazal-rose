@@ -7,6 +7,7 @@ import { ProductImage } from "./ProductImage";
 import { ProductBadge, Pill } from "./Badge";
 import { Accordion } from "./Accordion";
 import { RichBody, RichText } from "./RichText";
+import { WhatsAppButton } from "./WhatsAppButton";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import { formatAED } from "@/lib/format";
@@ -309,17 +310,15 @@ export function ProductDetailClient({
         </div>
 
         {/* WhatsApp inquiry */}
-        <a
+        <WhatsAppButton
           href={whatsappLink(inquiryMsg, whatsapp.number)}
-          target="_blank"
-          rel="noopener noreferrer"
           className="mt-3 flex items-center justify-center gap-2 border border-[#25D366] py-3 text-xs uppercase tracking-[0.18em] text-[#1f8a5b] transition-colors hover:bg-[#25D366]/10"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
             <path d="M.06 24l1.68-6.13A11.86 11.86 0 0 1 .16 11.9C.16 5.33 5.5 0 12.06 0a11.82 11.82 0 0 1 8.41 3.49 11.82 11.82 0 0 1 3.48 8.42c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 0 1-5.69-1.45L.06 24zM6.6 20.13c1.68.99 3.28 1.59 5.45 1.59 5.45 0 9.89-4.43 9.89-9.88a9.82 9.82 0 0 0-2.9-6.99 9.82 9.82 0 0 0-6.98-2.9c-5.46 0-9.9 4.44-9.9 9.89 0 2.27.6 3.86 1.65 5.55l-.99 3.62 3.78-.99z" />
           </svg>
           Ask about this piece on WhatsApp
-        </a>
+        </WhatsAppButton>
 
         {/* Mini trust row */}
         <div className="mt-6 grid grid-cols-3 gap-3 border-y border-sand-deep/50 py-4 text-center text-[0.68rem] text-ink-soft">
