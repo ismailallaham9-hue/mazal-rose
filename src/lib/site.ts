@@ -54,12 +54,12 @@ export const SITE = {
   },
 } as const;
 
-/** Build a wa.me deep link with a pre-filled message. */
+/** Build a WhatsApp deep link with a pre-filled message. */
 export function whatsappNumber(value: string = SITE.whatsapp.number): string {
   return value.replace(/\D/g, "");
 }
 
 export function whatsappLink(message?: string, number: string = SITE.whatsapp.number): string {
   const text = encodeURIComponent(message ?? SITE.whatsapp.defaultMessage);
-  return `https://wa.me/${whatsappNumber(number)}?text=${text}`;
+  return `https://api.whatsapp.com/send?phone=${whatsappNumber(number)}&text=${text}`;
 }
