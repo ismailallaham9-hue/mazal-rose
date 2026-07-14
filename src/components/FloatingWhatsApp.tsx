@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { SITE, whatsappLink } from "@/lib/site";
 import type { SiteSettings } from "@/lib/store";
 
@@ -31,15 +32,13 @@ export function FloatingWhatsApp({
           </div>
           <div className="flex flex-col p-2">
             {options.map((o) => (
-              <a
+              <WhatsAppButton
                 key={o.label}
                 href={whatsappLink(o.msg, whatsapp.number)}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="rounded-lg px-3 py-2.5 text-sm text-ink transition-colors hover:bg-sand/60"
               >
                 {o.label}
-              </a>
+              </WhatsAppButton>
             ))}
           </div>
         </div>
