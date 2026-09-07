@@ -12,4 +12,3 @@ export function ClearCartOnPaid({ paid }: { paid: boolean }) {
 
   return null;
 }
-

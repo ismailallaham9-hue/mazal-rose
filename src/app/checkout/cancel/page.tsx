@@ -8,4 +8,3 @@ export default async function CheckoutCancelPage({
   const { order } = await searchParams;
   redirect(order ? `/checkout/noon/return?order=${order}` : "/checkout");
 }
-
