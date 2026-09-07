@@ -72,6 +72,10 @@ export function CheckoutClient({
       setError(data.error || "Order could not be placed. Please try again.");
       return;
     }
+    if (typeof data.redirectUrl === "string" && data.redirectUrl) {
+      window.location.href = data.redirectUrl;
+      return;
+    }
     setPlaced(data.order as StoreOrder);
     clear();
   }
@@ -217,8 +221,8 @@ export function CheckoutClient({
                   name="payment"
                   checked={payment === "card"}
                   onChange={() => setPayment("card")}
-                  label="Credit / debit card"
-                  hint="Payment link"
+                  label="Cards / Apple Pay / Google Pay"
+                  hint="Secure Noon checkout"
                 />
                 <Radio
                   name="payment"
@@ -229,8 +233,9 @@ export function CheckoutClient({
               </div>
               {payment !== "cod" && (
                 <p className="mt-3 rounded bg-sand/60 px-4 py-3 text-xs text-ink-soft">
-                  Your order will be saved now and the team will send a secure
-                  payment link. Card details are never stored on this website.
+                  Card payments open a secure Noon checkout page when the
+                  gateway is configured. Card details are never stored on this
+                  website.
                 </p>
               )}
             </Section>
@@ -262,7 +267,11 @@ export function CheckoutClient({
                 disabled={submitting}
                 className="block w-full bg-bronze py-4 text-center text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
               >
-                {submitting ? "Placing Order..." : "Place Order"}
+                {submitting
+                  ? "Placing Order..."
+                  : payment === "card"
+                    ? "Continue to Secure Payment"
+                    : "Place Order"}
               </button>
             </OrderSummary>
           </div>

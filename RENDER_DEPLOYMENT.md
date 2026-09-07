@@ -41,6 +41,13 @@ NODE_ENV=production
 RESEND_API_KEY=<optional, for live email sending>
 RESEND_FROM=MAZAL <care@mazal.ae>
 ADMIN_EMAIL=care@mazal.ae
+NOON_PAYMENTS_MODE=test
+NOON_PAYMENTS_BUSINESS_ID=mazal
+NOON_PAYMENTS_APP_NAME=<application identifier from noon portal>
+NOON_PAYMENTS_APP_KEY=<authentication key from noon portal>
+NOON_PAYMENTS_ORDER_CATEGORY=pay
+NOON_PAYMENTS_CURRENCY=AED
+NOON_PAYMENTS_PAYMENT_ACTION=SALE
 ```
 
 `BLOB_READ_WRITE_TOKEN` is optional. If you set it, the app will use Vercel Blob
@@ -48,6 +55,16 @@ instead of the Render disk for admin data and uploaded media.
 
 Email notifications use Resend when `RESEND_API_KEY` is set. If it is not set,
 the app still records email events in the admin panel as queued/outbox items.
+
+Noon Payments card checkout uses hosted redirection. Your test account email
+lists `mazal` as the Business Identifier and `pay` as the configured order
+category. After logging in to the Noon test portal, create/open an Application
+and copy its Application Identifier and Authentication Key into Render.
+
+```txt
+Portal: https://portal-test.noonpayments.com/
+API: https://api-test.noonpayments.com/payment/v1
+```
 
 ## Important
 

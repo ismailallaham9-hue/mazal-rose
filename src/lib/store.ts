@@ -92,6 +92,8 @@ export type StorePaymentStatus =
   | "failed"
   | "refunded";
 
+export type StorePaymentProvider = "noon" | "manual" | "tabby";
+
 export type StoreOrder = {
   id: string;
   orderNumber: string;
@@ -100,6 +102,9 @@ export type StoreOrder = {
   status: StoreOrderStatus;
   paymentMethod: StorePaymentMethod;
   paymentStatus: StorePaymentStatus;
+  paymentProvider?: StorePaymentProvider;
+  paymentSessionId?: string;
+  paymentUrl?: string;
   deliveryMethod: "standard" | "express";
   customer: {
     email: string;

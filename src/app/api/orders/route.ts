@@ -13,6 +13,10 @@ import {
 } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import { orderEmails, sendEmails } from "@/lib/email";
+import {
+  createNoonCheckout,
+  noonPaymentsConfigured,
+} from "@/lib/noon-payments";
 
 export const runtime = "nodejs";
 
@@ -132,6 +136,7 @@ export async function POST(req: Request) {
         settings: StoreData["settings"];
       }
     | undefined;
+  let redirectUrl: string | undefined;
 
   try {
     saved = await updateStoreData((store) => {
@@ -167,6 +172,12 @@ export async function POST(req: Request) {
         paymentMethod,
         paymentStatus:
           paymentMethod === "cod" ? "pending" : "payment_link_requested",
+        paymentProvider:
+          paymentMethod === "card"
+            ? "noon"
+            : paymentMethod === "tabby"
+              ? "tabby"
+              : "manual",
         deliveryMethod,
         customer: { email, phone, firstName, lastName },
         shipping: { address, city, country },
@@ -218,6 +229,40 @@ export async function POST(req: Request) {
     throw error;
   }
 
+  if (
+    saved.order.paymentMethod === "card" &&
+    saved.order.total > 0 &&
+    noonPaymentsConfigured()
+  ) {
+    try {
+      const checkout = await createNoonCheckout({
+        order: saved.order,
+        baseUrl: saved.settings.url,
+      });
+      redirectUrl = checkout.paymentUrl;
+      const gatewayOrder = await updateStoreData((store) => {
+        const orders = store.orders.map((order) =>
+          order.id === saved!.order.id
+            ? {
+                ...order,
+                paymentProvider: "noon" as const,
+                paymentSessionId: checkout.noonOrderId,
+                paymentUrl: checkout.paymentUrl,
+                updatedAt: new Date().toISOString(),
+              }
+            : order,
+        );
+        return {
+          store: { ...store, orders },
+          result: orders.find((order) => order.id === saved!.order.id) ?? saved!.order,
+        };
+      });
+      saved = { ...saved, order: gatewayOrder };
+    } catch (error) {
+      console.error("Noon Payments checkout failed", error);
+    }
+  }
+
   const emailEvents = await sendEmails(
     saved.settings,
     orderEmails(saved.settings, saved.order),
@@ -230,5 +275,5 @@ export async function POST(req: Request) {
   }
   revalidateStorefront({ products: saved.products, articles: saved.articles });
 
-  return NextResponse.json({ order: saved.order });
+  return NextResponse.json({ order: saved.order, redirectUrl });
 }
