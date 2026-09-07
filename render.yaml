@@ -26,6 +26,21 @@ services:
         value: MAZAL <care@mazal.ae>
       - key: ADMIN_EMAIL
         value: care@mazal.ae
+      # Noon Payments hosted checkout. Keep the app key secret in Render.
+      - key: NOON_PAYMENTS_MODE
+        value: test
+      - key: NOON_PAYMENTS_BUSINESS_ID
+        value: mazal
+      - key: NOON_PAYMENTS_APP_NAME
+        value: mazal_web
+      - key: NOON_PAYMENTS_APP_KEY
+        sync: false
+      - key: NOON_PAYMENTS_ORDER_CATEGORY
+        value: pay
+      - key: NOON_PAYMENTS_CURRENCY
+        value: AED
+      - key: NOON_PAYMENTS_PAYMENT_ACTION
+        value: SALE
     disk:
       name: mazal-data
       mountPath: /var/data

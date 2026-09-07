@@ -55,6 +55,35 @@ Products without an image render an elegant sand "atelier" placeholder.
 
 ---
 
+## 💳 Online payments
+
+Card payments use Noon Payments hosted checkout when these environment
+variables are set:
+
+```txt
+NOON_PAYMENTS_MODE=test
+NOON_PAYMENTS_BUSINESS_ID=mazal
+NOON_PAYMENTS_APP_NAME=<application identifier from noon portal>
+NOON_PAYMENTS_APP_KEY=<authentication key from noon portal>
+NOON_PAYMENTS_ORDER_CATEGORY=pay
+NOON_PAYMENTS_CURRENCY=AED
+NOON_PAYMENTS_PAYMENT_ACTION=SALE
+```
+
+For the test portal, create or open the application under the Noon Payments
+Management/Applications area, then copy the Application Identifier and
+Authentication Key into the environment values above. The test endpoint defaults
+to:
+
+```txt
+https://api-test.noonpayments.com/payment/v1
+```
+
+Cash on delivery still works without Noon keys. Tabby remains available as a
+manual payment-link flow until Tabby merchant API credentials are connected.
+
+---
+
 ## 🗂️ Structure
 
 ```

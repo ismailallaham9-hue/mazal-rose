@@ -32,6 +32,14 @@ type ButtonAsButton = CommonProps &
 
 type ButtonAsLink = CommonProps & { href: string };
 
+const buttonOnlyKeys = new Set(["variant", "size", "className", "children", "href"]);
+
+function buttonAttributes(props: ButtonAsButton) {
+  return Object.fromEntries(
+    Object.entries(props).filter(([key]) => !buttonOnlyKeys.has(key)),
+  ) as React.ButtonHTMLAttributes<HTMLButtonElement>;
+}
+
 export function Button(props: ButtonAsButton | ButtonAsLink) {
   const { variant = "primary", size = "md", className, children } = props;
   const classes = clsx(base, variants[variant], sizes[size], className);
@@ -44,9 +52,8 @@ export function Button(props: ButtonAsButton | ButtonAsLink) {
     );
   }
 
-  const { href: _href, ...rest } = props as ButtonAsButton;
   return (
-    <button className={classes} {...rest}>
+    <button className={classes} {...buttonAttributes(props as ButtonAsButton)}>
       {children}
     </button>
   );
