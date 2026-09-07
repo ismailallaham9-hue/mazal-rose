@@ -19,6 +19,14 @@ type AsLink = CommonProps & { href: string };
 type AsButton = CommonProps &
   React.ButtonHTMLAttributes<HTMLButtonElement> & { href?: undefined };
 
+const buttonOnlyKeys = new Set(["tone", "className", "children", "href"]);
+
+function buttonAttributes(props: AsButton) {
+  return Object.fromEntries(
+    Object.entries(props).filter(([key]) => !buttonOnlyKeys.has(key)),
+  ) as React.ButtonHTMLAttributes<HTMLButtonElement>;
+}
+
 function ArrowBadge() {
   return (
     <span className="btn-pill-badge" aria-hidden>
@@ -58,15 +66,8 @@ export function PillButton(props: AsLink | AsButton) {
     );
   }
 
-  const {
-    href: _href,
-    tone: _tone,
-    children: _children,
-    className: _className,
-    ...rest
-  } = props as AsButton & { tone?: "ink" | "cream"; href?: string };
   return (
-    <button className={classes} {...rest}>
+    <button className={classes} {...buttonAttributes(props as AsButton)}>
       <span>{children}</span>
       <ArrowBadge />
     </button>
