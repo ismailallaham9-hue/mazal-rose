@@ -48,6 +48,7 @@ NOON_PAYMENTS_APP_KEY=<authentication key from noon portal>
 NOON_PAYMENTS_ORDER_CATEGORY=pay
 NOON_PAYMENTS_CURRENCY=AED
 NOON_PAYMENTS_PAYMENT_ACTION=SALE
+NOON_PAYMENTS_CHANNEL=WEB
 ```
 
 `BLOB_READ_WRITE_TOKEN` is optional. If you set it, the app will use Vercel Blob
