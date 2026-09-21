@@ -88,6 +88,38 @@ function reduceProductStock(product: Product, items: StoreOrder["items"]): Produ
   return { ...product, stock: Math.max(0, product.stock - ordered) };
 }
 
+function restoreProductStock(product: Product, items: StoreOrder["items"]): Product {
+  const ordered = items
+    .filter((item) => item.productId === product.id)
+    .reduce((sum, item) => sum + item.quantity, 0);
+  if (!ordered) return product;
+
+  if (product.variantStock && Object.keys(product.variantStock).length) {
+    const variantStockMap = { ...product.variantStock };
+    for (const item of items.filter((entry) => entry.productId === product.id)) {
+      const key = variantKey(item.size, item.color);
+      variantStockMap[key] = (variantStockMap[key] ?? 0) + item.quantity;
+    }
+    return { ...product, variantStock: variantStockMap, stock: totalStock({ ...product, variantStock: variantStockMap }) };
+  }
+
+  if (typeof product.stock !== "number") return product;
+  return { ...product, stock: product.stock + ordered };
+}
+
+async function rollbackUnpaidCardOrder(order: StoreOrder) {
+  await updateStoreData((store) => ({
+    store: {
+      ...store,
+      products: store.products.map((product) =>
+        restoreProductStock(product, order.items),
+      ),
+      orders: store.orders.filter((entry) => entry.id !== order.id),
+    },
+    result: null,
+  }));
+}
+
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const rawItems = Array.isArray(body.items) ? (body.items as IncomingItem[]) : [];
@@ -229,11 +261,15 @@ export async function POST(req: Request) {
     throw error;
   }
 
-  if (
-    saved.order.paymentMethod === "card" &&
-    saved.order.total > 0 &&
-    noonPaymentsConfigured()
-  ) {
+  if (saved.order.paymentMethod === "card" && saved.order.total > 0) {
+    if (!noonPaymentsConfigured()) {
+      await rollbackUnpaidCardOrder(saved.order);
+      return NextResponse.json(
+        { error: "Card checkout is not available right now. Please try again or choose cash on delivery." },
+        { status: 503 },
+      );
+    }
+
     try {
       const checkout = await createNoonCheckout({
         order: saved.order,
@@ -260,6 +296,11 @@ export async function POST(req: Request) {
       saved = { ...saved, order: gatewayOrder };
     } catch (error) {
       console.error("Noon Payments checkout failed", error);
+      await rollbackUnpaidCardOrder(saved.order);
+      return NextResponse.json(
+        { error: "Secure card checkout could not be opened. Please try again or choose cash on delivery." },
+        { status: 502 },
+      );
     }
   }
 
