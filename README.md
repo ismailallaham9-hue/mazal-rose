@@ -68,6 +68,7 @@ NOON_PAYMENTS_APP_KEY=<authentication key from noon portal>
 NOON_PAYMENTS_ORDER_CATEGORY=pay
 NOON_PAYMENTS_CURRENCY=AED
 NOON_PAYMENTS_PAYMENT_ACTION=SALE
+NOON_PAYMENTS_CHANNEL=WEB
 ```
 
 For the test portal, create or open the application under the Noon Payments
