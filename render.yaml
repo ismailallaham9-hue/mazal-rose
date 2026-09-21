@@ -41,6 +41,8 @@ services:
         value: AED
       - key: NOON_PAYMENTS_PAYMENT_ACTION
         value: SALE
+      - key: NOON_PAYMENTS_CHANNEL
+        value: WEB
     disk:
       name: mazal-data
       mountPath: /var/data
