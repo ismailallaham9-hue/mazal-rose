@@ -7,6 +7,9 @@ import {
   noonPaymentsConfigured,
   paymentStatusFromNoon,
 } from "@/lib/noon-payments";
+import { orderEmails, sendEmails } from "@/lib/email";
+import { applyOrderInventoryDeduction } from "@/lib/inventory";
+import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import {
   getFreshStoreData,
   updateStoreData,
@@ -27,7 +30,7 @@ async function refreshOrderFromNoon(order: StoreOrder) {
   try {
     const noonOrder = await getNoonOrder(order.paymentSessionId);
     const paymentStatus = paymentStatusFromNoon(noonOrder);
-    return updateStoreData((store) => {
+    const updated = await updateStoreData((store) => {
       const orders = store.orders.map((entry) =>
         entry.id === order.id
           ? {
@@ -43,6 +46,35 @@ async function refreshOrderFromNoon(order: StoreOrder) {
         result: orders.find((entry) => entry.id === order.id) ?? order,
       };
     });
+    if (paymentStatus !== "paid") return updated;
+
+    const eventId = `noon:${order.paymentSessionId}:${String(
+      noonOrder.result?.order?.status ?? "paid",
+    )}`;
+    const adjustment = await applyOrderInventoryDeduction({
+      orderId: order.id,
+      paymentEventId: eventId,
+      reason: "noon_paid_return_verification",
+      markPaid: true,
+    });
+    if (adjustment.changed && adjustment.order) {
+      const latestStore = await getFreshStoreData();
+      const emailEvents = await sendEmails(
+        latestStore.settings,
+        orderEmails(latestStore.settings, adjustment.order),
+      );
+      if (emailEvents.length) {
+        await updateStoreData((store) => ({
+          store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
+          result: null,
+        }));
+      }
+      revalidateStorefront({
+        products: latestStore.products,
+        articles: latestStore.articles,
+      });
+    }
+    return adjustment.order ?? updated;
   } catch (error) {
     console.error("Unable to refresh Noon payment status", error);
     return order;

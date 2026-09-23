@@ -138,6 +138,10 @@ export type StoreOrder = {
   trackingUrl?: string;
   internalNotes?: string;
   customerNotifiedAt?: string;
+  inventoryAdjustedAt?: string;
+  inventoryAdjustmentReason?: string;
+  inventoryPaymentEventId?: string;
+  inventoryConflictAt?: string;
 };
 
 export type StoreInquiry = {
