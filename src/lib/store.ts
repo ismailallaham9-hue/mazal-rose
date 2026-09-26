@@ -83,7 +83,7 @@ export type StoreOrderStatus =
   | "delivered"
   | "cancelled";
 
-export type StorePaymentMethod = "cod" | "card" | "tabby";
+export type StorePaymentMethod = "card" | "tabby";
 
 export type StorePaymentStatus =
   | "pending"

@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Product } from "@/lib/products";
-import {
-  deductOrderInventoryFromProducts,
-  InventoryError,
-  stockError,
-} from "@/lib/inventory";
+import { stockError } from "@/lib/inventory";
 import {
   type StoreData,
   type StoreOrder,
@@ -12,7 +8,6 @@ import {
   updateStoreData,
 } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
-import { orderEmails, sendEmails } from "@/lib/email";
 import {
   createNoonCheckout,
   noonPaymentsConfigured,
@@ -132,14 +127,21 @@ export async function POST(req: Request) {
           ? 30
           : 0;
       const total = Math.max(0, subtotal - discount + deliveryFee);
+      const requestedPaymentMethod = clean(body.paymentMethod);
+      if (requestedPaymentMethod === "cod") {
+        throw new CheckoutError(
+          "Cash on delivery is no longer available. Please choose card payment or Tabby.",
+          400,
+        );
+      }
       const paymentMethod = (
-        ["cod", "card", "tabby"].includes(clean(body.paymentMethod))
-          ? clean(body.paymentMethod)
-          : "cod"
+        ["card", "tabby"].includes(requestedPaymentMethod)
+          ? requestedPaymentMethod
+          : "card"
       ) as StorePaymentMethod;
       if (paymentMethod === "tabby") {
         throw new CheckoutError(
-          "Tabby checkout is not connected yet. Please choose card payment or cash on delivery.",
+          "Tabby checkout is not connected yet. Please choose card payment.",
           503,
         );
       }
@@ -152,12 +154,8 @@ export async function POST(req: Request) {
         updatedAt: now,
         status: "new",
         paymentMethod,
-        paymentStatus:
-          paymentMethod === "cod" ? "pending" : "payment_link_requested",
-        paymentProvider:
-          paymentMethod === "card"
-            ? "noon"
-            : "manual",
+        paymentStatus: "payment_link_requested",
+        paymentProvider: paymentMethod === "card" ? "noon" : "tabby",
         deliveryMethod,
         customer: { email, phone, firstName, lastName },
         shipping: { address, city, country },
@@ -188,36 +186,18 @@ export async function POST(req: Request) {
             ]
           : store.subscribers;
 
-      const resultOrder =
-        paymentMethod === "cod"
-          ? {
-              ...order,
-              status: "confirmed" as const,
-              inventoryAdjustedAt: now,
-              inventoryAdjustmentReason: "cod_order_created",
-              inventoryPaymentEventId: `cod:${order.id}`,
-            }
-          : order;
-      const products =
-        paymentMethod === "cod"
-          ? deductOrderInventoryFromProducts(store.products, resultOrder)
-          : store.products;
       return {
         store: {
           ...store,
-          products,
-          orders: [resultOrder, ...store.orders],
+          orders: [order, ...store.orders],
           subscribers,
         },
-        result: { order: resultOrder, products, articles: store.articles, settings: store.settings },
+        result: { order, products: store.products, articles: store.articles, settings: store.settings },
       };
     });
   } catch (error) {
     if (error instanceof CheckoutError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-    if (error instanceof InventoryError) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
     }
     throw error;
   }
@@ -226,7 +206,7 @@ export async function POST(req: Request) {
     if (!noonPaymentsConfigured()) {
       await removeUnpaidPaymentOrder(saved.order);
       return NextResponse.json(
-        { error: "Card checkout is not available right now. Please try again or choose cash on delivery." },
+        { error: "Card checkout is not available right now. Please try again later." },
         { status: 503 },
       );
     }
@@ -259,24 +239,12 @@ export async function POST(req: Request) {
       console.error("Noon Payments checkout failed", error);
       await removeUnpaidPaymentOrder(saved.order);
       return NextResponse.json(
-        { error: "Secure card checkout could not be opened. Please try again or choose cash on delivery." },
+        { error: "Secure card checkout could not be opened. Please try again later." },
         { status: 502 },
       );
     }
   }
 
-  if (saved.order.inventoryAdjustedAt || saved.order.paymentMethod === "cod") {
-    const emailEvents = await sendEmails(
-      saved.settings,
-      orderEmails(saved.settings, saved.order),
-    );
-    if (emailEvents.length) {
-      await updateStoreData((store) => ({
-        store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
-        result: null,
-      }));
-    }
-  }
   revalidateStorefront({ products: saved.products, articles: saved.articles });
 
   return NextResponse.json({ order: saved.order, redirectUrl });

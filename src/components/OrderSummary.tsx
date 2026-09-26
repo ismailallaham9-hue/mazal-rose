@@ -76,7 +76,7 @@ export function OrderSummary({
       {children && <div className="mt-6">{children}</div>}
 
       <p className="mt-4 text-center text-[0.7rem] text-ink-soft">
-        Secure encrypted checkout · Cards · Tabby · Cash on delivery
+        Secure encrypted checkout · Cards · Tabby
       </p>
     </div>
   );
