@@ -11,7 +11,7 @@ import { formatAED } from "@/lib/format";
 import { SITE, whatsappLink } from "@/lib/site";
 import type { SiteSettings, StoreOrder } from "@/lib/store";
 
-type Payment = "cod" | "card" | "tabby";
+type Payment = "card" | "tabby";
 
 export function CheckoutClient({
   settings,
@@ -21,7 +21,7 @@ export function CheckoutClient({
   const whatsapp = settings?.whatsapp ?? SITE.whatsapp;
   const googleReviewUrl = settings?.googleReviewUrl ?? SITE.googleReviewUrl;
   const { items, promoCode, clear } = useCart();
-  const [payment, setPayment] = useState<Payment>("cod");
+  const [payment, setPayment] = useState<Payment>("card");
   const [placed, setPlaced] = useState<StoreOrder | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -212,13 +212,6 @@ export function CheckoutClient({
               <div className="space-y-3">
                 <Radio
                   name="payment"
-                  checked={payment === "cod"}
-                  onChange={() => setPayment("cod")}
-                  label="Cash on delivery"
-                  hint="Pay when it arrives"
-                />
-                <Radio
-                  name="payment"
                   checked={payment === "card"}
                   onChange={() => setPayment("card")}
                   label="Cards / Apple Pay / Google Pay"
@@ -231,7 +224,7 @@ export function CheckoutClient({
                   label="Tabby — 4 interest-free payments"
                 />
               </div>
-              {payment !== "cod" && (
+              {payment === "card" && (
                 <p className="mt-3 rounded bg-sand/60 px-4 py-3 text-xs text-ink-soft">
                   Card payments open a secure Noon checkout page when the
                   gateway is configured. Card details are never stored on this

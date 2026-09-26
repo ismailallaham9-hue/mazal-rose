@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  totalStock,
-  variantKey,
-  variantStock,
-  type Product,
-} from "@/lib/products";
+import type { Product } from "@/lib/products";
+import { stockError } from "@/lib/inventory";
 import {
   type StoreData,
   type StoreOrder,
@@ -12,7 +8,6 @@ import {
   updateStoreData,
 } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
-import { orderEmails, sendEmails } from "@/lib/email";
 import {
   createNoonCheckout,
   noonPaymentsConfigured,
@@ -54,66 +49,10 @@ function orderNumber(existing: StoreData["orders"]) {
   return `MZL-${day}-${suffix}`;
 }
 
-function stockError(products: Product[], items: StoreOrder["items"]) {
-  for (const item of items) {
-    const product = products.find((entry) => entry.id === item.productId);
-    if (!product) return `${item.name} is no longer available.`;
-    if (variantStock(product, item.size, item.color) < item.quantity) {
-      return `${item.name} (${item.size} / ${item.color}) has only ${variantStock(
-        product,
-        item.size,
-        item.color,
-      )} left.`;
-    }
-  }
-  return null;
-}
-
-function reduceProductStock(product: Product, items: StoreOrder["items"]): Product {
-  const ordered = items
-    .filter((item) => item.productId === product.id)
-    .reduce((sum, item) => sum + item.quantity, 0);
-  if (!ordered) return product;
-
-  if (product.variantStock && Object.keys(product.variantStock).length) {
-    const variantStockMap = { ...product.variantStock };
-    for (const item of items.filter((entry) => entry.productId === product.id)) {
-      const key = variantKey(item.size, item.color);
-      variantStockMap[key] = Math.max(0, (variantStockMap[key] ?? 0) - item.quantity);
-    }
-    return { ...product, variantStock: variantStockMap, stock: totalStock({ ...product, variantStock: variantStockMap }) };
-  }
-
-  if (typeof product.stock !== "number") return product;
-  return { ...product, stock: Math.max(0, product.stock - ordered) };
-}
-
-function restoreProductStock(product: Product, items: StoreOrder["items"]): Product {
-  const ordered = items
-    .filter((item) => item.productId === product.id)
-    .reduce((sum, item) => sum + item.quantity, 0);
-  if (!ordered) return product;
-
-  if (product.variantStock && Object.keys(product.variantStock).length) {
-    const variantStockMap = { ...product.variantStock };
-    for (const item of items.filter((entry) => entry.productId === product.id)) {
-      const key = variantKey(item.size, item.color);
-      variantStockMap[key] = (variantStockMap[key] ?? 0) + item.quantity;
-    }
-    return { ...product, variantStock: variantStockMap, stock: totalStock({ ...product, variantStock: variantStockMap }) };
-  }
-
-  if (typeof product.stock !== "number") return product;
-  return { ...product, stock: product.stock + ordered };
-}
-
-async function rollbackUnpaidCardOrder(order: StoreOrder) {
+async function removeUnpaidPaymentOrder(order: StoreOrder) {
   await updateStoreData((store) => ({
     store: {
       ...store,
-      products: store.products.map((product) =>
-        restoreProductStock(product, order.items),
-      ),
       orders: store.orders.filter((entry) => entry.id !== order.id),
     },
     result: null,
@@ -188,11 +127,24 @@ export async function POST(req: Request) {
           ? 30
           : 0;
       const total = Math.max(0, subtotal - discount + deliveryFee);
+      const requestedPaymentMethod = clean(body.paymentMethod);
+      if (requestedPaymentMethod === "cod") {
+        throw new CheckoutError(
+          "Cash on delivery is no longer available. Please choose card payment or Tabby.",
+          400,
+        );
+      }
       const paymentMethod = (
-        ["cod", "card", "tabby"].includes(clean(body.paymentMethod))
-          ? clean(body.paymentMethod)
-          : "cod"
+        ["card", "tabby"].includes(requestedPaymentMethod)
+          ? requestedPaymentMethod
+          : "card"
       ) as StorePaymentMethod;
+      if (paymentMethod === "tabby") {
+        throw new CheckoutError(
+          "Tabby checkout is not connected yet. Please choose card payment.",
+          503,
+        );
+      }
       const now = new Date().toISOString();
 
       const order: StoreOrder = {
@@ -202,14 +154,8 @@ export async function POST(req: Request) {
         updatedAt: now,
         status: "new",
         paymentMethod,
-        paymentStatus:
-          paymentMethod === "cod" ? "pending" : "payment_link_requested",
-        paymentProvider:
-          paymentMethod === "card"
-            ? "noon"
-            : paymentMethod === "tabby"
-              ? "tabby"
-              : "manual",
+        paymentStatus: "payment_link_requested",
+        paymentProvider: paymentMethod === "card" ? "noon" : "tabby",
         deliveryMethod,
         customer: { email, phone, firstName, lastName },
         shipping: { address, city, country },
@@ -225,10 +171,6 @@ export async function POST(req: Request) {
         trackingUrl: "",
         internalNotes: "",
       };
-
-      const products = store.products.map((product) =>
-        reduceProductStock(product, items),
-      );
 
       const subscribers =
         clean(body.newsletterOptIn) === "true" &&
@@ -247,11 +189,10 @@ export async function POST(req: Request) {
       return {
         store: {
           ...store,
-          products,
           orders: [order, ...store.orders],
           subscribers,
         },
-        result: { order, products, articles: store.articles, settings: store.settings },
+        result: { order, products: store.products, articles: store.articles, settings: store.settings },
       };
     });
   } catch (error) {
@@ -263,9 +204,9 @@ export async function POST(req: Request) {
 
   if (saved.order.paymentMethod === "card" && saved.order.total > 0) {
     if (!noonPaymentsConfigured()) {
-      await rollbackUnpaidCardOrder(saved.order);
+      await removeUnpaidPaymentOrder(saved.order);
       return NextResponse.json(
-        { error: "Card checkout is not available right now. Please try again or choose cash on delivery." },
+        { error: "Card checkout is not available right now. Please try again later." },
         { status: 503 },
       );
     }
@@ -296,24 +237,14 @@ export async function POST(req: Request) {
       saved = { ...saved, order: gatewayOrder };
     } catch (error) {
       console.error("Noon Payments checkout failed", error);
-      await rollbackUnpaidCardOrder(saved.order);
+      await removeUnpaidPaymentOrder(saved.order);
       return NextResponse.json(
-        { error: "Secure card checkout could not be opened. Please try again or choose cash on delivery." },
+        { error: "Secure card checkout could not be opened. Please try again later." },
         { status: 502 },
       );
     }
   }
 
-  const emailEvents = await sendEmails(
-    saved.settings,
-    orderEmails(saved.settings, saved.order),
-  );
-  if (emailEvents.length) {
-    await updateStoreData((store) => ({
-      store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
-      result: null,
-    }));
-  }
   revalidateStorefront({ products: saved.products, articles: saved.articles });
 
   return NextResponse.json({ order: saved.order, redirectUrl });

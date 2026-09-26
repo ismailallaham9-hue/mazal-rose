@@ -83,7 +83,7 @@ export type StoreOrderStatus =
   | "delivered"
   | "cancelled";
 
-export type StorePaymentMethod = "cod" | "card" | "tabby";
+export type StorePaymentMethod = "card" | "tabby";
 
 export type StorePaymentStatus =
   | "pending"
@@ -138,6 +138,10 @@ export type StoreOrder = {
   trackingUrl?: string;
   internalNotes?: string;
   customerNotifiedAt?: string;
+  inventoryAdjustedAt?: string;
+  inventoryAdjustmentReason?: string;
+  inventoryPaymentEventId?: string;
+  inventoryConflictAt?: string;
 };
 
 export type StoreInquiry = {

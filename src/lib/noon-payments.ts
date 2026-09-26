@@ -169,7 +169,7 @@ export async function createNoonCheckout({
       name: orderName(order),
       reference: order.orderNumber,
       category: configuredCategory,
-      channel: process.env.NOON_PAYMENTS_CHANNEL || "WEB",
+      channel: "WEB",
       description: orderDescription(order),
       items: order.items.map((item) => ({
         name: item.name.slice(0, 100),
