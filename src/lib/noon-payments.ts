@@ -87,7 +87,8 @@ function authorizationHeader() {
   const appName = requiredEnv("NOON_PAYMENTS_APP_NAME");
   const appKey = requiredEnv("NOON_PAYMENTS_APP_KEY");
   const encoded = Buffer.from(`${businessId}.${appName}:${appKey}`, "utf8").toString("base64");
-  return `${process.env.NOON_PAYMENTS_AUTH_SCHEME || "Key"} ${encoded}`;
+  const defaultScheme = mode() === "live" ? "Key_Live" : "Key_Test";
+  return `${process.env.NOON_PAYMENTS_AUTH_SCHEME || defaultScheme} ${encoded}`;
 }
 
 function absoluteBaseUrl(baseUrl: string) {
@@ -122,14 +123,22 @@ function noonLocale(locale?: string) {
 async function noonFetch(path: string, init?: RequestInit) {
   const response = await fetch(`${endpoint()}${path}`, {
     ...init,
+    cache: "no-store",
+    signal: init?.signal ?? AbortSignal.timeout(15_000),
     headers: {
       Authorization: authorizationHeader(),
+      Accept: "application/json",
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
   });
   const text = await response.text();
-  const data = text ? (JSON.parse(text) as NoonPaymentResponse) : null;
+  let data: NoonPaymentResponse | null = null;
+  try {
+    data = text ? (JSON.parse(text) as NoonPaymentResponse) : null;
+  } catch {
+    // Keep non-JSON gateway errors out of the customer-facing response.
+  }
   if (!data) {
     throw new Error(`Noon Payments request failed: HTTP ${response.status}`);
   }
