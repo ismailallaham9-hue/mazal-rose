@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:meta": "node scripts/meta-events-smoke.mjs",
     "inventory:report": "node scripts/inventory-reconciliation.mjs"
   },
   "dependencies": {

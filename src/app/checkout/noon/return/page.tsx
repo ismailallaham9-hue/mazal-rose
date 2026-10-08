@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
+import { MetaPurchaseEvent } from "@/components/MetaPurchaseEvent";
 import { formatAED } from "@/lib/format";
 import {
   getNoonOrder,
@@ -9,6 +10,12 @@ import {
 } from "@/lib/noon-payments";
 import { orderEmails, sendEmails } from "@/lib/email";
 import { applyOrderInventoryDeduction } from "@/lib/inventory";
+import {
+  metaOrderPayload,
+  metaOrderUserData,
+  metaPurchaseEventId,
+  sendMetaCapiEvent,
+} from "@/lib/meta-capi";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import {
   getFreshStoreData,
@@ -24,8 +31,60 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-async function refreshOrderFromNoon(order: StoreOrder) {
-  if (!order.paymentSessionId || !noonPaymentsConfigured()) return order;
+type RefreshedOrder = {
+  order: StoreOrder;
+  purchaseEventId?: string;
+};
+
+async function trackMetaPurchaseOnce(order: StoreOrder): Promise<RefreshedOrder> {
+  const eventId = metaPurchaseEventId(order);
+  if (order.metaPurchaseTrackedAt && order.metaPurchaseEventId === eventId) {
+    return { order };
+  }
+
+  const payload = metaOrderPayload(order);
+  const result = await sendMetaCapiEvent({
+    eventName: "Purchase",
+    eventId,
+    payload,
+    userData: metaOrderUserData(order),
+  });
+
+  const trackedAt = result.sent ? new Date().toISOString() : undefined;
+  const updated = await updateStoreData((store) => {
+    const orders = store.orders.map((entry) =>
+      entry.id === order.id
+        ? {
+            ...entry,
+            metaPurchaseEventId: eventId,
+            ...(trackedAt
+              ? {
+                  metaPurchaseTrackedAt: trackedAt,
+                  metaPurchaseTrackingError: "",
+                }
+              : {
+                  metaPurchaseTrackingError: JSON.stringify(
+                    result.error ?? "Meta CAPI skipped or not sent",
+                  ).slice(0, 500),
+                }),
+            updatedAt: new Date().toISOString(),
+          }
+        : entry,
+    );
+    return {
+      store: { ...store, orders },
+      result: orders.find((entry) => entry.id === order.id) ?? order,
+    };
+  });
+
+  return {
+    order: updated,
+    purchaseEventId: result.sent ? eventId : undefined,
+  };
+}
+
+async function refreshOrderFromNoon(order: StoreOrder): Promise<RefreshedOrder> {
+  if (!order.paymentSessionId || !noonPaymentsConfigured()) return { order };
 
   try {
     const noonOrder = await getNoonOrder(order.paymentSessionId);
@@ -46,7 +105,7 @@ async function refreshOrderFromNoon(order: StoreOrder) {
         result: orders.find((entry) => entry.id === order.id) ?? order,
       };
     });
-    if (paymentStatus !== "paid") return updated;
+    if (paymentStatus !== "paid") return { order: updated };
 
     const eventId = `noon:${order.paymentSessionId}:${String(
       noonOrder.result?.order?.status ?? "paid",
@@ -74,10 +133,11 @@ async function refreshOrderFromNoon(order: StoreOrder) {
         articles: latestStore.articles,
       });
     }
-    return adjustment.order ?? updated;
+    const paidOrder = adjustment.order ?? updated;
+    return trackMetaPurchaseOnce(paidOrder);
   } catch (error) {
     console.error("Unable to refresh Noon payment status", error);
-    return order;
+    return { order };
   }
 }
 
@@ -89,13 +149,24 @@ export default async function NoonReturnPage({
   const { order: orderId } = await searchParams;
   const store = await getFreshStoreData();
   const found = store.orders.find((entry) => entry.id === orderId);
-  const order = found ? await refreshOrderFromNoon(found) : undefined;
+  const refreshed = found ? await refreshOrderFromNoon(found) : undefined;
+  const order = refreshed?.order;
   const paid = order?.paymentStatus === "paid";
   const failed = order?.paymentStatus === "failed";
+  const metaPayload = paid && order ? metaOrderPayload(order) : null;
 
   return (
     <Container className="flex flex-col items-center py-24 text-center">
       <ClearCartOnPaid paid={paid} />
+      {paid && refreshed?.purchaseEventId && metaPayload && (
+        <MetaPurchaseEvent
+          eventId={refreshed.purchaseEventId}
+          value={metaPayload.value ?? 0}
+          contents={metaPayload.contents}
+          contentIds={metaPayload.content_ids ?? []}
+          numItems={metaPayload.num_items ?? 0}
+        />
+      )}
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-bronze/15 text-bronze">
         {paid ? (
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>

@@ -11,6 +11,8 @@ import { WhatsAppButton } from "./WhatsAppButton";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import { formatAED } from "@/lib/format";
+import { META_CURRENCY } from "@/lib/meta-events";
+import { trackMetaEvent } from "@/lib/meta-browser";
 import { SITE, whatsappLink } from "@/lib/site";
 import type { SiteSettings } from "@/lib/store";
 import {
@@ -72,6 +74,17 @@ export function ProductDetailClient({
       /* ignore */
     }
   }, [product.id]);
+
+  useEffect(() => {
+    trackMetaEvent("ViewContent", {
+      value: product.price,
+      currency: META_CURRENCY,
+      content_type: "product",
+      content_ids: [product.id],
+      content_name: product.name,
+      contents: [{ id: product.id, quantity: 1, item_price: product.price }],
+    });
+  }, [product.id, product.name, product.price]);
 
   function addToCart() {
     if (!size) {
