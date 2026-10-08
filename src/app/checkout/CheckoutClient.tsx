@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -8,6 +8,8 @@ import { OrderSummary } from "@/components/OrderSummary";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useCart } from "@/lib/cart-context";
 import { formatAED } from "@/lib/format";
+import { META_CURRENCY } from "@/lib/meta-events";
+import { trackMetaEvent } from "@/lib/meta-browser";
 import { SITE, whatsappLink } from "@/lib/site";
 import type { SiteSettings, StoreOrder } from "@/lib/store";
 
@@ -25,6 +27,24 @@ export function CheckoutClient({
   const [placed, setPlaced] = useState<StoreOrder | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const checkoutTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (checkoutTrackedRef.current || items.length === 0) return;
+    checkoutTrackedRef.current = true;
+    trackMetaEvent("InitiateCheckout", {
+      value: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      currency: META_CURRENCY,
+      content_type: "product",
+      content_ids: items.map((item) => item.productId),
+      contents: items.map((item) => ({
+        id: item.productId,
+        quantity: item.quantity,
+        item_price: item.price,
+      })),
+      num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+    });
+  }, [items]);
 
   async function placeOrder(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

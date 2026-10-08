@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { AnnouncementMarquee } from "@/components/AnnouncementMarquee";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
+import { MetaPixel } from "@/components/MetaPixel";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { VeilIntro } from "@/components/VeilIntro";
 import { getFreshStoreData } from "@/lib/store";
@@ -126,6 +127,7 @@ export default async function RootLayout({
             gtag('config', 'G-7RP6QP5FWM');
           `}
         </Script>
+        <MetaPixel />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(orgJsonLd) }}

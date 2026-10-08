@@ -142,6 +142,9 @@ export type StoreOrder = {
   inventoryAdjustmentReason?: string;
   inventoryPaymentEventId?: string;
   inventoryConflictAt?: string;
+  metaPurchaseEventId?: string;
+  metaPurchaseTrackedAt?: string;
+  metaPurchaseTrackingError?: string;
 };
 
 export type StoreInquiry = {

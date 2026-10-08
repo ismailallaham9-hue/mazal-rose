@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 import { SITE } from "@/lib/site";
+import { META_CURRENCY } from "@/lib/meta-events";
+import { trackMetaEvent } from "@/lib/meta-browser";
 import type { SiteSettings } from "@/lib/store";
 
 /**
@@ -167,8 +169,18 @@ export function CartProvider({
     settings?.freeShippingThreshold ?? SITE.freeShippingThreshold;
 
   const addItem = useCallback((item: AddPayload) => {
+    const quantity = item.quantity ?? 1;
     dispatch({ type: "add", payload: item });
     setIsOpen(true);
+    trackMetaEvent("AddToCart", {
+      value: item.price * quantity,
+      currency: META_CURRENCY,
+      content_type: "product",
+      content_ids: [item.productId],
+      content_name: item.name,
+      contents: [{ id: item.productId, quantity, item_price: item.price }],
+      num_items: quantity,
+    });
   }, []);
 
   const removeItem = useCallback(
