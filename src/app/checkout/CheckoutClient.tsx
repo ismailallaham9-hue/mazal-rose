@@ -13,8 +13,6 @@ import { trackMetaEvent } from "@/lib/meta-browser";
 import { SITE, whatsappLink } from "@/lib/site";
 import type { SiteSettings, StoreOrder } from "@/lib/store";
 
-type Payment = "card" | "tabby";
-
 export function CheckoutClient({
   settings,
 }: {
@@ -23,7 +21,6 @@ export function CheckoutClient({
   const whatsapp = settings?.whatsapp ?? SITE.whatsapp;
   const googleReviewUrl = settings?.googleReviewUrl ?? SITE.googleReviewUrl;
   const { items, promoCode, clear } = useCart();
-  const [payment, setPayment] = useState<Payment>("card");
   const [placed, setPlaced] = useState<StoreOrder | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +72,7 @@ export function CheckoutClient({
         country: String(form.get("country") ?? ""),
       },
       deliveryMethod: "standard",
-      paymentMethod: payment,
+      paymentMethod: "card",
       promoCode,
       newsletterOptIn: String(form.get("newsletterOptIn") === "on"),
       note: String(form.get("note") ?? ""),
@@ -231,25 +228,15 @@ export function CheckoutClient({
               <div className="space-y-3">
                 <Radio
                   name="payment"
-                  checked={payment === "card"}
-                  onChange={() => setPayment("card")}
+                  defaultChecked
                   label="Cards / Apple Pay / Google Pay"
                   hint="Secure Noon checkout"
                 />
-                <Radio
-                  name="payment"
-                  checked={payment === "tabby"}
-                  onChange={() => setPayment("tabby")}
-                  label="Tabby — 4 interest-free payments"
-                />
               </div>
-              {payment === "card" && (
-                <p className="mt-3 rounded bg-sand/60 px-4 py-3 text-xs text-ink-soft">
-                  Card payments open a secure Noon checkout page when the
-                  gateway is configured. Card details are never stored on this
-                  website.
-                </p>
-              )}
+              <p className="mt-3 rounded bg-sand/60 px-4 py-3 text-xs text-ink-soft">
+                Card payments open a secure Noon checkout page when the gateway
+                is configured. Card details are never stored on this website.
+              </p>
             </Section>
 
             <Section title="Notes">
@@ -279,11 +266,7 @@ export function CheckoutClient({
                 disabled={submitting}
                 className="block w-full bg-bronze py-4 text-center text-xs uppercase tracking-[0.2em] text-cream-soft transition-colors hover:bg-bronze-deep"
               >
-                {submitting
-                  ? "Placing Order..."
-                  : payment === "card"
-                    ? "Continue to Secure Payment"
-                    : "Place Order"}
+                {submitting ? "Placing Order..." : "Continue to Secure Payment"}
               </button>
             </OrderSummary>
           </div>
