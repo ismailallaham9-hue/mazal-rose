@@ -3,7 +3,7 @@ import { Container } from "./Container";
 const ITEMS = [
   {
     title: "Secure Payment",
-    desc: "Encrypted checkout · Tabby & cards",
+    desc: "Encrypted card checkout",
     icon: (
       <path
         d="M6 10V8a6 6 0 0 1 12 0v2M5 10h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9Z"

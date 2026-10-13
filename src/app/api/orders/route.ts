@@ -4,7 +4,6 @@ import { stockError } from "@/lib/inventory";
 import {
   type StoreData,
   type StoreOrder,
-  type StorePaymentMethod,
   updateStoreData,
 } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
@@ -125,21 +124,17 @@ export async function POST(req: Request) {
       const requestedPaymentMethod = clean(body.paymentMethod);
       if (requestedPaymentMethod === "cod") {
         throw new CheckoutError(
-          "Cash on delivery is no longer available. Please choose card payment or Tabby.",
+          "Cash on delivery is no longer available. Please choose card payment.",
           400,
         );
       }
-      const paymentMethod = (
-        ["card", "tabby"].includes(requestedPaymentMethod)
-          ? requestedPaymentMethod
-          : "card"
-      ) as StorePaymentMethod;
-      if (paymentMethod === "tabby") {
+      if (requestedPaymentMethod === "tabby") {
         throw new CheckoutError(
-          "Tabby checkout is not connected yet. Please choose card payment.",
-          503,
+          "Tabby is no longer available. Please choose card payment.",
+          400,
         );
       }
+      const paymentMethod = "card";
       const now = new Date().toISOString();
 
       const order: StoreOrder = {
@@ -150,7 +145,7 @@ export async function POST(req: Request) {
         status: "new",
         paymentMethod,
         paymentStatus: "payment_link_requested",
-        paymentProvider: paymentMethod === "card" ? "noon" : "tabby",
+        paymentProvider: "noon",
         deliveryMethod,
         customer: { email, phone, firstName, lastName },
         shipping: { address, city, country },

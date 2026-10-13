@@ -65,7 +65,7 @@ export default async function TermsPage() {
             <p>
               Prices are shown in {settings.currency} unless stated otherwise.
               Order totals, delivery fees and discounts are shown at checkout.
-              Payment options may include card, payment link or Tabby where
+              Payment options may include card or secure payment link where
               available. An order is accepted only when MAZAL confirms it.
             </p>
           </PolicySection>
