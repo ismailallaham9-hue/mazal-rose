@@ -105,7 +105,7 @@ export type StoreOrder = {
   paymentProvider?: StorePaymentProvider;
   paymentSessionId?: string;
   paymentUrl?: string;
-  deliveryMethod: "standard" | "express";
+  deliveryMethod: "standard";
   customer: {
     email: string;
     phone: string;
