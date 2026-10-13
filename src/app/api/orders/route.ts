@@ -119,13 +119,8 @@ export async function POST(req: Request) {
       const discount = promoCode
         ? Math.round((subtotal * store.settings.firstOrderDiscount) / 100)
         : 0;
-      const deliveryMethod =
-        clean(body.deliveryMethod) === "express" ? "express" : "standard";
-      const deliveryFee =
-        deliveryMethod === "express" &&
-        subtotal < store.settings.freeShippingThreshold
-          ? 30
-          : 0;
+      const deliveryMethod = "standard";
+      const deliveryFee = 0;
       const total = Math.max(0, subtotal - discount + deliveryFee);
       const requestedPaymentMethod = clean(body.paymentMethod);
       if (requestedPaymentMethod === "cod") {

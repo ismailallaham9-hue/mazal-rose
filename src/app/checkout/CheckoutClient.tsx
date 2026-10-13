@@ -74,7 +74,7 @@ export function CheckoutClient({
         city: String(form.get("city") ?? ""),
         country: String(form.get("country") ?? ""),
       },
-      deliveryMethod: String(form.get("delivery") ?? "standard"),
+      deliveryMethod: "standard",
       paymentMethod: payment,
       promoCode,
       newsletterOptIn: String(form.get("newsletterOptIn") === "on"),
@@ -223,7 +223,6 @@ export function CheckoutClient({
             <Section title="Delivery method">
               <div className="space-y-3">
                 <Radio name="delivery" value="standard" defaultChecked label="Standard — 10–12 days" hint="Free" />
-                <Radio name="delivery" value="express" label="Express — 1–2 days" hint="AED 30" />
               </div>
             </Section>
 
