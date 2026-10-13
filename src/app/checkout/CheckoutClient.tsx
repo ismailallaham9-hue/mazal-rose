@@ -222,7 +222,7 @@ export function CheckoutClient({
             {/* Delivery */}
             <Section title="Delivery method">
               <div className="space-y-3">
-                <Radio name="delivery" value="standard" defaultChecked label="Standard — 2–4 days" hint="Free" />
+                <Radio name="delivery" value="standard" defaultChecked label="Standard — 10–12 days" hint="Free" />
                 <Radio name="delivery" value="express" label="Express — 1–2 days" hint="AED 30" />
               </div>
             </Section>
