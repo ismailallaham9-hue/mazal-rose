@@ -5,6 +5,11 @@ const PRIVATE = "noindex, nofollow";
 
 const nextConfig: NextConfig = {
   images: {
+    // Serve images as-is. On-the-fly resizing (sharp) pushed the 512 MB Render
+    // instance over its memory limit, and its cache is wiped on every restart,
+    // so each restart re-resized everything and crashed again. Uploads are
+    // already compressed WebP; Cloudflare caches them at the edge.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
