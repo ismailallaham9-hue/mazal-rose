@@ -255,6 +255,7 @@ export default async function ShopPage({
             categories={store.categories}
             initialCategory={category}
             initialSort={initialSort}
+            initialSaleOnly={sp.sort === "sale"}
           />
         </Suspense>
       </Container>

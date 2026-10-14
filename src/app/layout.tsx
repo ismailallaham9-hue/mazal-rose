@@ -79,6 +79,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// Cache rendered storefront pages and refresh them in the background at most
+// once a minute; admin saves and orders refresh them immediately via
+// revalidateStorefront(). Rendering every page per visit exhausted memory.
+export const revalidate = 60;
+
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

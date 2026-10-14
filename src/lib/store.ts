@@ -14,7 +14,6 @@
  * operation limits. Blob remains a fallback for older deployments.
  */
 import "server-only";
-import { connection } from "next/server";
 import { ARTICLES, type Article } from "./articles";
 import { CATEGORIES, PRODUCTS, type Product } from "./products";
 import { SITE, whatsappNumber } from "./site";
@@ -936,12 +935,31 @@ async function localStoreFile() {
   return { path, dir, file: path.join(dir, "store.json") };
 }
 
-async function readDiskStore(): Promise<StoreData | null> {
+/**
+ * Parsed disk store, reused until store.json changes on disk. Re-reading and
+ * parsing the whole file on every page view was a major source of memory
+ * churn on the 512 MB Render instance.
+ */
+let diskMemCache: { data: StoreData; mtimeMs: number; size: number } | null = null;
+
+async function readDiskStore({ fresh = false } = {}): Promise<StoreData | null> {
   try {
     const fs = await import("node:fs/promises");
     const { file } = await localStoreFile();
+    const stat = await fs.stat(file);
+    if (
+      !fresh &&
+      diskMemCache &&
+      diskMemCache.mtimeMs === stat.mtimeMs &&
+      diskMemCache.size === stat.size
+    ) {
+      return diskMemCache.data;
+    }
     const raw = await fs.readFile(file, "utf8");
-    return normalize(JSON.parse(raw));
+    const data = normalize(JSON.parse(raw));
+    // Writers get their own copy so in-place edits never leak into the cache.
+    if (!fresh) diskMemCache = { data, mtimeMs: stat.mtimeMs, size: stat.size };
+    return data;
   } catch {
     return null;
   }
@@ -1067,9 +1085,12 @@ export async function getStoreData(): Promise<StoreData> {
   return (await readBlobStore()) ?? (await readDiskStore()) ?? seedData();
 }
 
-/** Read the store for public storefront rendering at request time. */
+/**
+ * Read the store for public storefront pages. Those pages are cached (ISR,
+ * see `revalidate` in app/layout.tsx) and refreshed on every admin save via
+ * revalidateStorefront(), so they are no longer re-rendered per visit.
+ */
 export async function getFreshStoreData(): Promise<StoreData> {
-  await connection();
   return getStoreData();
 }
 
@@ -1096,7 +1117,9 @@ export async function updateStoreData<T>(
   const run = storeWriteQueue.then(async () => {
     const release = await acquireStoreLock();
     try {
-      const current = await getStoreData();
+      const current = hasDisk()
+        ? ((await readDiskStore({ fresh: true })) ?? (await getStoreData()))
+        : await getStoreData();
       const next = await updater(current);
       await saveStoreData(next.store);
       output = next.result;
