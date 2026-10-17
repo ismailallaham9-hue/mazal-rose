@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { updateStoreData, type StoreData } from "@/lib/store";
 import { whatsappNumber } from "@/lib/site";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -57,6 +58,8 @@ function mergePages(
 }
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const body = (await req.json().catch(() => ({}))) as Partial<StoreData>;
   const next = await updateStoreData((current) => {
     const next: StoreData = {
