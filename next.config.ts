@@ -41,6 +41,8 @@ const nextConfig: NextConfig = {
       source,
       headers: [{ key: "X-Robots-Tag", value }],
     });
+    // Test deployments (e.g. *.workers.dev) must not be indexed.
+    if (process.env.NOINDEX_ALL) return [rule("/:path*", NOINDEX)];
     return [
       rule("/admin", NOINDEX),
       rule("/admin/:path*", NOINDEX),

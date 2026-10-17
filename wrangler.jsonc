@@ -32,15 +32,14 @@
 			// Store data (products, orders, content). Schema: migrations/.
 			"binding": "DB",
 			"database_name": "mazal-store",
-			// Replaced with the real id when the database is created (day 4).
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			"database_id": "08011f8d-bb12-4c95-8bb6-bf68844c4125",
 			"migrations_dir": "migrations"
 		},
 		{
 			// OpenNext tag cache (instant page refresh); same database.
 			"binding": "NEXT_TAG_CACHE_D1",
 			"database_name": "mazal-store",
-			"database_id": "00000000-0000-0000-0000-000000000000"
+			"database_id": "08011f8d-bb12-4c95-8bb6-bf68844c4125"
 		}
 	],
 	"vars": {
