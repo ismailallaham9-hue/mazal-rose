@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizeProduct } from "@/lib/admin-product";
 import { updateStoreData } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,8 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const result = await updateStoreData((store) => {
@@ -61,9 +64,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const { id } = await params;
   const result = await updateStoreData((store) => {
     const existing = store.products.find((p) => p.id === id);

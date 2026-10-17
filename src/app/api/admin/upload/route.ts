@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { uploadImage } from "@/lib/store";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,8 @@ const MAX_IMAGE_PIXELS = 40_000_000;
 const MAX_DIMENSION = 2000;
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const contentLength = Number(req.headers.get("content-length") ?? 0);
   if (Number.isFinite(contentLength) && contentLength > MAX_VIDEO_BYTES + 1024 * 1024) {
     return NextResponse.json(

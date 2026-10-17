@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { orderStatusEmails, sendEmails } from "@/lib/email";
 import { updateStoreData } from "@/lib/store";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -8,6 +9,8 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdmin(_req);
+  if (denied) return denied;
   const { id } = await params;
   const result = await updateStoreData((store) => {
     const order = store.orders.find((item) => item.id === id);
