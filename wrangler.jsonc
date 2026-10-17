@@ -20,6 +20,32 @@
 			// ISR / page cache. See https://opennext.js.org/cloudflare/caching
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",
 			"bucket_name": "mazal-rose-opennext-cache"
+		},
+		{
+			// Videos, brand images and admin uploads, served at media.mazal.ae.
+			"binding": "MEDIA_BUCKET",
+			"bucket_name": "mazal-media"
 		}
-	]
+	],
+	"d1_databases": [
+		{
+			// Store data (products, orders, content). Schema: migrations/.
+			"binding": "DB",
+			"database_name": "mazal-store",
+			// Replaced with the real id when the database is created (day 4).
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "migrations"
+		},
+		{
+			// OpenNext tag cache (instant page refresh); same database.
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_name": "mazal-store",
+			"database_id": "00000000-0000-0000-0000-000000000000"
+		}
+	],
+	"vars": {
+		"STORE_BACKEND_D1": "1",
+		"MEDIA_URL": "https://media.mazal.ae",
+		"MEDIA_UPLOADS": "1"
+	}
 }

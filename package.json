@@ -10,6 +10,9 @@
     "build": "next build",
     "start": "NODE_OPTIONS=--max-old-space-size=320 next start",
     "lint": "eslint",
+    "cf:build": "MEDIA_URL=https://media.mazal.ae MEDIA_UPLOADS=1 STORE_BACKEND_D1=1 opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare deploy",
     "test:meta": "node scripts/meta-events-smoke.mjs",
     "inventory:report": "node scripts/inventory-reconciliation.mjs"
   },

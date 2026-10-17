@@ -17,6 +17,7 @@ import "server-only";
 import { ARTICLES, type Article } from "./articles";
 import { CATEGORIES, PRODUCTS, type Product } from "./products";
 import { SITE, whatsappNumber } from "./site";
+import { D1WriteConflict, getD1, getMediaBucket, readD1Store, writeD1Store } from "./store-d1";
 
 /**
  * In-process cache for the Blob store. Vercel Blob's `list()` is a metered
@@ -921,6 +922,8 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
   };
 }
 
+const D1_MAX_ATTEMPTS = 12;
+
 const hasBlob = () => !!process.env.BLOB_READ_WRITE_TOKEN;
 const hasDisk = () => !!RENDER_DATA_DIR;
 
@@ -1079,6 +1082,16 @@ async function acquireStoreLock(): Promise<() => Promise<void>> {
 
 /** Read the full store. Never throws — falls back to the seed catalogue. */
 export async function getStoreData(): Promise<StoreData> {
+  const db = await getD1();
+  if (db) {
+    try {
+      const row = await readD1Store(db);
+      return row ? normalize(row.store as Partial<StoreData>) : seedData();
+    } catch (error) {
+      console.error("D1 store read failed", error);
+      return seedData();
+    }
+  }
   if (hasDisk()) {
     return (await readDiskStore()) ?? (await readBlobStore()) ?? seedData();
   }
@@ -1097,8 +1110,22 @@ export async function getFreshStoreData(): Promise<StoreData> {
 /** Persist the full store. */
 export async function saveStoreData(data: StoreData): Promise<void> {
   const payload: StoreData = { ...data, updatedAt: new Date().toISOString() };
-  const json = JSON.stringify(payload, null, 2);
 
+  const db = await getD1();
+  if (db) {
+    // Full overwrite (used for imports); diffs against what is there now.
+    for (let attempt = 0; ; attempt++) {
+      const row = await readD1Store(db);
+      try {
+        await writeD1Store(db, row?.store ?? null, payload, row?.version ?? 0);
+        return;
+      } catch (error) {
+        if (!(error instanceof D1WriteConflict) || attempt >= D1_MAX_ATTEMPTS) throw error;
+      }
+    }
+  }
+
+  const json = JSON.stringify(payload, null, 2);
   if (hasDisk()) {
     await writeDiskStore(json);
     return;
@@ -1113,6 +1140,26 @@ export async function saveStoreData(data: StoreData): Promise<void> {
 export async function updateStoreData<T>(
   updater: (store: StoreData) => Promise<{ store: StoreData; result: T }> | { store: StoreData; result: T },
 ): Promise<T> {
+  const db = await getD1();
+  if (db) {
+    // Optimistic locking: re-run the (synchronous, side-effect-free) updater
+    // on fresh data if another request saved first. See store-d1.ts.
+    for (let attempt = 0; ; attempt++) {
+      const row = await readD1Store(db);
+      const current = row ? normalize(row.store as Partial<StoreData>) : seedData();
+      const next = await updater(current);
+      const payload: StoreData = { ...next.store, updatedAt: new Date().toISOString() };
+      try {
+        await writeD1Store(db, row?.store ?? null, payload, row?.version ?? 0);
+        return next.result;
+      } catch (error) {
+        if (!(error instanceof D1WriteConflict)) throw error;
+        if (attempt >= D1_MAX_ATTEMPTS) throw new Error("Store is busy. Please try again.");
+        await sleep(20 + Math.random() * 40 * (attempt + 1));
+      }
+    }
+  }
+
   let output!: T;
   const run = storeWriteQueue.then(async () => {
     const release = await acquireStoreLock();
@@ -1183,7 +1230,12 @@ export function ratingSummaryForProductId(
 
 /** Whether persistent storage is configured (controls the admin banner). */
 export function storageReady(): boolean {
-  return hasBlob() || hasDisk() || process.env.NODE_ENV !== "production";
+  return (
+    !!process.env.STORE_BACKEND_D1 ||
+    hasBlob() ||
+    hasDisk() ||
+    process.env.NODE_ENV !== "production"
+  );
 }
 
 /** Upload an image; returns a public URL usable in <Image src>. */
@@ -1194,6 +1246,16 @@ export async function uploadImage(
 ): Promise<string> {
   const safe =
     Date.now() + "-" + filename.replace(/[^a-zA-Z0-9.\-_]/g, "_").slice(-60);
+
+  const bucket = await getMediaBucket();
+  if (bucket) {
+    // Same /uploads/<name> URL as the disk store, so saved product images
+    // keep working; on Cloudflare it redirects to the media domain.
+    await bucket.put(`uploads/${safe}`, bytes, {
+      httpMetadata: { contentType, cacheControl: "public, max-age=31536000, immutable" },
+    });
+    return `/uploads/${safe}`;
+  }
 
   if (!hasDisk() && hasBlob()) {
     const { put } = await import("@vercel/blob");

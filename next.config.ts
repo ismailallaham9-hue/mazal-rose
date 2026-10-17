@@ -25,7 +25,10 @@ const nextConfig: NextConfig = {
   async redirects() {
     const media = process.env.MEDIA_URL?.replace(/\/$/, "");
     if (!media) return [];
-    return ["/video/:path*", "/images/:path*"].map((source) => ({
+    const sources = ["/video/:path*", "/images/:path*"];
+    // On Cloudflare, admin uploads live in the same R2 bucket under uploads/.
+    if (process.env.MEDIA_UPLOADS) sources.push("/uploads/:path*");
+    return sources.map((source) => ({
       source,
       destination: `${media}${source}`,
       permanent: true,
