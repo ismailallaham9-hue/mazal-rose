@@ -9,8 +9,12 @@ export async function POST(req: Request) {
   if (!(await isValidPassword(password))) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
+  const token = await sessionToken();
+  if (!token) {
+    return NextResponse.json({ error: "Admin login is not configured" }, { status: 503 });
+  }
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(ADMIN_COOKIE, await sessionToken(), {
+  res.cookies.set(ADMIN_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
