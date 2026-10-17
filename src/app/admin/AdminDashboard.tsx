@@ -24,6 +24,7 @@ import {
 import type { Article, ArticleBlock } from "@/lib/articles";
 import type { Badge, Category, Product } from "@/lib/products";
 import { variantLabel } from "@/lib/products";
+import { shrinkImageForUpload } from "@/lib/client-image";
 import type {
   MediaAsset,
   SiteContent,
@@ -303,7 +304,7 @@ export function AdminDashboard({
   async function uploadFile(file: File): Promise<MediaAsset | null> {
     setBusy(true);
     const form = new FormData();
-    form.append("file", file);
+    form.append("file", await shrinkImageForUpload(file));
     const res = await fetch("/api/admin/upload", { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
