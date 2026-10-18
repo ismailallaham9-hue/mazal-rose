@@ -10,7 +10,6 @@ const COLUMNS = [
     links: [
       { label: "Our Story", href: "/about" },
       { label: "The Journal", href: "/journal" },
-      { label: "MAZAL Rewards", href: "/rewards" },
       { label: "Contact", href: "/contact" },
     ],
   },
@@ -49,7 +48,12 @@ export function Footer({
   };
   showAccount?: boolean;
 }) {
-  const sourceColumns = content?.columns?.length ? content.columns : COLUMNS;
+  // Pages that are hidden for now; links saved in admin are dropped too.
+  const hidden = new Set(["/rewards"]);
+  const sourceColumns = (content?.columns?.length ? content.columns : COLUMNS).map((column) => ({
+    ...column,
+    links: column.links.filter((link) => !hidden.has(link.href)),
+  }));
   const accountFilteredColumns = showAccount
     ? sourceColumns
     : sourceColumns.map((column) => ({

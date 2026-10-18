@@ -23,13 +23,19 @@ const nextConfig: NextConfig = {
   // saved in the store. Set MEDIA_URL (e.g. https://media.mazal.ae) at build
   // time to enable; without it the files are served from public/ as before.
   async redirects() {
+    // The rewards programme isn't live; send old links to the shop
+    // (temporary, so the page can come back).
+    const hidden = [{ source: "/rewards", destination: "/shop", permanent: false }];
     const media = process.env.MEDIA_URL?.replace(/\/$/, "");
-    if (!media) return [];
-    return ["/video/:path*", "/images/:path*"].map((source) => ({
-      source,
-      destination: `${media}${source}`,
-      permanent: true,
-    }));
+    if (!media) return hidden;
+    return [
+      ...hidden,
+      ...["/video/:path*", "/images/:path*"].map((source) => ({
+        source,
+        destination: `${media}${source}`,
+        permanent: true,
+      })),
+    ];
   },
   // Keep admin + transactional/account routes out of search indexes at the
   // header level (works for client components too, unlike page metadata).

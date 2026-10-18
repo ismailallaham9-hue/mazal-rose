@@ -443,7 +443,6 @@ export const DEFAULT_PAGES: PageContent = {
         links: [
           { label: "Our Story", href: "/about" },
           { label: "The Journal", href: "/journal" },
-          { label: "MAZAL Rewards", href: "/rewards" },
           { label: "Contact", href: "/contact" },
         ],
       },
