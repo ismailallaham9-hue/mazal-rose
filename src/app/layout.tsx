@@ -147,7 +147,6 @@ export default async function RootLayout({
             <Footer
               content={pages.footer}
               showAccount={settings.showCustomerAccount}
-              settings={settings}
             />
             <CartDrawer />
             <FloatingWhatsApp whatsapp={settings.whatsapp} />

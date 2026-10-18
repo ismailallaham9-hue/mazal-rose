@@ -435,7 +435,7 @@ export const DEFAULT_PAGES: PageContent = {
   footer: {
     newsletterTitle: "Join the MAZAL world",
     newsletterBody:
-      "Private previews, new arrivals, and quiet notes on craft - plus 10% off your first order.",
+      "Private previews, new arrivals, and quiet notes on craft.",
     wordmark: "MAZAL",
     columns: [
       {
@@ -443,7 +443,6 @@ export const DEFAULT_PAGES: PageContent = {
         links: [
           { label: "Our Story", href: "/about" },
           { label: "The Journal", href: "/journal" },
-          { label: "MAZAL Rewards", href: "/rewards" },
           { label: "Contact", href: "/contact" },
         ],
       },
@@ -840,6 +839,9 @@ function isValidRating(value: unknown): value is StoreRating {
   );
 }
 
+const RETIRED_NEWSLETTER_BODY =
+  "Private previews, new arrivals, and quiet notes on craft - plus 10% off your first order.";
+
 function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
   const seed = seedData();
   if (!raw || typeof raw !== "object") return seed;
@@ -877,6 +879,11 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     footer: {
       ...seed.pages.footer,
       ...(rawPages.footer ?? {}),
+      // Discount codes were discontinued; replace the old default copy that
+      // promised one (custom copy written in admin is left alone).
+      ...(rawPages.footer?.newsletterBody === RETIRED_NEWSLETTER_BODY
+        ? { newsletterBody: seed.pages.footer.newsletterBody }
+        : {}),
       columns: Array.isArray(rawPages.footer?.columns)
         ? withRequiredFooterLinks(rawPages.footer.columns)
         : withRequiredFooterLinks(seed.pages.footer.columns),

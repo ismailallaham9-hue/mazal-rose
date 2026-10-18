@@ -187,7 +187,7 @@ export function ProductDetailClient({
           )}
         </div>
         <p className="mt-1 text-xs text-ink-soft">
-          Or 4 interest-free payments. Taxes included.
+          Taxes included.
         </p>
 
         <p className="mt-6 text-ink-soft">

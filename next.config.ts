@@ -23,13 +23,19 @@ const nextConfig: NextConfig = {
   // saved in the store. Set MEDIA_URL (e.g. https://media.mazal.ae) at build
   // time to enable; without it the files are served from public/ as before.
   async redirects() {
+    // The rewards programme isn't live; send old links to the shop
+    // (temporary, so the page can come back).
+    const hidden = [{ source: "/rewards", destination: "/shop", permanent: false }];
     const media = process.env.MEDIA_URL?.replace(/\/$/, "");
-    if (!media) return [];
-    return ["/video/:path*", "/images/:path*"].map((source) => ({
-      source,
-      destination: `${media}${source}`,
-      permanent: true,
-    }));
+    if (!media) return hidden;
+    return [
+      ...hidden,
+      ...["/video/:path*", "/images/:path*"].map((source) => ({
+        source,
+        destination: `${media}${source}`,
+        permanent: true,
+      })),
+    ];
   },
   // Keep admin + transactional/account routes out of search indexes at the
   // header level (works for client components too, unlike page metadata).
@@ -39,6 +45,20 @@ const nextConfig: NextConfig = {
       headers: [{ key: "X-Robots-Tag", value }],
     });
     return [
+      {
+        // Baseline security headers for every response. No CSP script
+        // allow-list here: it would need maintaining for Meta Pixel, Google
+        // Analytics and Noon, and a mistake would break checkout.
+        source: "/:path*",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
       rule("/admin", NOINDEX),
       rule("/admin/:path*", NOINDEX),
       rule("/account", PRIVATE),

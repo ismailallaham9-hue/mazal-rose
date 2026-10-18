@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { Reveal } from "./Reveal";
 import { Container } from "./Container";
-import { SITE } from "@/lib/site";
-import type { SiteSettings } from "@/lib/store";
 
 /**
  * Seasonal campaign band (Eid / Ramadan / Summer). Swap the copy and
- * href to run a campaign — drives urgency + first-order incentive.
+ * href to run a campaign.
  */
 export function SeasonalBanner({
   eyebrow = "Limited Time · Seasonal Edit",
@@ -14,19 +12,13 @@ export function SeasonalBanner({
   text = "Quiet statement pieces for the season of celebration — curated abayas, kaftans and accessories, ready to gift or keep.",
   ctaLabel = "Shop the Edit",
   ctaHref = "/shop?sort=new",
-  settings,
 }: {
   eyebrow?: string;
   title?: string;
   text?: string;
   ctaLabel?: string;
   ctaHref?: string;
-  settings?: SiteSettings;
 }) {
-  const firstOrderCode = settings?.firstOrderCode ?? SITE.firstOrderCode;
-  const firstOrderDiscount =
-    settings?.firstOrderDiscount ?? SITE.firstOrderDiscount;
-
   return (
     <section
       className="bg-gradient-to-br from-bronze-deep via-bronze to-[#caa278] text-cream-soft"
@@ -48,11 +40,6 @@ export function SeasonalBanner({
             >
               {ctaLabel}
             </Link>
-            <span className="text-sm text-cream-soft/90">
-              New here? Use{" "}
-              <strong className="font-semibold">{firstOrderCode}</strong> for{" "}
-              {firstOrderDiscount}% off your first order
-            </span>
           </div>
         </Reveal>
       </Container>
