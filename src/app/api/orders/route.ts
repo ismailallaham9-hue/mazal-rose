@@ -110,14 +110,27 @@ export async function POST(req: Request) {
 
   try {
     saved = await updateStoreData((store) => {
-      const unavailable = stockError(store.products, items);
+      // Never trust prices or names sent by the browser (the bag lives in
+      // localStorage and can be stale or edited): charge the store's
+      // current price for each product.
+      const pricedItems = items.map((item) => {
+        const product = store.products.find((p) => p.id === item.productId);
+        if (!product || product.published === false) {
+          throw new CheckoutError(
+            `${item.name || "An item in your bag"} is no longer available. Please remove it and try again.`,
+            409,
+          );
+        }
+        const price = Math.max(0, Math.round(number(product.price, 0)));
+        return { ...item, name: product.name, price, lineTotal: price * item.quantity };
+      });
+      const unavailable = stockError(store.products, pricedItems);
       if (unavailable) throw new CheckoutError(unavailable, 409);
 
-      const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
-      const promoCode = clean(body.promoCode) || null;
-      const discount = promoCode
-        ? Math.round((subtotal * store.settings.firstOrderDiscount) / 100)
-        : 0;
+      const subtotal = pricedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+      // Discount codes are discontinued; any code sent is ignored.
+      const promoCode = null;
+      const discount = 0;
       const deliveryMethod = "standard";
       const deliveryFee = 0;
       const total = Math.max(0, subtotal - discount + deliveryFee);
@@ -149,7 +162,7 @@ export async function POST(req: Request) {
         deliveryMethod,
         customer: { email, phone, firstName, lastName },
         shipping: { address, city, country },
-        items,
+        items: pricedItems,
         subtotal,
         discount,
         deliveryFee,

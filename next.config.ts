@@ -39,6 +39,20 @@ const nextConfig: NextConfig = {
       headers: [{ key: "X-Robots-Tag", value }],
     });
     return [
+      {
+        // Baseline security headers for every response. No CSP script
+        // allow-list here: it would need maintaining for Meta Pixel, Google
+        // Analytics and Noon, and a mistake would break checkout.
+        source: "/:path*",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
       rule("/admin", NOINDEX),
       rule("/admin/:path*", NOINDEX),
       rule("/account", PRIVATE),
