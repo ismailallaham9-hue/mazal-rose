@@ -1,19 +1,31 @@
 import { NextResponse } from "next/server";
 import { type StoreInquiry, updateStoreData } from "@/lib/store";
 import { contactEmails, sendEmails } from "@/lib/email";
+import {
+  clientIp,
+  limitText,
+  payloadTooLarge,
+  rateLimit,
+  readJsonBody,
+  RequestTooLarge,
+  tooManyRequests,
+} from "@/lib/request-guard";
 
 export const runtime = "nodejs";
 
-function clean(value: unknown) {
-  return String(value ?? "").trim();
-}
-
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-  const name = clean(body.name);
-  const email = clean(body.email).toLowerCase();
-  const subject = clean(body.subject);
-  const message = clean(body.message);
+  if (!rateLimit(`contact:${clientIp(req)}`, 5, 10 * 60 * 1000)) return tooManyRequests();
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonBody(req, 16 * 1024);
+  } catch (error) {
+    if (error instanceof RequestTooLarge) return payloadTooLarge();
+    throw error;
+  }
+  const name = limitText(body.name, 120);
+  const email = limitText(body.email, 200).toLowerCase();
+  const subject = limitText(body.subject, 200);
+  const message = limitText(body.message, 5000);
 
   if (!name || !email || !subject || !message) {
     return NextResponse.json(
