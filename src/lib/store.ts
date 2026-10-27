@@ -359,7 +359,7 @@ export const DEFAULT_CONTENT: SiteContent = {
   heroCtaHref: "/shop",
   announcements: [
     "MAZAL 2026 — the new collection has arrived",
-    "Complimentary express delivery over AED 500",
+    "Complimentary delivery on orders over AED 600",
     "Private atelier appointments now open in Dubai",
     "Worldwide shipping to 60+ countries",
   ],

@@ -2,7 +2,7 @@ import { SITE } from "@/lib/site";
 
 const DEFAULT_MESSAGES: string[] = [
   "MAZAL 2026 - the new collection has arrived",
-  `Complimentary express delivery over ${SITE.currency} ${SITE.freeShippingThreshold}`,
+  `Complimentary delivery on orders over ${SITE.currency} ${SITE.freeShippingThreshold}`,
   "Private atelier appointments now open in Dubai",
   "Considered modest pieces, crafted to endure",
   "Worldwide shipping to 60+ countries",
@@ -11,7 +11,7 @@ const DEFAULT_MESSAGES: string[] = [
 function normalizeMessage(message: string) {
   return message.replace(
     /Complimentary express delivery over AED 50000/g,
-    `Complimentary express delivery over ${SITE.currency} ${SITE.freeShippingThreshold}`,
+    `Complimentary delivery on orders over ${SITE.currency} ${SITE.freeShippingThreshold}`,
   );
 }
 

@@ -12,7 +12,7 @@ export const SITE = {
   url: "https://mazal.ae", // production domain
 
   currency: "AED",
-  freeShippingThreshold: 500, // AED — drives the cart free-shipping progress bar
+  freeShippingThreshold: 600, // AED — drives the cart free-shipping progress bar
   firstOrderCode: "STILL10",
   firstOrderDiscount: 10, // %
 
@@ -38,12 +38,10 @@ export const SITE = {
     pinterest: "https://pinterest.com/mazal", // TODO
   },
 
-  // ── Store statistics (sample — TODO: replace with real numbers) ──
+  // ── Store statistics: real numbers only (editable in admin settings) ──
   stats: [
-    { value: "120K+", label: "Pieces delivered" },
-    { value: "4.9★", label: "Average rating" },
-    { value: "60+", label: "Countries shipped" },
-    { value: "98%", label: "Would recommend" },
+    { value: "1,000+", label: "Pieces delivered" },
+    { value: "5.0★", label: "Customer rating" },
   ],
 
   contact: {
