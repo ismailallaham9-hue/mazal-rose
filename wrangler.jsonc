@@ -45,6 +45,18 @@
 	"vars": {
 		"STORE_BACKEND_D1": "1",
 		"MEDIA_URL": "https://media.mazal.ae",
-		"MEDIA_UPLOADS": "1"
+		"MEDIA_UPLOADS": "1",
+		// Where Noon returns customers after paying. Test deployment address
+		// until switch day; set to https://mazal.ae when mazal.ae points here.
+		"PUBLIC_BASE_URL": "https://mazal-rose.mazal-ae.workers.dev",
+		// Noon Payments (non-secret settings, same as Render). The app key is a
+		// secret: wrangler secret put NOON_PAYMENTS_APP_KEY
+		"NOON_PAYMENTS_MODE": "live",
+		"NOON_PAYMENTS_BUSINESS_ID": "mazal",
+		"NOON_PAYMENTS_APP_NAME": "mazal_web",
+		"NOON_PAYMENTS_ORDER_CATEGORY": "pay",
+		"NOON_PAYMENTS_CURRENCY": "AED",
+		"NOON_PAYMENTS_PAYMENT_ACTION": "SALE",
+		"NOON_PAYMENTS_CHANNEL": "WEB"
 	}
 }
