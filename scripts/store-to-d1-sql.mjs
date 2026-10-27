@@ -19,7 +19,13 @@ if (!file) {
   console.error("usage: node scripts/store-to-d1-sql.mjs <backup.json>");
   process.exit(1);
 }
-const store = JSON.parse(readFileSync(file, "utf8"));
+// Upload names containing ".." are stored in R2 with a single dot (Cloudflare's
+// API firewall rejects ".." in keys); rewrite references to match.
+const raw = readFileSync(file, "utf8").replace(
+  /\/uploads\/([A-Za-z0-9._-]+)/g,
+  (_, name) => `/uploads/${name.replace(/\.{2,}/g, ".")}`,
+);
+const store = JSON.parse(raw);
 if (!store || typeof store !== "object" || !Array.isArray(store.products)) {
   console.error("Not a store backup: expected an object with a products array.");
   process.exit(1);

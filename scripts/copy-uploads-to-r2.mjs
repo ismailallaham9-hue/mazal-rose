@@ -24,6 +24,11 @@ if (!file) {
   process.exit(1);
 }
 
+// Cloudflare's API firewall rejects object keys containing "..", so such
+// files are stored under a single-dot name; store-to-d1-sql.mjs rewrites the
+// references the same way.
+const r2Name = (name) => name.replace(/\.{2,}/g, ".");
+
 const text = readFileSync(file, "utf8");
 const names = [...new Set([...text.matchAll(/\/uploads\/([A-Za-z0-9._-]+)/g)].map((m) => m[1]))];
 console.log(`${names.length} uploaded files referenced in ${path.basename(file)}`);
@@ -51,11 +56,11 @@ for (const name of names) {
   const type = TYPES[name.split(".").pop().toLowerCase()] || "application/octet-stream";
   execFileSync(
     "npx",
-    ["wrangler", "r2", "object", "put", `${bucket}/uploads/${name}`, "--file", local,
+    ["wrangler", "r2", "object", "put", `${bucket}/uploads/${r2Name(name)}`, "--file", local,
       "--content-type", type, "--cache-control", "public, max-age=31536000, immutable", "--remote"],
     { stdio: "ignore" },
   );
-  console.log(`copied ${name} (${statSync(local).size} bytes)`);
+  console.log(`copied ${name}${r2Name(name) !== name ? ` as ${r2Name(name)}` : ""} (${statSync(local).size} bytes)`);
   copied++;
 }
 
