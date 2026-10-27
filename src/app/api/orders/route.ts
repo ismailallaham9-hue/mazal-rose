@@ -128,14 +128,9 @@ export async function POST(req: Request) {
       if (unavailable) throw new CheckoutError(unavailable, 409);
 
       const subtotal = pricedItems.reduce((sum, item) => sum + item.lineTotal, 0);
-      // Only the configured code earns the discount (the browser checks this
-      // too, but the server must not accept any non-empty string).
-      const submittedCode = clean(body.promoCode).toUpperCase();
-      const validCode = (store.settings.firstOrderCode || "").trim().toUpperCase();
-      const promoCode = submittedCode && validCode && submittedCode === validCode ? submittedCode : null;
-      const discount = promoCode
-        ? Math.round((subtotal * store.settings.firstOrderDiscount) / 100)
-        : 0;
+      // Discount codes are discontinued; any code sent is ignored.
+      const promoCode = null;
+      const discount = 0;
       const deliveryMethod = "standard";
       const deliveryFee = 0;
       const total = Math.max(0, subtotal - discount + deliveryFee);
