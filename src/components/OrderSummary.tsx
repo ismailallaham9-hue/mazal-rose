@@ -2,14 +2,11 @@
 
 import { useCart } from "@/lib/cart-context";
 import { formatAED } from "@/lib/format";
-import { PromoCode } from "./PromoCode";
 
 /** Order totals with free-shipping progress, used on cart + checkout. */
 export function OrderSummary({
-  showPromo = true,
   children,
 }: {
-  showPromo?: boolean;
   children?: React.ReactNode;
 }) {
   const { subtotal, discount, total, freeShippingThreshold } = useCart();
@@ -43,12 +40,6 @@ export function OrderSummary({
           />
         </span>
       </div>
-
-      {showPromo && (
-        <div className="mt-5">
-          <PromoCode />
-        </div>
-      )}
 
       <dl className="mt-5 space-y-2.5 border-t border-sand-deep/40 pt-5 text-sm">
         <div className="flex justify-between">

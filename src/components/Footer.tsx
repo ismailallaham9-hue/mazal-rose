@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Container } from "./Container";
 import { FooterNewsletter } from "./FooterNewsletter";
-import type { SiteSettings } from "@/lib/store";
 
 const LUXURY_ABAYA_LINK = { label: "Luxury Abaya", href: "/luxury-abaya" };
 
@@ -11,7 +10,6 @@ const COLUMNS = [
     links: [
       { label: "Our Story", href: "/about" },
       { label: "The Journal", href: "/journal" },
-      { label: "MAZAL Rewards", href: "/rewards" },
       { label: "Contact", href: "/contact" },
     ],
   },
@@ -41,7 +39,6 @@ const COLUMNS = [
 export function Footer({
   content,
   showAccount = true,
-  settings,
 }: {
   content?: {
     newsletterTitle: string;
@@ -50,9 +47,13 @@ export function Footer({
     columns: { title: string; links: { label: string; href: string }[] }[];
   };
   showAccount?: boolean;
-  settings?: SiteSettings;
 }) {
-  const sourceColumns = content?.columns?.length ? content.columns : COLUMNS;
+  // Pages that are hidden for now; links saved in admin are dropped too.
+  const hidden = new Set(["/rewards"]);
+  const sourceColumns = (content?.columns?.length ? content.columns : COLUMNS).map((column) => ({
+    ...column,
+    links: column.links.filter((link) => !hidden.has(link.href)),
+  }));
   const accountFilteredColumns = showAccount
     ? sourceColumns
     : sourceColumns.map((column) => ({
@@ -72,7 +73,6 @@ export function Footer({
           <FooterNewsletter
             title={content?.newsletterTitle}
             body={content?.newsletterBody}
-            settings={settings}
           />
 
           {columns.map((col) => (

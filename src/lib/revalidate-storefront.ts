@@ -18,7 +18,6 @@ const PUBLIC_PATHS = [
   "/wishlist",
   "/cart",
   "/checkout",
-  "/rewards",
   "/sitemap.xml",
   "/robots.txt",
 ];

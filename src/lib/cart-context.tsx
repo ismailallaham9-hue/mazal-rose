@@ -130,8 +130,8 @@ export function CartProvider({
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) dispatch({ type: "hydrate", items: JSON.parse(raw) });
-        const promo = localStorage.getItem(PROMO_KEY);
-        if (promo) setPromoCode(promo);
+        // Discount codes are discontinued; drop any code saved earlier.
+        localStorage.removeItem(PROMO_KEY);
       } catch {
         /* ignore malformed storage */
       }
@@ -196,14 +196,11 @@ export function CartProvider({
     setPromoCode(null);
   }, []);
 
+  // Discount codes are discontinued: nothing is ever applied.
   const applyPromo = useCallback((code: string) => {
-    const normalized = code.trim().toUpperCase();
-    if (normalized === firstOrderCode.toUpperCase()) {
-      setPromoCode(normalized);
-      return true;
-    }
+    void code;
     return false;
-  }, [firstOrderCode]);
+  }, []);
   const removePromo = useCallback(() => setPromoCode(null), []);
 
   const { count, subtotal } = useMemo(() => {
@@ -217,10 +214,7 @@ export function CartProvider({
     );
   }, [state.items]);
 
-  const discount = useMemo(() => {
-    if (!promoCode) return 0;
-    return Math.round((subtotal * firstOrderDiscount) / 100);
-  }, [firstOrderDiscount, promoCode, subtotal]);
+  const discount = 0;
 
   const total = Math.max(0, subtotal - discount);
 

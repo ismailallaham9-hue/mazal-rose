@@ -1,11 +1,27 @@
 import { NextResponse } from "next/server";
 import { ADMIN_COOKIE, isValidPassword, sessionToken } from "@/lib/admin-auth";
+import {
+  clientIp,
+  payloadTooLarge,
+  rateLimit,
+  readJsonBody,
+  RequestTooLarge,
+  tooManyRequests,
+} from "@/lib/request-guard";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const password = String((body as { password?: string }).password ?? "");
+  // Slow down password guessing: 10 attempts per 15 minutes per IP.
+  if (!rateLimit(`login:${clientIp(req)}`, 10, 15 * 60 * 1000)) return tooManyRequests();
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonBody(req, 2 * 1024);
+  } catch (error) {
+    if (error instanceof RequestTooLarge) return payloadTooLarge();
+    throw error;
+  }
+  const password = String(body.password ?? "");
   if (!(await isValidPassword(password))) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
