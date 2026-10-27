@@ -46,9 +46,8 @@
 		"STORE_BACKEND_D1": "1",
 		"MEDIA_URL": "https://media.mazal.ae",
 		"MEDIA_UPLOADS": "1",
-		// Where Noon returns customers after paying. Test deployment address
-		// until switch day; set to https://mazal.ae when mazal.ae points here.
-		"PUBLIC_BASE_URL": "https://mazal-rose.mazal-ae.workers.dev",
+		// Where Noon returns customers after paying.
+		"PUBLIC_BASE_URL": "https://mazal.ae",
 		// Noon Payments (non-secret settings, same as Render). The app key is a
 		// secret: wrangler secret put NOON_PAYMENTS_APP_KEY
 		"NOON_PAYMENTS_MODE": "live",
@@ -57,6 +56,18 @@
 		"NOON_PAYMENTS_ORDER_CATEGORY": "pay",
 		"NOON_PAYMENTS_CURRENCY": "AED",
 		"NOON_PAYMENTS_PAYMENT_ACTION": "SALE",
-		"NOON_PAYMENTS_CHANNEL": "WEB"
-	}
+		"NOON_PAYMENTS_CHANNEL": "WEB",
+		// Email (Resend) and Meta: same values as Render. Secrets set with
+		// wrangler secret put: RESEND_API_KEY, META_CAPI_ACCESS_TOKEN.
+		"RESEND_FROM": "MAZAL <care@mazal.ae>",
+		"ADMIN_EMAIL": "care@mazal.ae",
+		"META_PIXEL_ID": "2136787320560677",
+		"META_GRAPH_API_VERSION": "v26.0",
+		"META_TEST_EVENT_CODE": "TEST64099"
+	},
+	// mazal.ae is served by this Worker. Removing this route (and redeploying)
+	// sends traffic back to Render, whose DNS record is still in place.
+	"routes": [
+		{ "pattern": "mazal.ae/*", "zone_name": "mazal.ae" }
+	]
 }
