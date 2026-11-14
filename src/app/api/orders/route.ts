@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Product } from "@/lib/products";
 import { stockError } from "@/lib/inventory";
+import { createTabbyCheckout, tabbyConfigured } from "@/lib/tabby";
 import {
   type StoreData,
   type StoreOrder,
@@ -110,6 +111,14 @@ export async function POST(req: Request) {
 
   try {
     saved = await updateStoreData((store) => {
+      if (clean(body.paymentMethod) === "tabby") {
+        for (const item of items) {
+          const product = store.products.find(entry => entry.id === item.productId);
+          if (!product) throw new CheckoutError("Product unavailable.", 409);
+          item.price = product.price;
+          item.lineTotal = product.price * item.quantity;
+        }
+      }
       const unavailable = stockError(store.products, items);
       if (unavailable) throw new CheckoutError(unavailable, 409);
 
@@ -128,13 +137,13 @@ export async function POST(req: Request) {
           400,
         );
       }
-      if (requestedPaymentMethod === "tabby") {
+      if (requestedPaymentMethod === "tabby" && (!tabbyConfigured() || country !== "United Arab Emirates")) {
         throw new CheckoutError(
           "Tabby is no longer available. Please choose card payment.",
           400,
         );
       }
-      const paymentMethod = "card";
+      const paymentMethod = requestedPaymentMethod === "tabby" ? "tabby" as const : "card" as const;
       const now = new Date().toISOString();
 
       const order: StoreOrder = {
@@ -145,7 +154,8 @@ export async function POST(req: Request) {
         status: "new",
         paymentMethod,
         paymentStatus: "payment_link_requested",
-        paymentProvider: "noon",
+        paymentProvider: paymentMethod === "tabby" ? "tabby" : "noon",
+        ...(paymentMethod === "tabby" ? { tabbyTestStatus: "pending" as const } : {}),
         deliveryMethod,
         customer: { email, phone, firstName, lastName },
         shipping: { address, city, country },
@@ -190,6 +200,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
     throw error;
+  }
+
+  if (saved.order.paymentMethod === "tabby") {
+    try {
+      if (saved.order.total <= 0) throw new Error("Tabby requires a positive order total.");
+      const checkout = await createTabbyCheckout(saved.order, saved.settings.url);
+      await updateStoreData(store => ({ store: { ...store, orders: store.orders.map(order => order.id === saved!.order.id ? { ...order, paymentSessionId: checkout.paymentId, paymentUrl: checkout.paymentUrl } : order) }, result: null }));
+      return NextResponse.json({ redirectUrl: checkout.paymentUrl });
+    } catch {
+      await removeUnpaidPaymentOrder(saved.order);
+      return NextResponse.json({ error: "Tabby could not approve or open this checkout. Please choose card payment." }, { status: 422 });
+    }
   }
 
   if (saved.order.paymentMethod === "card" && saved.order.total > 0) {

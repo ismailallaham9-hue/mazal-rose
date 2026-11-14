@@ -83,7 +83,7 @@ export type StoreOrderStatus =
   | "delivered"
   | "cancelled";
 
-export type StorePaymentMethod = "card";
+export type StorePaymentMethod = "card" | "tabby";
 
 export type StorePaymentStatus =
   | "pending"
@@ -92,7 +92,7 @@ export type StorePaymentStatus =
   | "failed"
   | "refunded";
 
-export type StorePaymentProvider = "noon" | "manual";
+export type StorePaymentProvider = "noon" | "manual" | "tabby";
 
 export type StoreOrder = {
   id: string;
@@ -105,6 +105,7 @@ export type StoreOrder = {
   paymentProvider?: StorePaymentProvider;
   paymentSessionId?: string;
   paymentUrl?: string;
+  tabbyTestStatus?: "pending" | "captured" | "failed";
   deliveryMethod: "standard";
   customer: {
     email: string;

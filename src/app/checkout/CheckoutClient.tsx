@@ -15,8 +15,10 @@ import type { SiteSettings, StoreOrder } from "@/lib/store";
 
 export function CheckoutClient({
   settings,
+  tabbyEnabled = false,
 }: {
   settings?: SiteSettings;
+  tabbyEnabled?: boolean;
 }) {
   const whatsapp = settings?.whatsapp ?? SITE.whatsapp;
   const googleReviewUrl = settings?.googleReviewUrl ?? SITE.googleReviewUrl;
@@ -72,7 +74,7 @@ export function CheckoutClient({
         country: String(form.get("country") ?? ""),
       },
       deliveryMethod: "standard",
-      paymentMethod: "card",
+      paymentMethod: String(form.get("payment") ?? "card"),
       promoCode,
       newsletterOptIn: String(form.get("newsletterOptIn") === "on"),
       note: String(form.get("note") ?? ""),
@@ -228,10 +230,12 @@ export function CheckoutClient({
               <div className="space-y-3">
                 <Radio
                   name="payment"
+                  value="card"
                   defaultChecked
                   label="Cards / Apple Pay / Google Pay"
                   hint="Secure Noon checkout"
                 />
+                {tabbyEnabled && <Radio name="payment" value="tabby" label="Tabby (test checkout)" hint="QA payments only" />}
               </div>
               <p className="mt-3 rounded bg-sand/60 px-4 py-3 text-xs text-ink-soft">
                 Card payments open a secure Noon checkout page when the gateway
