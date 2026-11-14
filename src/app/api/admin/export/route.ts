@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStoreData } from "@/lib/store";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,8 @@ function download(body: string, filename: string, contentType: string) {
 }
 
 export async function GET(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const { searchParams } = new URL(req.url);
   const kind = searchParams.get("kind") || "backup";
   const store = await getStoreData();

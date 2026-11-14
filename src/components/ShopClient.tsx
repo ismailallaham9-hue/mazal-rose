@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ProductCard } from "./ProductCard";
 import { clsx } from "@/lib/clsx";
 import {
@@ -26,14 +26,15 @@ export function ShopClient({
   categories,
   initialCategory,
   initialSort = "featured",
+  initialSaleOnly = false,
 }: {
   products: Product[];
   categories?: StoreCategory[];
   initialCategory?: string;
   initialSort?: SortKey;
+  initialSaleOnly?: boolean;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const availableCategories: StoreCategory[] = categories?.length
     ? categories
@@ -44,9 +45,7 @@ export function ShopClient({
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
   const [maxPrice, setMaxPrice] = useState<number>(0); // 0 = no cap
-  const [onSaleOnly, setOnSaleOnly] = useState(
-    searchParams.get("sort") === "sale",
-  );
+  const [onSaleOnly, setOnSaleOnly] = useState(initialSaleOnly);
   const [sort, setSort] = useState<SortKey>(initialSort);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -97,7 +96,7 @@ export function ShopClient({
 
   function selectCategory(c: string | "all") {
     setCategory(c);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     if (c === "all") params.delete("category");
     else params.set("category", c);
     router.replace(`/shop${params.toString() ? `?${params}` : ""}`, {
@@ -108,7 +107,7 @@ export function ShopClient({
   function selectSort(nextSort: SortKey) {
     setSort(nextSort);
     setOnSaleOnly(false);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     if (nextSort === "featured") params.delete("sort");
     else params.set("sort", nextSort);
     router.replace(`/shop${params.toString() ? `?${params}` : ""}`, {

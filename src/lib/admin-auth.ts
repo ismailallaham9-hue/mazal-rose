@@ -35,3 +35,24 @@ export async function isAuthed(cookieValue: string | undefined): Promise<boolean
   if (!cookieValue) return false;
   return cookieValue === (await sessionToken());
 }
+
+function cookieFromHeader(header: string | null, name: string): string | undefined {
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (key === name) return decodeURIComponent(rest.join("="));
+  }
+  return undefined;
+}
+
+/**
+ * Route-level guard for /api/admin handlers. The middleware already blocks
+ * unauthenticated requests, but a middleware bypass (e.g. CVE in Next.js
+ * < 16.2.11) would otherwise expose orders and customer data, so every
+ * handler checks again. Returns a 401 response when not authed, else null.
+ */
+export async function requireAdmin(req: Request): Promise<Response | null> {
+  const value = cookieFromHeader(req.headers.get("cookie"), ADMIN_COOKIE);
+  if (await isAuthed(value)) return null;
+  return Response.json({ error: "Unauthorized" }, { status: 401 });
+}

@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendMetaCapiEvent } from "@/lib/meta-capi";
+import {
+  clientIp,
+  payloadTooLarge,
+  rateLimit,
+  readJsonBody,
+  RequestTooLarge,
+  tooManyRequests,
+} from "@/lib/request-guard";
 import type { MetaEventPayload, MetaStandardEventName } from "@/lib/meta-events";
 
 export const runtime = "nodejs";
@@ -25,11 +33,13 @@ function isPayload(value: unknown): value is MetaEventPayload {
 }
 
 export async function POST(request: NextRequest) {
+  if (!rateLimit(`meta:${clientIp(request)}`, 120, 60 * 1000)) return tooManyRequests();
   let body: unknown;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+    body = await readJsonBody(request, 16 * 1024);
+  } catch (error) {
+    if (error instanceof RequestTooLarge) return payloadTooLarge();
+    throw error;
   }
 
   const eventName = (body as { eventName?: unknown })?.eventName;

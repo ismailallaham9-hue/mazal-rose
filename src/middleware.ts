@@ -26,6 +26,21 @@ export async function middleware(req: NextRequest) {
   }
   if (pathname === "/contact") return NextResponse.next();
 
+  if (pathname === "/shop") {
+    // Serve /shop from a cached per-filter page; see shop-listing/[category]/[sort].
+    // Unknown values collapse to defaults so tracking params (fbclid, utm_*)
+    // and junk can't multiply cache entries.
+    const params = req.nextUrl.searchParams;
+    const rawCategory = params.get("category") ?? "";
+    const category = /^[a-z0-9-]{1,40}$/.test(rawCategory) ? rawCategory : "all";
+    const rawSort = params.get("sort") ?? "";
+    const sort = rawSort === "new" || rawSort === "sale" ? rawSort : "featured";
+    const target = req.nextUrl.clone();
+    target.pathname = `/shop-listing/${category}/${sort}`;
+    target.search = "";
+    return NextResponse.rewrite(target);
+  }
+
   const isLoginPage = pathname === "/admin/login";
   const isLoginApi = pathname === "/api/admin/login";
   if (isLoginPage || isLoginApi) return noindex(NextResponse.next());
@@ -43,5 +58,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/contact", "/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/contact", "/shop", "/admin/:path*", "/api/admin/:path*"],
 };

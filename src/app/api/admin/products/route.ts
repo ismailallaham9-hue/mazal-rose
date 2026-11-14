@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizeProduct } from "@/lib/admin-product";
 import { updateStoreData } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,8 @@ function uniqueSlug(slug: string, products: { slug: string }[]) {
 }
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const { product, products, articles } = await updateStoreData((store) => {
     const product = normalizeProduct(body as Record<string, unknown>);

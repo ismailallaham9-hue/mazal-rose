@@ -16,7 +16,6 @@ import {
   metaPurchaseEventId,
   sendMetaCapiEvent,
 } from "@/lib/meta-capi";
-import { revalidateStorefront } from "@/lib/revalidate-storefront";
 import {
   getFreshStoreData,
   updateStoreData,
@@ -87,6 +86,10 @@ async function refreshOrderFromNoon(order: StoreOrder): Promise<RefreshedOrder> 
   if (order.paymentProvider !== "noon") return { order };
   if (!order.paymentSessionId || !noonPaymentsConfigured()) return { order };
 
+  // Latest saved state. If a follow-up step (email, Meta) fails after Noon
+  // confirmed the payment, the customer must still see it as paid; showing
+  // "pending" made customers pay a second time.
+  let current = order;
   try {
     const noonOrder = await getNoonOrder(order.paymentSessionId);
     const paymentStatus = paymentStatusFromNoon(noonOrder);
@@ -106,6 +109,7 @@ async function refreshOrderFromNoon(order: StoreOrder): Promise<RefreshedOrder> 
         result: orders.find((entry) => entry.id === order.id) ?? order,
       };
     });
+    current = updated;
     if (paymentStatus !== "paid") return { order: updated };
 
     const eventId = `noon:${order.paymentSessionId}:${String(
@@ -117,28 +121,31 @@ async function refreshOrderFromNoon(order: StoreOrder): Promise<RefreshedOrder> 
       reason: "noon_paid_return_verification",
       markPaid: true,
     });
+    current = adjustment.order ?? updated;
     if (adjustment.changed && adjustment.order) {
-      const latestStore = await getFreshStoreData();
-      const emailEvents = await sendEmails(
-        latestStore.settings,
-        orderEmails(latestStore.settings, adjustment.order),
-      );
-      if (emailEvents.length) {
-        await updateStoreData((store) => ({
-          store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
-          result: null,
-        }));
+      try {
+        const latestStore = await getFreshStoreData();
+        const emailEvents = await sendEmails(
+          latestStore.settings,
+          orderEmails(latestStore.settings, adjustment.order),
+        );
+        if (emailEvents.length) {
+          await updateStoreData((store) => ({
+            store: { ...store, emailEvents: [...emailEvents, ...store.emailEvents] },
+            result: null,
+          }));
+        }
+      } catch (error) {
+        console.error("Order emails failed after Noon payment", error);
       }
-      revalidateStorefront({
-        products: latestStore.products,
-        articles: latestStore.articles,
-      });
+      // No revalidatePath here: it throws during render (this is a page), and
+      // that error used to hide the confirmed payment. Stock shown on product
+      // pages refreshes within the 60s ISR window; checkout re-checks stock.
     }
-    const paidOrder = adjustment.order ?? updated;
-    return trackMetaPurchaseOnce(paidOrder);
+    return await trackMetaPurchaseOnce(current);
   } catch (error) {
     console.error("Unable to refresh Noon payment status", error);
-    return { order };
+    return { order: current };
   }
 }
 

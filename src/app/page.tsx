@@ -162,7 +162,7 @@ export default async function Home() {
         tone="cream"
       />
 
-      <SeasonalBanner settings={settings} />
+      <SeasonalBanner />
 
       <ProductRail
         eyebrow="Most Wanted"

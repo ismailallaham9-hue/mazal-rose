@@ -3,6 +3,14 @@ import type { Product } from "@/lib/products";
 import { stockError } from "@/lib/inventory";
 import { createTabbyCheckout, tabbyConfigured } from "@/lib/tabby";
 import {
+  clientIp,
+  payloadTooLarge,
+  rateLimit,
+  readJsonBody,
+  RequestTooLarge,
+  tooManyRequests,
+} from "@/lib/request-guard";
+import {
   type StoreData,
   type StoreOrder,
   updateStoreData,
@@ -34,8 +42,9 @@ class CheckoutError extends Error {
   }
 }
 
+// Every field ends up in the store; cap lengths so a request can't bloat it.
 function clean(value: unknown, fallback = "") {
-  return String(value ?? fallback).trim();
+  return String(value ?? fallback).trim().slice(0, 500);
 }
 
 function number(value: unknown, fallback = 0) {
@@ -60,11 +69,18 @@ async function removeUnpaidPaymentOrder(order: StoreOrder) {
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-  const rawItems = Array.isArray(body.items) ? (body.items as IncomingItem[]) : [];
+  if (!rateLimit(`orders:${clientIp(req)}`, 10, 10 * 60 * 1000)) return tooManyRequests();
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonBody(req, 64 * 1024);
+  } catch (error) {
+    if (error instanceof RequestTooLarge) return payloadTooLarge();
+    throw error;
+  }
+  const rawItems = Array.isArray(body.items) ? (body.items as IncomingItem[]).slice(0, 30) : [];
   const items = rawItems
     .map((item) => {
-      const quantity = Math.max(1, Math.floor(number(item.quantity, 1)));
+      const quantity = Math.min(20, Math.max(1, Math.floor(number(item.quantity, 1))));
       const price = Math.max(0, Math.round(number(item.price, 0)));
       return {
         productId: clean(item.productId),
@@ -111,22 +127,27 @@ export async function POST(req: Request) {
 
   try {
     saved = await updateStoreData((store) => {
-      if (clean(body.paymentMethod) === "tabby") {
-        for (const item of items) {
-          const product = store.products.find(entry => entry.id === item.productId);
-          if (!product) throw new CheckoutError("Product unavailable.", 409);
-          item.price = product.price;
-          item.lineTotal = product.price * item.quantity;
+      // Never trust prices or names sent by the browser (the bag lives in
+      // localStorage and can be stale or edited): charge the store's
+      // current price for each product.
+      const pricedItems = items.map((item) => {
+        const product = store.products.find((p) => p.id === item.productId);
+        if (!product || product.published === false) {
+          throw new CheckoutError(
+            `${item.name || "An item in your bag"} is no longer available. Please remove it and try again.`,
+            409,
+          );
         }
-      }
-      const unavailable = stockError(store.products, items);
+        const price = Math.max(0, Math.round(number(product.price, 0)));
+        return { ...item, name: product.name, price, lineTotal: price * item.quantity };
+      });
+      const unavailable = stockError(store.products, pricedItems);
       if (unavailable) throw new CheckoutError(unavailable, 409);
 
-      const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
-      const promoCode = clean(body.promoCode) || null;
-      const discount = promoCode
-        ? Math.round((subtotal * store.settings.firstOrderDiscount) / 100)
-        : 0;
+      const subtotal = pricedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+      // Discount codes are discontinued; any code sent is ignored.
+      const promoCode = null;
+      const discount = 0;
       const deliveryMethod = "standard";
       const deliveryFee = 0;
       const total = Math.max(0, subtotal - discount + deliveryFee);
@@ -159,7 +180,7 @@ export async function POST(req: Request) {
         deliveryMethod,
         customer: { email, phone, firstName, lastName },
         shipping: { address, city, country },
-        items,
+        items: pricedItems,
         subtotal,
         discount,
         deliveryFee,

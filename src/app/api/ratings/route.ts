@@ -2,6 +2,14 @@ import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import {
+  clientIp,
+  payloadTooLarge,
+  rateLimit,
+  readJsonBody,
+  RequestTooLarge,
+  tooManyRequests,
+} from "@/lib/request-guard";
+import {
   ratingSummaryForProduct,
   type RatingSummary,
   type StoreRating,
@@ -25,22 +33,24 @@ function clean(value: unknown) {
   return String(value ?? "").trim();
 }
 
-function clientIp(req: Request) {
-  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0];
-  return clean(forwarded || req.headers.get("x-real-ip") || "unknown");
-}
-
+// One rating per product per visitor IP. The user agent and session header
+// used to be part of this, but the client controls both, so changing them
+// allowed unlimited ratings.
 function fingerprint(req: Request, targetId: string) {
-  const ip = clientIp(req);
-  const userAgent = clean(req.headers.get("user-agent") || "unknown");
-  const session = clean(req.headers.get("x-mazal-rating-session") || "anonymous");
   return createHash("sha256")
-    .update([targetId, ip, userAgent, session].join("|"))
+    .update([targetId, clientIp(req)].join("|"))
     .digest("hex");
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!rateLimit(`ratings:${clientIp(req)}`, 10, 10 * 60 * 1000)) return tooManyRequests();
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonBody(req, 4 * 1024);
+  } catch (error) {
+    if (error instanceof RequestTooLarge) return payloadTooLarge();
+    throw error;
+  }
   const targetType = clean(body.targetType);
   const targetId = clean(body.targetId);
   const targetSlug = clean(body.targetSlug);

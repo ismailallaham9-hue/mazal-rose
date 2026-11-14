@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { AccountClient } from "./AccountClient";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
-import { getFreshStoreData } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "My Account",
@@ -11,13 +9,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function AccountPage() {
-  const { settings } = await getFreshStoreData();
-
-  if (settings.showCustomerAccount) {
-    return <AccountClient />;
-  }
-
+// The client area (AccountClient) is a design demo with placeholder orders
+// and points, not connected to real accounts, so it stays hidden.
+export default function AccountPage() {
   return (
     <>
       <Container className="pt-8">
@@ -30,8 +24,8 @@ export default async function AccountPage() {
           Customer accounts are coming soon
         </h1>
         <p className="mt-5 max-w-xl text-ink-soft">
-          We are preparing a private account area for order history, rewards,
-          saved details, and wishlist syncing. For now, our client care team can
+          We are preparing a private account area for order history, saved
+          details, and wishlist syncing. For now, our client care team can
           help with any order request directly.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">

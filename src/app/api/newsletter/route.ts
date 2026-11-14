@@ -4,6 +4,15 @@ import {
   updateStoreData,
 } from "@/lib/store";
 import { sendEmails, subscriberEmails } from "@/lib/email";
+import {
+  clientIp,
+  limitText,
+  payloadTooLarge,
+  rateLimit,
+  readJsonBody,
+  RequestTooLarge,
+  tooManyRequests,
+} from "@/lib/request-guard";
 
 export const runtime = "nodejs";
 
@@ -12,14 +21,21 @@ function clean(value: unknown) {
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-  const email = clean(body.email).toLowerCase();
+  if (!rateLimit(`newsletter:${clientIp(req)}`, 10, 10 * 60 * 1000)) return tooManyRequests();
+  let body: Record<string, unknown>;
+  try {
+    body = await readJsonBody(req, 4 * 1024);
+  } catch (error) {
+    if (error instanceof RequestTooLarge) return payloadTooLarge();
+    throw error;
+  }
+  const email = limitText(body.email, 200).toLowerCase();
   const source =
     clean(body.source) === "footer" || clean(body.source) === "checkout"
       ? clean(body.source)
       : "newsletter";
 
-  if (!email || !email.includes("@")) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json(
       { error: "Please enter a valid email address." },
       { status: 400 },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStoreData } from "@/lib/store";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,8 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const { id } = await params;
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") === "packing" ? "Packing Slip" : "Invoice";

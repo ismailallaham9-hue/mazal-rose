@@ -22,7 +22,7 @@ export function CheckoutClient({
 }) {
   const whatsapp = settings?.whatsapp ?? SITE.whatsapp;
   const googleReviewUrl = settings?.googleReviewUrl ?? SITE.googleReviewUrl;
-  const { items, promoCode, clear } = useCart();
+  const { items, clear } = useCart();
   const [placed, setPlaced] = useState<StoreOrder | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +75,6 @@ export function CheckoutClient({
       },
       deliveryMethod: "standard",
       paymentMethod: String(form.get("payment") ?? "card"),
-      promoCode,
       newsletterOptIn: String(form.get("newsletterOptIn") === "on"),
       note: String(form.get("note") ?? ""),
     };

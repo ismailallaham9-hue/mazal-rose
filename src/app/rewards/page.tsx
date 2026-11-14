@@ -5,7 +5,6 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Reveal } from "@/components/Reveal";
 import { Accordion } from "@/components/Accordion";
 import { pageMetadata } from "@/lib/seo";
-import { getFreshStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -58,9 +57,7 @@ const TIERS = [
   },
 ];
 
-export default async function RewardsPage() {
-  const { settings } = await getFreshStoreData();
-
+export default function RewardsPage() {
   return (
     <>
       <Container className="pt-8">
@@ -175,11 +172,10 @@ export default async function RewardsPage() {
         <Reveal>
           <p className="eyebrow">Refer a friend</p>
           <h2 className="mt-3 font-serif text-4xl text-ink md:text-5xl">
-            Give AED 50, get AED 50
+            Refer a friend, earn AED 50
           </h2>
           <p className="mt-5 text-ink-soft">
-            Share your personal link. Your friend gets {settings.firstOrderDiscount}%
-            off their first order, and you earn AED 50 in points the moment they
+            Share MAZAL with a friend and earn AED 50 in points the moment they
             shop. There&rsquo;s no limit to how much you can earn.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">

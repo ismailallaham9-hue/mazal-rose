@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_CONTENT, updateStoreData } from "@/lib/store";
 import { revalidateStorefront } from "@/lib/revalidate-storefront";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const body = await req.json().catch(() => ({}));
   const input = body as Record<string, unknown>;
   const announcements = Array.isArray(input.announcements)

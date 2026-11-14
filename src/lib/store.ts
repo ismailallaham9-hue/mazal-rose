@@ -14,7 +14,6 @@
  * operation limits. Blob remains a fallback for older deployments.
  */
 import "server-only";
-import { connection } from "next/server";
 import { ARTICLES, type Article } from "./articles";
 import { CATEGORIES, PRODUCTS, type Product } from "./products";
 import { SITE, whatsappNumber } from "./site";
@@ -437,7 +436,7 @@ export const DEFAULT_PAGES: PageContent = {
   footer: {
     newsletterTitle: "Join the MAZAL world",
     newsletterBody:
-      "Private previews, new arrivals, and quiet notes on craft - plus 10% off your first order.",
+      "Private previews, new arrivals, and quiet notes on craft.",
     wordmark: "MAZAL",
     columns: [
       {
@@ -445,7 +444,6 @@ export const DEFAULT_PAGES: PageContent = {
         links: [
           { label: "Our Story", href: "/about" },
           { label: "The Journal", href: "/journal" },
-          { label: "MAZAL Rewards", href: "/rewards" },
           { label: "Contact", href: "/contact" },
         ],
       },
@@ -842,6 +840,9 @@ function isValidRating(value: unknown): value is StoreRating {
   );
 }
 
+const RETIRED_NEWSLETTER_BODY =
+  "Private previews, new arrivals, and quiet notes on craft - plus 10% off your first order.";
+
 function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
   const seed = seedData();
   if (!raw || typeof raw !== "object") return seed;
@@ -879,6 +880,11 @@ function normalize(raw: Partial<StoreData> | null | undefined): StoreData {
     footer: {
       ...seed.pages.footer,
       ...(rawPages.footer ?? {}),
+      // Discount codes were discontinued; replace the old default copy that
+      // promised one (custom copy written in admin is left alone).
+      ...(rawPages.footer?.newsletterBody === RETIRED_NEWSLETTER_BODY
+        ? { newsletterBody: seed.pages.footer.newsletterBody }
+        : {}),
       columns: Array.isArray(rawPages.footer?.columns)
         ? withRequiredFooterLinks(rawPages.footer.columns)
         : withRequiredFooterLinks(seed.pages.footer.columns),
@@ -937,12 +943,31 @@ async function localStoreFile() {
   return { path, dir, file: path.join(dir, "store.json") };
 }
 
-async function readDiskStore(): Promise<StoreData | null> {
+/**
+ * Parsed disk store, reused until store.json changes on disk. Re-reading and
+ * parsing the whole file on every page view was a major source of memory
+ * churn on the 512 MB Render instance.
+ */
+let diskMemCache: { data: StoreData; mtimeMs: number; size: number } | null = null;
+
+async function readDiskStore({ fresh = false } = {}): Promise<StoreData | null> {
   try {
     const fs = await import("node:fs/promises");
     const { file } = await localStoreFile();
+    const stat = await fs.stat(file);
+    if (
+      !fresh &&
+      diskMemCache &&
+      diskMemCache.mtimeMs === stat.mtimeMs &&
+      diskMemCache.size === stat.size
+    ) {
+      return diskMemCache.data;
+    }
     const raw = await fs.readFile(file, "utf8");
-    return normalize(JSON.parse(raw));
+    const data = normalize(JSON.parse(raw));
+    // Writers get their own copy so in-place edits never leak into the cache.
+    if (!fresh) diskMemCache = { data, mtimeMs: stat.mtimeMs, size: stat.size };
+    return data;
   } catch {
     return null;
   }
@@ -1068,9 +1093,12 @@ export async function getStoreData(): Promise<StoreData> {
   return (await readBlobStore()) ?? (await readDiskStore()) ?? seedData();
 }
 
-/** Read the store for public storefront rendering at request time. */
+/**
+ * Read the store for public storefront pages. Those pages are cached (ISR,
+ * see `revalidate` in app/layout.tsx) and refreshed on every admin save via
+ * revalidateStorefront(), so they are no longer re-rendered per visit.
+ */
 export async function getFreshStoreData(): Promise<StoreData> {
-  await connection();
   return getStoreData();
 }
 
@@ -1097,7 +1125,9 @@ export async function updateStoreData<T>(
   const run = storeWriteQueue.then(async () => {
     const release = await acquireStoreLock();
     try {
-      const current = await getStoreData();
+      const current = hasDisk()
+        ? ((await readDiskStore({ fresh: true })) ?? (await getStoreData()))
+        : await getStoreData();
       const next = await updater(current);
       await saveStoreData(next.store);
       output = next.result;

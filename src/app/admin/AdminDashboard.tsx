@@ -2133,8 +2133,6 @@ function SettingsSection({ store, setStore, saveStore }: SectionProps) {
 
       <Fieldset title="Promotions">
         <div className="grid gap-4 md:grid-cols-2">
-          <TextField label="Promo code" value={s.firstOrderCode} onChange={(v) => set({ firstOrderCode: v })} />
-          <TextField label="Promo discount %" type="number" value={String(s.firstOrderDiscount)} onChange={(v) => set({ firstOrderDiscount: Number(v) })} />
         </div>
       </Fieldset>
 
