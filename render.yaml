@@ -11,6 +11,15 @@ services:
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
+      # Tabby QA only. Enable after webhook registration and review.
+      - key: TABBY_ENABLED
+        value: "false"
+      - key: TABBY_MERCHANT_CODE
+        value: MAZ
+      - key: TABBY_SECRET_KEY
+        sync: false
+      - key: TABBY_WEBHOOK_SECRET
+        sync: false
       - key: NODE_ENV
         value: production
       - key: ADMIN_PASSWORD
