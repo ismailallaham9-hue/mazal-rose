@@ -361,7 +361,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     "MAZAL 2026 — the new collection has arrived",
     "Complimentary delivery on orders over AED 600",
     "Private atelier appointments now open in Dubai",
-    "Worldwide shipping to 60+ countries",
+    "Delivery across the UAE & GCC in 2–7 days",
   ],
 };
 
@@ -494,12 +494,12 @@ export const DEFAULT_PAGES: PageContent = {
     returns: {
       title: "Returns & Exchanges",
       description:
-        "Read MAZAL's returns and exchanges policy, including eligibility, timelines, refunds, exchanges and client care support.",
+        "MAZAL exchange policy: no refunds; unworn abayas can be exchanged for another abaya within 14 days of delivery. Eligibility, steps and client care.",
     },
     shipping: {
       title: "Shipping Policy",
       description:
-        "Read MAZAL's shipping policy, including UAE delivery, GCC and international shipping timelines, fees, duties and order support.",
+        "MAZAL shipping policy: delivery across the UAE and GCC in 2–7 working days, complimentary over AED 600. Fees and order support.",
     },
     privacy: {
       title: "Privacy Policy",

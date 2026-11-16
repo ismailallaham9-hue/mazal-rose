@@ -156,22 +156,23 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               title: "How long does delivery take?",
               content: (
                 <p>
-                  Express delivery across the GCC takes 2–4 working days, and
-                  worldwide 5–9 days. Complimentary over {settings.currency}{" "}
+                  We deliver across the UAE and GCC in 2–7 working days.
+                  Complimentary over {settings.currency}{" "}
                   {settings.freeShippingThreshold}.
                 </p>
               ),
             },
             {
-              title: "What is your return policy?",
+              title: "Can I return or exchange a piece?",
               content: (
                 <p>
-                  We offer 14-day hassle-free returns and exchanges on unworn
-                  items with tags attached. Read the full{" "}
+                  We do not offer refunds. Unworn items with tags attached can
+                  be exchanged for another abaya within 14 days of delivery.
+                  Read the full{" "}
                   <Link href="/returns" className="link-underline text-bronze hover:text-bronze-deep">
-                    Returns & Exchanges policy
+                    Exchange policy
                   </Link>{" "}
-                  for eligibility, refunds, and exchange steps.
+                  for eligibility and exchange steps.
                 </p>
               ),
             },

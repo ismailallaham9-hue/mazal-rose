@@ -5,7 +5,7 @@ const DEFAULT_MESSAGES: string[] = [
   `Complimentary delivery on orders over ${SITE.currency} ${SITE.freeShippingThreshold}`,
   "Private atelier appointments now open in Dubai",
   "Considered modest pieces, crafted to endure",
-  "Worldwide shipping to 60+ countries",
+  "Delivery across the UAE & GCC in 2–7 days",
 ];
 
 function normalizeMessage(message: string) {

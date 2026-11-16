@@ -14,16 +14,20 @@ export function generateMetadata(): Promise<Metadata> {
     pageKey: "returns",
     recordKey: "page:returns",
     path: "/returns",
-    fallbackTitle: "Returns & Exchanges",
+    fallbackTitle: "Exchange Policy",
     fallbackDescription:
-      "Read MAZAL's returns and exchanges policy, including eligibility, timelines, refunds, exchanges, and how to contact client care.",
+      "MAZAL exchange policy: no refunds; unworn abayas can be exchanged for another abaya within 14 days of delivery. Eligibility, steps and client care.",
   });
 }
 
 const QUICK_POINTS = [
   {
+    title: "Exchanges only",
+    text: "We do not offer refunds. Pieces can be exchanged for another abaya.",
+  },
+  {
     title: "14-day window",
-    text: "Return or exchange requests should be made within 14 days of delivery.",
+    text: "Exchange requests should be made within 14 days of delivery.",
   },
   {
     title: "Original condition",
@@ -31,15 +35,15 @@ const QUICK_POINTS = [
   },
   {
     title: "Client care support",
-    text: "Start every return or exchange through WhatsApp so our team can guide the next step.",
+    text: "Start every exchange through WhatsApp so our team can guide the next step.",
   },
 ];
 
 const STEPS = [
-  "Contact MAZAL Client Care on WhatsApp with your order number and the item you want to return or exchange.",
-  "Our team will confirm eligibility and share the return instructions.",
-  "Pack the item securely with all tags, accessories, packaging, and proof of purchase.",
-  "Once received and inspected, we will confirm the refund, exchange, or store-credit option.",
+  "Contact MAZAL Client Care on WhatsApp with your order number, the piece you want to exchange, and the abaya you would like instead.",
+  "Our team will confirm eligibility and availability, and share the exchange instructions.",
+  "Pack the piece securely with all tags, packaging, and proof of purchase.",
+  "Once received and inspected, we will send your new abaya.",
 ];
 
 const FINAL_SALE = [
@@ -59,7 +63,7 @@ export default async function ReturnsPage() {
         <Breadcrumbs
           items={[
             { label: "Home", href: "/" },
-            { label: "Returns & Exchanges" },
+            { label: "Exchange Policy" },
           ]}
         />
       </Container>
@@ -68,12 +72,12 @@ export default async function ReturnsPage() {
         <div>
           <p className="eyebrow">Client Care</p>
           <h1 className="mt-4 font-serif text-5xl leading-[1.05] text-ink md:text-6xl">
-            Returns & Exchanges
+            Exchange Policy
           </h1>
           <p className="mt-6 max-w-2xl text-ink-soft">
-            We want every MAZAL piece to feel considered from the moment it
-            arrives. If something is not right, our client care team will help
-            you with a return or exchange request clearly and calmly.
+            We want every MAZAL piece to feel right. We do not offer refunds,
+            but if a piece is not right for you, you can exchange it for another
+            abaya. Our client care team will guide you.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <WhatsAppButton
@@ -128,22 +132,23 @@ export default async function ReturnsPage() {
         <div>
           <p className="eyebrow">Eligibility</p>
           <h2 className="mt-3 font-serif text-4xl text-ink">
-            What can be returned
+            What can be exchanged
           </h2>
           <p className="mt-5 text-ink-soft">
-            Eligible items can be returned or exchanged when they are in their
+            Pieces can be exchanged for another abaya when they are in their
             original condition. Please keep all tags, packaging, and order
             details until you are sure the piece is right for you.
           </p>
           <p className="mt-4 text-ink-soft">
-            Delivery fees, duties, customs charges, and return shipping costs
-            may be non-refundable unless the item arrived damaged, defective, or
-            incorrect.
+            Purchases are not refundable. If the abaya you choose has a
+            different price, our team will explain how the difference is
+            handled before the exchange. Delivery costs for exchanges may apply
+            unless the item arrived damaged, defective, or incorrect.
           </p>
         </div>
 
         <div className="border border-sand-deep/60 p-6">
-          <h3 className="font-serif text-2xl text-ink">Final sale exceptions</h3>
+          <h3 className="font-serif text-2xl text-ink">Not eligible for exchange</h3>
           <ul className="mt-5 space-y-3 text-sm text-ink-soft">
             {FINAL_SALE.map((item) => (
               <li key={item} className="flex gap-3">
@@ -161,13 +166,11 @@ export default async function ReturnsPage() {
           defaultOpen={0}
           items={[
             {
-              title: "Refund timing",
+              title: "Refunds",
               content: (
                 <p>
-                  After your returned item is received and approved, refunds are
-                  processed to the original payment method. Bank and payment
-                  provider timing can vary, but most refunds appear within 5-7
-                  working days after processing.
+                  MAZAL does not offer refunds. Eligible pieces can be exchanged
+                  for another abaya as described above.
                 </p>
               ),
             },
@@ -175,10 +178,10 @@ export default async function ReturnsPage() {
               title: "Exchanges",
               content: (
                 <p>
-                  Exchanges depend on availability. If your preferred size,
-                  colour, or style is available, our team will reserve it after
-                  your return request is approved. If it is unavailable, we can
-                  help with an alternative or refund.
+                  Exchanges depend on availability. If your preferred abaya,
+                  size, or colour is available, our team will reserve it after
+                  your exchange request is approved. If it is unavailable, we
+                  will help you choose another abaya.
                 </p>
               ),
             },
@@ -188,17 +191,8 @@ export default async function ReturnsPage() {
                 <p>
                   If your order arrives damaged, defective, or incorrect, please
                   contact us within 48 hours of delivery with photos of the item,
-                  packaging, and order number so we can resolve it quickly.
-                </p>
-              ),
-            },
-            {
-              title: "International orders",
-              content: (
-                <p>
-                  International customers are responsible for any duties, taxes,
-                  customs fees, or return shipping charges unless the item is
-                  confirmed to be damaged, defective, or incorrect.
+                  packaging, and order number. We will replace it or exchange it
+                  for another abaya at no cost to you.
                 </p>
               ),
             },
@@ -207,7 +201,7 @@ export default async function ReturnsPage() {
 
         <div className="mt-12 border-t border-sand-deep/60 pt-8 text-sm text-ink-soft">
           <p>
-            Need help before requesting a return? Message us on{" "}
+            Need help before requesting an exchange? Message us on{" "}
             <WhatsAppButton
               href={whatsappLink(whatsapp.orderSupportMessage, whatsapp.number)}
               className="link-underline text-bronze hover:text-bronze-deep"

@@ -237,15 +237,15 @@ export default async function ProductPage({
         name: "How long does delivery take?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Express delivery across the GCC takes 2–4 working days, and worldwide 5–9 days. Free over AED 500.",
+          text: `We deliver across the UAE and GCC in 2–7 working days. Free over ${store.settings.currency} ${store.settings.freeShippingThreshold}.`,
         },
       },
       {
         "@type": "Question",
-        name: "What is your return policy?",
+        name: "Can I return or exchange a piece?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: seo?.returnExchangeInformation || "We offer 14-day hassle-free returns and exchanges on unworn items with tags attached. Full eligibility and exchange steps are available on the Returns & Exchanges page.",
+          text: "We do not offer refunds. Unworn items with tags attached can be exchanged for another abaya within 14 days of delivery. Full eligibility and exchange steps are on the Exchange policy page.",
         },
       },
       {

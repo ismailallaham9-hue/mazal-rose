@@ -12,7 +12,7 @@ export function generateMetadata(): Promise<Metadata> {
     path: "/shipping",
     fallbackTitle: "Shipping Policy",
     fallbackDescription:
-      "Read MAZAL's shipping policy, including UAE delivery, GCC and international shipping timelines, fees, duties and client care support.",
+      "MAZAL shipping policy: delivery across the UAE and GCC in 2–7 working days, complimentary over AED 600. Fees and order support.",
   });
 }
 
@@ -32,7 +32,7 @@ export default async function ShippingPage() {
             Shipping Policy
           </h1>
           <p className="mt-5 text-ink-soft">
-            Last updated: July 1, 2026
+            Last updated: November 16, 2026
           </p>
           <div className="mt-8">
             <Button href="/contact" variant="outline">
@@ -51,31 +51,29 @@ export default async function ShippingPage() {
             </p>
           </PolicySection>
 
-          <PolicySection title="UAE Delivery">
+          <PolicySection title="Where We Deliver">
             <p>
-              UAE delivery is available across Dubai, Abu Dhabi, Sharjah, Ajman,
-              Ras Al Khaimah, Fujairah and Umm Al Quwain. Standard delivery is
-              typically 1 to 3 working days after dispatch.
+              We deliver across the UAE (Dubai, Abu Dhabi, Sharjah, Ajman, Ras
+              Al Khaimah, Fujairah and Umm Al Quwain) and the GCC. We do not
+              ship outside the UAE and GCC.
             </p>
           </PolicySection>
 
-          <PolicySection title="GCC and International Shipping">
+          <PolicySection title="Delivery Times">
             <p>
-              GCC orders usually arrive within 2 to 5 working days after
-              dispatch. International delivery is available to selected
-              countries and usually takes 5 to 9 working days after dispatch,
-              depending on customs and courier routing.
+              Delivery usually takes 2 to 7 working days after your order is
+              confirmed, depending on your city and country. We offer one
+              standard delivery service.
             </p>
           </PolicySection>
 
-          <PolicySection title="Fees, Duties and Taxes">
+          <PolicySection title="Delivery Fees">
             <p>
-              Delivery fees are shown at checkout before payment. Complimentary
-              standard shipping may apply on eligible orders over{" "}
-              {settings.currency} {settings.freeShippingThreshold}. International
-              duties, customs charges, VAT, import taxes, brokerage fees and
-              local clearance costs are the customer&apos;s responsibility unless
-              checkout clearly states otherwise.
+              Any delivery fee is shown at checkout before payment. Delivery is
+              complimentary on orders over {settings.currency}{" "}
+              {settings.freeShippingThreshold}. For GCC orders outside the UAE,
+              any local customs or import charges are the customer&apos;s
+              responsibility.
             </p>
           </PolicySection>
 
