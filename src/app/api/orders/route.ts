@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Product } from "@/lib/products";
 import { stockError } from "@/lib/inventory";
+import { isUnderAbaya, underAbayaLabel, underAbayaPrice } from "@/lib/under-abaya";
 import {
   clientIp,
   payloadTooLarge,
@@ -30,6 +31,7 @@ type IncomingItem = {
   color?: string;
   quantity?: number;
   price?: number;
+  underAbaya?: unknown;
 };
 
 class CheckoutError extends Error {
@@ -87,6 +89,7 @@ export async function POST(req: Request) {
         image: clean(item.image),
         size: clean(item.size),
         color: clean(item.color),
+        underAbaya: isUnderAbaya(item.underAbaya) ? item.underAbaya : undefined,
         quantity,
         price,
         lineTotal: price * quantity,
@@ -137,8 +140,9 @@ export async function POST(req: Request) {
             409,
           );
         }
-        const price = Math.max(0, Math.round(number(product.price, 0)));
-        return { ...item, name: product.name, price, lineTotal: price * item.quantity };
+        const price = Math.max(0, Math.round(number(product.price, 0))) + underAbayaPrice(item.underAbaya);
+        const name = product.name + (item.underAbaya ? ` + ${underAbayaLabel(item.underAbaya)}` : "");
+        return { ...item, name, price, lineTotal: price * item.quantity };
       });
       const unavailable = stockError(store.products, pricedItems);
       if (unavailable) throw new CheckoutError(unavailable, 409);
