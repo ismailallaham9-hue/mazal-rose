@@ -13,6 +13,7 @@ import { SITE } from "@/lib/site";
 import { META_CURRENCY } from "@/lib/meta-events";
 import { trackMetaEvent } from "@/lib/meta-browser";
 import type { SiteSettings } from "@/lib/store";
+import type { UnderAbaya } from "@/lib/under-abaya";
 
 /**
  * Client-side cart. Persists to localStorage so the bag survives reloads.
@@ -29,6 +30,7 @@ export type CartItem = {
   image: string;
   size: string;
   color: string;
+  underAbaya?: UnderAbaya;
   quantity: number;
 };
 
@@ -56,7 +58,7 @@ function reducer(state: CartState, action: CartAction): CartState {
       return { items: action.items };
     case "add": {
       const { productId, size, color, quantity = 1 } = action.payload;
-      const key = lineKey(productId, size, color);
+      const key = lineKey(productId, size, color) + (action.payload.underAbaya ? `::${action.payload.underAbaya}` : "");
       const existing = state.items.find((i) => i.key === key);
       if (existing) {
         return {

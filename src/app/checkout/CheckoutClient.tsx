@@ -57,6 +57,7 @@ export function CheckoutClient({
         image: item.image,
         size: item.size,
         color: item.color,
+        underAbaya: item.underAbaya,
         quantity: item.quantity,
         price: item.price,
       })),
