@@ -23,6 +23,7 @@ import {
   variantStock,
 } from "@/lib/products";
 import { clsx } from "@/lib/clsx";
+import { underAbayaLabel, underAbayaPrice, type UnderAbaya } from "@/lib/under-abaya";
 
 const RECENT_KEY = "mazal.recent.v1";
 
@@ -50,6 +51,7 @@ export function ProductDetailClient({
   );
   const [selectedImage, setSelectedImage] = useState(galleryImages[0] ?? "");
   const [qty, setQty] = useState(1);
+  const [underAbaya, setUnderAbaya] = useState<UnderAbaya | "">("");
   const [sizeError, setSizeError] = useState(false);
 
   const off = discountPercent(product);
@@ -94,8 +96,9 @@ export function ProductDetailClient({
     if (selectedOutOfStock) return;
     addItem({
       productId: product.id,
-      name: product.name,
-      price: product.price,
+      name: product.name + (underAbaya ? ` + ${underAbayaLabel(underAbaya)}` : ""),
+      price: product.price + underAbayaPrice(underAbaya || undefined),
+      underAbaya: underAbaya || undefined,
       image: product.image ?? "",
       size,
       color: color.name,
@@ -264,6 +267,15 @@ export function ProductDetailClient({
           {sizeError && (
             <p className="mt-2 text-xs text-[#8a3f2b]">Please select a size.</p>
           )}
+        </div>
+
+        <div className="mt-6">
+          <label htmlFor="under-abaya" className="mb-2 block text-xs uppercase tracking-[0.15em] text-ink">Add an under-abaya</label>
+          <select id="under-abaya" value={underAbaya} onChange={event => setUnderAbaya(event.target.value as UnderAbaya | "")} className="w-full border border-sand-deep bg-cream-soft px-4 py-3 text-sm text-ink focus:border-bronze focus:outline-none">
+            <option value="">No extra</option>
+            <option value="velvet">Velvet under-abaya (+AED 50)</option>
+            <option value="crepe">Crepe under-abaya (+AED 50)</option>
+          </select>
         </div>
 
         {/* Stock urgency */}
