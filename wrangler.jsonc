@@ -1,0 +1,73 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "mazal-rose",
+	"compatibility_date": "2026-10-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding; must match the worker name.
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "mazal-rose"
+		}
+	],
+	"r2_buckets": [
+		{
+			// ISR / page cache. See https://opennext.js.org/cloudflare/caching
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "mazal-rose-opennext-cache"
+		},
+		{
+			// Videos, brand images and admin uploads, served at media.mazal.ae.
+			"binding": "MEDIA_BUCKET",
+			"bucket_name": "mazal-media"
+		}
+	],
+	"d1_databases": [
+		{
+			// Store data (products, orders, content). Schema: migrations/.
+			"binding": "DB",
+			"database_name": "mazal-store",
+			"database_id": "08011f8d-bb12-4c95-8bb6-bf68844c4125",
+			"migrations_dir": "migrations"
+		},
+		{
+			// OpenNext tag cache (instant page refresh); same database.
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_name": "mazal-store",
+			"database_id": "08011f8d-bb12-4c95-8bb6-bf68844c4125"
+		}
+	],
+	"vars": {
+		"STORE_BACKEND_D1": "1",
+		"MEDIA_URL": "https://media.mazal.ae",
+		"MEDIA_UPLOADS": "1",
+		// Where Noon returns customers after paying.
+		"PUBLIC_BASE_URL": "https://mazal.ae",
+		// Noon Payments (non-secret settings, same as Render). The app key is a
+		// secret: wrangler secret put NOON_PAYMENTS_APP_KEY
+		"NOON_PAYMENTS_MODE": "live",
+		"NOON_PAYMENTS_BUSINESS_ID": "mazal",
+		"NOON_PAYMENTS_APP_NAME": "mazal_web",
+		"NOON_PAYMENTS_ORDER_CATEGORY": "pay",
+		"NOON_PAYMENTS_CURRENCY": "AED",
+		"NOON_PAYMENTS_PAYMENT_ACTION": "SALE",
+		"NOON_PAYMENTS_CHANNEL": "WEB",
+		// Email (Resend) and Meta: same values as Render. Secrets set with
+		// wrangler secret put: RESEND_API_KEY, META_CAPI_ACCESS_TOKEN.
+		"RESEND_FROM": "MAZAL <care@mazal.ae>",
+		"ADMIN_EMAIL": "care@mazal.ae",
+		"META_PIXEL_ID": "2136787320560677",
+		"META_GRAPH_API_VERSION": "v26.0",
+		"META_TEST_EVENT_CODE": "TEST64099"
+	},
+	// mazal.ae is served by this Worker. Removing this route (and redeploying)
+	// sends traffic back to Render, whose DNS record is still in place.
+	"routes": [
+		{ "pattern": "mazal.ae/*", "zone_name": "mazal.ae" }
+	]
+}

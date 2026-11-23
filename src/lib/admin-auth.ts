@@ -6,9 +6,14 @@
  */
 export const ADMIN_COOKIE = "mazal_admin";
 
-/** Dev default so the panel works locally without any setup. CHANGE in prod. */
-function adminPassword(): string {
-  return process.env.ADMIN_PASSWORD || "mazal-admin";
+/**
+ * Dev default so the panel works locally without any setup. In production a
+ * missing ADMIN_PASSWORD disables admin login instead of falling back to the
+ * publicly known default (e.g. a fresh Cloudflare deploy without secrets).
+ */
+function adminPassword(): string | null {
+  if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
+  return process.env.NODE_ENV === "production" ? null : "mazal-admin";
 }
 
 async function sha256hex(input: string): Promise<string> {
@@ -20,20 +25,23 @@ async function sha256hex(input: string): Promise<string> {
 }
 
 /** The cookie value a logged-in admin should carry. */
-export async function sessionToken(): Promise<string> {
-  return sha256hex("mazal::" + adminPassword());
+export async function sessionToken(): Promise<string | null> {
+  const password = adminPassword();
+  return password ? sha256hex("mazal::" + password) : null;
 }
 
 /** True if the submitted password is correct. */
 export async function isValidPassword(submitted: string): Promise<boolean> {
-  if (!submitted) return false;
-  return (await sha256hex("mazal::" + submitted)) === (await sessionToken());
+  const token = await sessionToken();
+  if (!submitted || !token) return false;
+  return (await sha256hex("mazal::" + submitted)) === token;
 }
 
 /** True if the request's cookie proves a valid session. */
 export async function isAuthed(cookieValue: string | undefined): Promise<boolean> {
-  if (!cookieValue) return false;
-  return cookieValue === (await sessionToken());
+  const token = await sessionToken();
+  if (!cookieValue || !token) return false;
+  return cookieValue === token;
 }
 
 function cookieFromHeader(header: string | null, name: string): string | undefined {

@@ -7,6 +7,9 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   if (process.env.NODE_ENV !== "production") return;
+  // On Cloudflare Workers there is no long-lived server to call back into;
+  // the deploy script calls /api/internal/warm with REVALIDATE_SECRET instead.
+  if (typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers") return;
 
   const token = crypto.randomUUID();
   (globalThis as { __mazalWarmToken?: string }).__mazalWarmToken = token;

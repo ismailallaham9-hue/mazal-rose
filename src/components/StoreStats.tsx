@@ -10,7 +10,11 @@ export function StoreStats({
 }) {
   return (
     <section className="bg-ink text-cream-soft" aria-label="MAZAL by the numbers">
-      <Container className="grid grid-cols-2 gap-8 py-14 text-center md:grid-cols-4">
+      <Container
+        className={`grid grid-cols-2 gap-8 py-14 text-center ${
+          stats.length >= 4 ? "md:grid-cols-4" : stats.length === 3 ? "md:grid-cols-3" : "mx-auto max-w-2xl"
+        }`}
+      >
         {stats.map((s) => (
           <div key={s.label}>
             <p className="font-serif text-4xl text-bronze md:text-5xl">{s.value}</p>

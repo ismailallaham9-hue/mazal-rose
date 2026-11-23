@@ -233,7 +233,9 @@ export async function POST(req: Request) {
     try {
       const checkout = await createNoonCheckout({
         order: saved.order,
-        baseUrl: saved.settings.url,
+        // PUBLIC_BASE_URL lets a test deployment (e.g. *.workers.dev) receive
+        // the customer back after Noon; otherwise the site URL from settings.
+        baseUrl: process.env.PUBLIC_BASE_URL || saved.settings.url,
       });
       redirectUrl = checkout.paymentUrl;
       const gatewayOrder = await updateStoreData((store) => {

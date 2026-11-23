@@ -12,8 +12,8 @@ const ITEMS = [
     ),
   },
   {
-    title: "Fast Delivery",
-    desc: "Express across the GCC",
+    title: "UAE & GCC Delivery",
+    desc: "Delivered in 2–7 working days",
     icon: (
       <path
         d="M3 7h11v8H3V7Zm11 3h4l3 3v2h-7v-5ZM7 18.5A1.5 1.5 0 1 0 7 15.5a1.5 1.5 0 0 0 0 3Zm10 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
@@ -22,8 +22,8 @@ const ITEMS = [
     ),
   },
   {
-    title: "Easy Returns",
-    desc: "14-day hassle-free returns",
+    title: "Easy Exchanges",
+    desc: "Exchange within 14 days",
     icon: (
       <path
         d="M4 9h11a4 4 0 0 1 0 8H9M4 9l3-3M4 9l3 3"
@@ -32,8 +32,8 @@ const ITEMS = [
     ),
   },
   {
-    title: "Satisfaction Guarantee",
-    desc: "Loved, or your money back",
+    title: "Client Care",
+    desc: "Personal help on WhatsApp",
     icon: (
       <path
         d="M12 3l2.5 2 3.2-.4.9 3.1 2.4 2.1-1.6 2.8.5 3.2-3.1 1-1.8 2.7L12 21l-3-.6-1.8-2.7-3.1-1 .5-3.2-1.6-2.8L5.4 7.7l.9-3.1L9.5 5 12 3Z"

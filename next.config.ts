@@ -27,10 +27,13 @@ const nextConfig: NextConfig = {
     // (temporary, so the page can come back).
     const hidden = [{ source: "/rewards", destination: "/shop", permanent: false }];
     const media = process.env.MEDIA_URL?.replace(/\/$/, "");
+    const sources = ["/video/:path*", "/images/:path*"];
+    // On Cloudflare, admin uploads live in the same R2 bucket under uploads/.
+    if (process.env.MEDIA_UPLOADS) sources.push("/uploads/:path*");
     if (!media) return hidden;
     return [
       ...hidden,
-      ...["/video/:path*", "/images/:path*"].map((source) => ({
+      ...sources.map((source) => ({
         source,
         destination: `${media}${source}`,
         permanent: true,
@@ -44,21 +47,24 @@ const nextConfig: NextConfig = {
       source,
       headers: [{ key: "X-Robots-Tag", value }],
     });
+    const security = {
+      // Baseline security headers for every response. No CSP script
+      // allow-list here: it would need maintaining for Meta Pixel, Google
+      // Analytics and Noon, and a mistake would break checkout.
+      source: "/:path*",
+      headers: [
+        { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+      ],
+    };
+    // Test deployments (e.g. *.workers.dev) must not be indexed.
+    if (process.env.NOINDEX_ALL) return [security, rule("/:path*", NOINDEX)];
     return [
-      {
-        // Baseline security headers for every response. No CSP script
-        // allow-list here: it would need maintaining for Meta Pixel, Google
-        // Analytics and Noon, and a mistake would break checkout.
-        source: "/:path*",
-        headers: [
-          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-        ],
-      },
+      security,
       rule("/admin", NOINDEX),
       rule("/admin/:path*", NOINDEX),
       rule("/account", PRIVATE),

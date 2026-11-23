@@ -7,6 +7,7 @@ import { Reveal } from "@/components/Reveal";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { StoreStats } from "@/components/StoreStats";
 import { TrustBadges } from "@/components/TrustBadges";
+import { getFreshStoreData } from "@/lib/store";
 
 export function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -34,7 +35,9 @@ const VALUES = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  // Stats come from admin settings so edits there show here.
+  const { settings } = await getFreshStoreData();
   return (
     <>
       <Container className="pt-8">
@@ -185,7 +188,7 @@ export default function AboutPage() {
         </Reveal>
       </Container>
 
-      <StoreStats />
+      <StoreStats stats={settings.stats} />
       <TrustBadges />
     </>
   );

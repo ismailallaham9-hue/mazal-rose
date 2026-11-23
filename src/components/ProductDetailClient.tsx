@@ -364,23 +364,24 @@ export function ProductDetailClient({
                 title: "Delivery & Shipping",
                 content: (
                   <p>
-                    Express delivery across the GCC in 2–4 working days, and
-                    worldwide in 5–9 days. Complimentary on orders over{" "}
-                    {currency} {freeShippingThreshold}. Each piece ships
-                    in MAZAL signature packaging.
+                    Delivery across the UAE and GCC in 2–7 working days.
+                    Complimentary on orders over {currency}{" "}
+                    {freeShippingThreshold}. Each piece ships in MAZAL
+                    signature packaging.
                   </p>
                 ),
               },
               {
-                title: "Returns & Exchanges",
+                title: "Exchanges",
                 content: (
                   <p>
-                    Enjoy 14-day hassle-free returns and exchanges on unworn
-                    pieces with tags attached. Read the full{" "}
+                    No refunds. Unworn pieces with tags attached can be
+                    exchanged for another abaya within 14 days of delivery.
+                    Read the full{" "}
                     <Link href="/returns" className="link-underline text-bronze hover:text-bronze-deep">
-                      Returns & Exchanges policy
+                      Exchange policy
                     </Link>{" "}
-                    for eligibility, refunds, and exchange steps.
+                    for eligibility and exchange steps.
                   </p>
                 ),
               },
