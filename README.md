@@ -137,3 +137,15 @@ robots, clean `/shop/[slug]` URLs, image optimization via `next/image`.
 Real checkout/payments, customer accounts & order history, live reviews,
 blog/journal, loyalty & referral programs, abandoned-cart WhatsApp automation,
 and a real Instagram feed. Hooks/structure are in place for all of these.
+
+## 🚀 How changes go live (Cloudflare)
+
+mazal.ae runs on Cloudflare Workers (worker `mazal-rose`). Cloudflare is connected
+to this GitHub repo: **every push/merge to `main` builds and deploys automatically**
+(`npm run cf:build` then `npm run cf:deploy`), usually live in 3–5 minutes.
+
+- Work on a branch and open a pull request; merging into `main` = going live.
+- Pushes to other branches only build a preview version, they do not change mazal.ae.
+- Products, orders, photos and site settings are edited in **mazal.ae/admin**, not in code.
+- Secrets (Noon, Resend, Meta, admin password) live in Cloudflare, never commit them.
+- Something broke? Cloudflare → Workers → mazal-rose → Deployments → roll back.
