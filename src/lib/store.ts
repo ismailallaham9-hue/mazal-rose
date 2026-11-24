@@ -126,6 +126,7 @@ export type StoreOrder = {
     quantity: number;
     price: number;
     lineTotal: number;
+    underAbaya?: "velvet" | "crepe";
   }[];
   subtotal: number;
   discount: number;
