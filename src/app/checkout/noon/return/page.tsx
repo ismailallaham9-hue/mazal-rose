@@ -83,6 +83,7 @@ async function trackMetaPurchaseOnce(order: StoreOrder): Promise<RefreshedOrder>
 }
 
 async function refreshOrderFromNoon(order: StoreOrder): Promise<RefreshedOrder> {
+  if (order.paymentProvider !== "noon") return { order };
   if (!order.paymentSessionId || !noonPaymentsConfigured()) return { order };
 
   // Latest saved state. If a follow-up step (email, Meta) fails after Noon
